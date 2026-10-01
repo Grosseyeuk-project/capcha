@@ -1,0 +1,30 @@
+import { chromium } from '/home/user/capcha/node_modules/playwright-core/index.mjs';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
+for (const [w,h] of [[1280,800],[390,800],[360,740]]) {
+  const p = await (await b.newContext({ viewport: { width: w, height: h }, hasTouch:w<500 })).newPage();
+  const errs=[]; p.on('console', m=>['error','warning'].includes(m.type())&&errs.push(m.text())); p.on('pageerror',e=>errs.push('PE '+e.message));
+  await p.goto('http://localhost:8091/?cheat=1'); await p.waitForTimeout(3500);
+  await p.screenshot({path:`/tmp/s/title${w}.png`});
+  console.log(w,'overflowX',await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth), 'scrollH', await p.evaluate(()=>document.documentElement.scrollHeight));
+  await p.click('.btn.primary'); await p.waitForTimeout(3500);
+  await p.screenshot({path:`/tmp/s/l1_${w}.png`});
+  console.log(w,'lvl overflowX',await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
+  await p.evaluate(()=>__cap.fail()); await p.waitForTimeout(1200);
+  await p.screenshot({path:`/tmp/s/strike${w}.png`});
+  await p.waitForTimeout(2500);
+  await p.evaluate(()=>__cap.solve()); await p.waitForTimeout(700);
+  await p.screenshot({path:`/tmp/s/solve${w}.png`});
+  await p.waitForTimeout(3500);
+  await p.screenshot({path:`/tmp/s/l2_${w}.png`});
+  await p.evaluate(()=>__cap.left(2500)); await p.waitForTimeout(1200);
+  await p.screenshot({path:`/tmp/s/low${w}.png`});
+  await p.evaluate(()=>__cap.over()); await p.waitForTimeout(2500);
+  await p.screenshot({path:`/tmp/s/over${w}.png`});
+  console.log(w,'over overflowX',await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
+  await p.evaluate(()=>{__cap.title();}); await p.waitForTimeout(500);
+  await p.evaluate(()=>{__cap.start();}); await p.waitForTimeout(1500);
+  await p.evaluate(()=>__cap.win()); await p.waitForTimeout(3500);
+  await p.screenshot({path:`/tmp/s/win${w}.png`});
+  console.log(w,errs.slice(0,5));
+}
+await b.close();

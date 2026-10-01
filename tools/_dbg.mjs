@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
+const p = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+p.on('pageerror', e => console.log('PAGEERR', e.message)); p.on('console', m => m.type()==='error' && console.log('CERR', m.text().slice(0,200)));
+await p.goto('http://localhost:8094/?cap=a_rotate&cheat=1', { waitUntil: 'domcontentloaded' });
+await p.waitForSelector('.ar-bt button', { timeout: 60000 }); await p.waitForTimeout(1500);
+console.log(await p.evaluate(() => document.querySelector('.cap-host').dataset.answer));
+await p.evaluate(() => document.querySelectorAll('.ar-bt button')[1].click());
+await p.waitForTimeout(500);
+console.log(await p.evaluate(() => document.querySelector('.ar-lb:last-of-type')?.textContent));
+await b.close();

@@ -1,0 +1,23 @@
+import { chromium } from '/home/user/capcha/node_modules/playwright-core/index.mjs';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
+const errs=[];
+const mk=async(w,h,n,m)=>{const p=await (await b.newContext({viewport:{width:w,height:h},hasTouch:m,isMobile:m})).newPage(); p.on('pageerror',e=>errs.push(n+' PE '+e.message)); p.on('console',x=>x.type()==='error'&&errs.push(n+' '+x.text())); await p.goto('http://localhost:8099/'); await p.waitForSelector('text=Mode en ligne'); await sleep(1500); await p.click('text=Mode en ligne'); await sleep(1500); return p;};
+const A=await mk(1280,800,'A',false), B=await mk(390,800,'B',true);
+const sh=(p,n,t)=>p.screenshot({path:`/tmp/s/o/${n}-${t}.png`});
+await A.fill('input[aria-label=Pseudo]','Alice'); await B.fill('input[aria-label=Pseudo]','Bob');
+await sh(A,'A','menu'); await sh(B,'B','menu');
+await A.click('text=Créer une salle'); await A.waitForSelector('.ol-code b'); const code=await A.textContent('.ol-code b');
+await B.fill('input[aria-label="Code de salle"]',code); await B.click('text=Rejoindre'); await B.waitForSelector('.ol-code b');
+await A.click('text=+ Ajouter un bot'); await A.click('text=+ Ajouter un bot'); await A.click('text=+ Ajouter un bot'); await B.click('text=Je suis prêt'); await sleep(500);
+await sh(A,'A','lobby'); await sh(B,'B','lobby');
+await A.click('text=Lancer la partie'); await sleep(1200); await sh(A,'A','count'); await sh(B,'B','count');
+await A.waitForSelector('.ol-rail',{timeout:15000}); await sleep(2500); await sh(A,'A','race1'); await sh(B,'B','race1');
+const solve=p=>p.evaluate(()=>window.CAPCHA_ONLINE.game?.cur?.api.solve()); const fail=p=>p.evaluate(()=>window.CAPCHA_ONLINE.game?.cur?.api.fail('test'));
+await solve(A); await sleep(1500); await fail(B); await sleep(800); await solve(A); await sleep(1500); await sh(A,'A','race2'); await sh(B,'B','race2');
+for(let i=0;i<4;i++){await fail(B); await sleep(1400);} await sleep(1500); await sh(B,'B','ghost');
+let t0=Date.now();
+for(let i=0;i<200;i++){await sleep(700); await solve(A); if(await A.$('.ol-podium'))break; if(Date.now()-t0>170000)break;}
+await sleep(3500); await sh(A,'A','pod'); await sh(B,'B','pod'); await sleep(3000); await sh(A,'A','pod2'); await sh(B,'B','pod2');
+console.log('ovf',await A.evaluate(()=>document.documentElement.scrollWidth>innerWidth),await B.evaluate(()=>[document.documentElement.scrollWidth,innerWidth,document.documentElement.scrollHeight]));
+console.log('ERRS',[...new Set(errs)]); await b.close();
