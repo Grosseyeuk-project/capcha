@@ -319,6 +319,8 @@ const CSS = `
 .ol-bigstamp{margin-bottom:8px}
 .ol-wrap.ol-menu{justify-content:center}
 @media (max-width:820px){.ol-bigstamp{font-size:clamp(1.3rem,6vw,2rem);padding:2px 14px;border-width:5px}.ol-verdict{margin:6px 0 22px}}
+
+@media (max-width:820px){.ol-root:has(.ol-race) .ol-wrap{padding-top:3px;gap:6px}}
 `;
 let done = false;
 export function injectCss() {
