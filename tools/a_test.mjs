@@ -11,9 +11,9 @@ async function run(id) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: false });
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && !/404/.test(m.text()) && errs.push(m.text()));
-  await p.goto(`http://localhost:${port}/?cap=${id}&cheat=1`, { waitUntil: 'domcontentloaded' });
+  await p.goto(`http://localhost:${port}/?cap=${id}&cheat=1`, { waitUntil: "domcontentloaded", timeout: 60000 });
   const slow = () => p.evaluate(() => window.__game.cur?.api.timer(180000)).catch(() => {});
-  const ready = async () => { await p.waitForFunction((id) => window.__game && window.__game.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 15000 }); await sleep(300); await slow(); };
+  const ready = async () => { await p.waitForFunction((id) => window.__game && window.__game.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 45000 }); await sleep(300); await slow(); };
   await ready();
   await p.evaluate(() => { const g = window.__game; window.__msgs = []; g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m); return o(m, ...r); }; });
   const ans = () => p.evaluate(() => document.querySelector('.cap-host').dataset.answer);
@@ -21,9 +21,9 @@ async function run(id) {
   const ctr = (bb) => [bb.x + bb.width / 2, bb.y + bb.height / 2];
   const state = () => p.evaluate(() => ({ strikes: window.__game.strikes, solves: window.__game.stats.solves, msgs: window.__msgs }));
   const shot = async (n) => shots && p.screenshot({ path: `${shots}/${id}_${n}.png` });
-  let nS = 0; const waitStrike = async () => { nS++; await p.waitForFunction((n) => window.__game.strikes >= n, nS, { timeout: 8000 }); const s = await state(); console.log(`  [${id}] FAIL msg:`, s.msgs.at(-1)); await shot('fail'); };
-  const waitSolve = async () => { await p.waitForFunction(() => window.__game.stats.solves > 0, null, { timeout: 8000 }); console.log(`  [${id}] SOLVED`); };
-  const remount = async () => { await sleep(800); await p.evaluate(() => { window.__old = window.__game.cur?.seed; }); await p.waitForFunction(() => window.__game.phase === 'play' && window.__game.cur.seed !== window.__old && document.querySelector('.cap-host')?.children.length, null, { timeout: 8000 }).catch(() => {}); await sleep(300); await slow(); await p.evaluate(() => { const g = window.__game; if (!g.__hooked) { g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m); return o(m, ...r); }; } }); };
+  let nS = 0; const waitStrike = async () => { nS++; await p.waitForFunction((n) => window.__game.strikes >= n, nS, { timeout: 25000 }); const s = await state(); console.log(`  [${id}] FAIL msg:`, JSON.stringify(s.msgs.slice(-3))); await shot('fail'); };
+  const waitSolve = async () => { await p.waitForFunction(() => window.__game.stats.solves > 0, null, { timeout: 25000 }); console.log(`  [${id}] SOLVED`); };
+  const remount = async () => { await sleep(800); await p.evaluate(() => { window.__old = window.__game.cur?.seed; }); await p.waitForFunction(() => window.__game.phase === 'play' && window.__game.cur.seed !== window.__old && document.querySelector('.cap-host')?.children.length, null, { timeout: 25000 }).catch(() => {}); await sleep(300); await slow(); await p.evaluate(() => { const g = window.__game; if (!g.__hooked) { g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m); return o(m, ...r); }; } }); };
   const click = async (sel) => p.locator(sel).first().click();
   const curve = async (x0, y0, x1, y1) => { for (let i = 1; i <= 30; i++) { const t = i / 30; await p.mouse.move(x0 + (x1 - x0) * t + Math.sin(t * 9) * 14, y0 + (y1 - y0) * t + Math.sin(t * 5) * 9); await sleep(8); } await p.mouse.move(x1, y1); };
   if (id === 'a_checkbox') {

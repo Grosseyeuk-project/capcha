@@ -1,7 +1,7 @@
 import { css, shake } from './b_kit.js';
 css('memory', `
 .bm-pads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.bm-p{appearance:none;border:2px solid var(--ink);height:clamp(70px,17vw,92px);cursor:pointer;font:800 15px var(--display);color:var(--ink);position:relative;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--c);filter:saturate(.55) brightness(.85);box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s,filter .08s;padding:0}
+.bm-p{appearance:none;border:2px solid var(--ink);height:clamp(60px,14vw,76px);cursor:pointer;font:800 15px var(--display);color:var(--ink);position:relative;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--c);filter:saturate(.55) brightness(.85);box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s,filter .08s;padding:0}
 .bm-p span{font-size:30px;line-height:1}.bm-p kbd{position:absolute;right:6px;top:3px;font:600 11px var(--mono);opacity:.6}
 .bm-p:hover:not(:disabled){filter:saturate(.8) brightness(.95)}
 .bm-p.lit{filter:saturate(1.4) brightness(1.25);transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);outline:5px solid #fff;outline-offset:-9px}
@@ -52,7 +52,7 @@ export default {
         if (stage === 1) { pips.children[1].classList.add('on'); api.sfx('good'); T(() => api.solve(), 300); } else { pips.children[0].classList.add('on'); api.say('Phase 1 validée. Vous vous croyiez fini ? Rien n’est fini ici.', 'smug'); T(() => begin(1), 900); }
       }
     }
-    const key = (e) => { const k = '1234'.indexOf(e.key); if (k > -1 && !e.repeat && !e.ctrlKey && !e.metaKey) press(k); const a = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3 }[e.key]; if (a !== undefined && accept) { e.preventDefault(); press(a); } };
+    const key = (e) => { const k = '1234'.indexOf(e.key); if (k > -1 && !e.repeat && !e.ctrlKey && !e.metaKey) press(k); };
     window.addEventListener('keydown', key);
     begin(0);
     return { destroy() { alive = false; tm.forEach(clearTimeout); window.removeEventListener('keydown', key); } };
