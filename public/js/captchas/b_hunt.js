@@ -5,7 +5,7 @@ css('hunt', `
 .bh-d{position:absolute;left:0;top:0;width:46px;height:46px;border:0;background:none;padding:0;font-size:34px;line-height:46px;text-align:center;cursor:pointer;will-change:transform;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;touch-action:manipulation}
 .bh-d i{position:absolute;left:50%;top:-4px;font-style:normal;font-size:17px;line-height:1;transform:translateX(-50%);pointer-events:none}
 .bh-d s{display:block;text-decoration:none;transition:transform .12s}
-.bh-d:hover s{transform:scale(1.14)}
+.bh-d:hover s{filter:drop-shadow(0 0 6px #fff)}
 .bh-d:focus-visible{outline:3px solid #1a73e8;border-radius:50%}
 .bh-d.hit s{animation:bh-hit .4s forwards}
 @keyframes bh-hit{50%{transform:scale(1.7) rotate(20deg)}100%{transform:scale(0);opacity:0}}
