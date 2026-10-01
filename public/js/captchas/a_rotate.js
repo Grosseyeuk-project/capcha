@@ -33,7 +33,7 @@ export default {
     const stage = h('div', { class: 'ar-st', tabindex: 0, 'aria-label': 'Zone de rotation : flèches pour pivoter, Q et E pour incliner' }, cv, h('div', { class: 'ar-dv' }), h('span', { class: 'ar-lb', style: { left: '10px' } }, 'Modèle'), h('span', { class: 'ar-lb', style: { right: '10px' } }, 'Votre objet'));
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
-    defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; bt.append(h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 4 : ↑ en maintenance' : l, disabled: dis ? '' : null, style: dis ? { opacity: .35, cursor: 'not-allowed', textDecoration: 'line-through' } : {}, onclick: () => rot(i) }, t)); });
+    defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; const bb = h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 4 : ↑ en maintenance' : l, style: dis ? { opacity: .35, cursor: 'not-allowed', textDecoration: 'line-through' } : {}, onclick: () => rot(i) }, t); if (dis) bb.disabled = true; bt.append(bb); });
     const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt], onVerify: check });
     host.append(fr.el);
     if (/cheat=1/.test(location.search)) { // BFS path for tests

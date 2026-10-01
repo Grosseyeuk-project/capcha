@@ -24,7 +24,7 @@ async function run(id) {
   let nS = 0; const waitStrike = async () => { nS++; await p.waitForFunction((n) => window.__game.strikes >= n, nS, { timeout: 25000 }); const s = await state(); console.log(`  [${id}] FAIL msg:`, JSON.stringify(s.msgs.slice(-3))); await shot('fail'); };
   const waitSolve = async () => { await p.waitForFunction(() => window.__game.stats.solves > 0, null, { timeout: 25000 }).catch(async (e) => { console.log('  NOT SOLVED; msgs', JSON.stringify((await state()).msgs.slice(-2))); throw e; }); console.log(`  [${id}] SOLVED`); };
   const remount = async () => { await sleep(800); await p.evaluate(() => { window.__old = window.__game.cur?.seed; }); await p.waitForFunction(() => window.__game.phase === 'play' && window.__game.cur.seed !== window.__old && document.querySelector('.cap-host')?.children.length, null, { timeout: 25000 }).catch(() => {}); await sleep(300); await slow(); await p.evaluate(() => { const g = window.__game; if (!g.__hooked) { g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m ?? (new Error().stack.split("\n").slice(1,4).join("|") + JSON.stringify(r))); return o(m, ...r); }; } }); };
-  const click = async (sel) => p.locator(sel).first().click({ timeout: 8000, force: true });
+  const click = async (sel) => { if (sel === '.ak-btn') await p.waitForFunction(() => !document.querySelector('.ak-btn')?.disabled, null, { timeout: 15000 }).catch(() => {}); return p.locator(sel).first().click({ timeout: 8000, force: true }); };
   const curve = async (x0, y0, x1, y1) => { for (let i = 1; i <= 30; i++) { const t = i / 30; await p.mouse.move(x0 + (x1 - x0) * t + Math.sin(t * 7) * 45, y0 + (y1 - y0) * t + Math.sin(t * 5) * 9); await sleep(8); } await p.mouse.move(x1, y1); };
   if (id === 'a_checkbox') {
     await shot('init');
@@ -91,8 +91,8 @@ async function run(id) {
     await p.locator('.ar-bt button').nth(3).click({ force: true }); await sleep(400); await click('.ak-btn'); await waitStrike(); await remount();
     const path = (await ans()).split(',').filter(Boolean).map(Number);
     console.log('  path', path.join(','));
-    for (const m of path.slice(0, 0)) { const sb = await box('.ar-st'); const [x, y] = ctr(sb); const d = { 0: [0, -60], 1: [0, 60], 2: [-60, 0], 3: [60, 0] }[m]; if (d) { await p.mouse.move(x + 40, y); await p.mouse.down(); await p.mouse.move(x + 40 + d[0], y + d[1], { steps: 6 }); await p.mouse.up(); } else await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(300); }
-    for (const m of path) { await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(260); }
+    for (const m of path.slice(0, 1)) { const sb = await box('.ar-st'); const [x, y] = ctr(sb); const d = { 0: [0, -60], 1: [0, 60], 2: [-60, 0], 3: [60, 0] }[m]; if (d) { await p.mouse.move(x + 40, y); await p.mouse.down(); await p.mouse.move(x + 40 + d[0], y + d[1], { steps: 6 }); await p.mouse.up(); } else await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(300); }
+    for (const m of path.slice(1)) { await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(260); }
     await sleep(400); await shot('solved'); await click('.ak-btn'); await waitSolve();
   }
   if (errs.length) console.log('  ERRORS', errs);

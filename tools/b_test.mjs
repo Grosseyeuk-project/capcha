@@ -85,15 +85,15 @@ async function run(id) {
     const rules = () => p.$$eval('.bp-r', (e) => e.length);
     await p.click('.bp-field input'); await p.keyboard.type('janvier', { delay: 10 }); await sleep(200); console.log('  rules after "janvier":', await rules());
     let okc = false, copied = false;
-    for (let k = 0; k < 60 && !okc; k++) {
+    for (let k = 0; k < 150 && !okc; k++) {
       const a = await ans(); await p.fill('.bp-field input', a);
       if (await p.$eval('.bp-field:nth-of-type(2)', (e) => e.style.display !== 'none') && !copied) { await p.click('.bp-cp'); copied = true; }
       await sleep(900);
-      okc = await p.evaluate(() => !document.querySelector('.bk > div:last-child .bk-btn').disabled);
-      if (k === 6) await shot('mid');
+      okc = await p.evaluate(() => { const b = document.querySelector('.bk > div:last-child .bk-btn'); if (!b.disabled) { b.click(); return true; } return false; });
+      if (k === 6 || k === 30 || k === 45) await shot('mid' + k);
     }
     console.log('  rules:', await rules(), 'enabled', okc); await shot('ok');
-    await p.click('.bk > div:last-child .bk-btn'); await waitSolve();
+    await waitSolve();
   } else if (id === 'b_boss') {
     await p.waitForSelector('.bb-orb', { timeout: 5000 });
     const hitReal = () => p.evaluate(() => new Promise((res) => { const f = () => { const st = document.querySelector('.bb-stage'); const o = document.querySelector('.bb-orb[aria-label="œil du boss"]:not(.boom)'); if (st && o && !st.classList.contains('inv')) { const r = o.getBoundingClientRect(); o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 27, clientY: r.top + 27 })); res(); } else requestAnimationFrame(f); }; f(); }));
