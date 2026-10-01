@@ -5,6 +5,7 @@ css('memory', `
 .bm-p span{font-size:30px;line-height:1}.bm-p kbd{position:absolute;right:6px;top:3px;font:600 11px var(--mono);opacity:.6}
 .bm-p:hover:not(:disabled){filter:saturate(.8) brightness(.95)}
 .bm-p.lit{filter:saturate(1.4) brightness(1.25);transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);outline:5px solid #fff;outline-offset:-9px}
+.bm-p.dec{filter:grayscale(1) brightness(1.7)!important;outline:5px dashed #333;outline-offset:-9px}
 .bm-p:disabled{cursor:default}
 .bm-seq{display:flex;gap:6px;flex-wrap:wrap;min-height:26px}
 .bm-seq i{width:22px;height:22px;border:2px solid var(--ink);background:transparent;transition:background .15s,transform .15s}
@@ -32,10 +33,11 @@ export default {
       if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify(n === 0 ? seq : [...seq].reverse());
       dots.replaceChildren(...seq.map(() => h('i', {})));
       if (n === 0) setRule('Phase 1', 'Regardez la séquence, puis ', h('b', {}, 'répétez-la'), ' (clic ou touches 1-4).');
-      else setRule('Phase 2 — mise à jour', 'Même chose, mais ', h('b', {}, 'À L’ENVERS'), ', et les pads vont ', h('b', {}, 'changer de place'), '. Oui, c’est méchant.');
+      else setRule('Phase 2 — mise à jour', 'Même chose, mais ', h('b', {}, 'À L’ENVERS'), ', les pads vont ', h('b', {}, 'changer de place'), ' et les flashs ', h('b', {}, 'gris'), ' sont des leurres : ignorez-les. Oui, c’est méchant.');
       pads.forEach((p) => { p.disabled = true; p.style.order = ''; }); state.className = 'bm-state'; state.textContent = 'Observez… (ça commence)';
       const step = api.reducedMotion ? 800 : 620; let t = 500; pads.forEach((p) => p.classList.add('lit')); T(() => pads.forEach((p) => p.classList.remove('lit')), 260);
-      seq.forEach((v) => { T(() => { lit(v, true); api.sfx('pop'); }, t); T(() => lit(v, false), t + step * 0.62); t += step; });
+      const items = seq.map((v) => ({ v })); if (n === 1) { items.splice(2, 0, { v: api.int(0, 3), d: 1 }); items.splice(5, 0, { v: api.int(0, 3), d: 1 }); }
+      items.forEach((it) => { T(() => { pads[it.v].classList.toggle('dec', !!it.d); lit(it.v, true); api.sfx(it.d ? 'tick' : 'pop'); }, t); T(() => { lit(it.v, false); pads[it.v].classList.remove('dec'); }, t + step * 0.62); t += step; });
       T(() => { accept = true; pads.forEach((p) => (p.disabled = false)); state.className = 'bm-state go'; state.textContent = n ? 'À l’envers !' : 'À vous !'; api.timer(n ? 16000 : 13000); api.sfx('whoosh'); if (n) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((p, i) => (p.style.order = o[i])); api.say('Les pads ont changé de place. Fiez-vous à la couleur, pas à la position.', 'smug'); } }, t + 100);
       api.timer(5000 + seq.length * step + 14000);
     }

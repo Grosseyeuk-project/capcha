@@ -40,6 +40,11 @@ export class Game {
     this.act = () => { this.lastAct = performance.now(); };
     ['pointerdown', 'keydown'].forEach((e) => this.card.addEventListener(e, this.act, true));
     this.idleIv = setInterval(() => this.idleCheck(), 1500);
+    this.onKey = (e) => { if (e.key === 'Escape' && this.ledger.classList.contains('open')) { this.toggleLedger(false); this.lbBar.focus?.(); } };
+    this.onDown = (e) => { if (this.ledger.classList.contains('open') && !this.list.contains(e.target) && !this.lbBar.contains(e.target)) this.toggleLedger(false); };
+    this.onResize = () => this.fitSoon();
+    addEventListener('keydown', this.onKey); addEventListener('pointerdown', this.onDown, true); addEventListener('resize', this.onResize);
+    this.host.addEventListener('scroll', () => this.slotMore(), { passive: true });
     this.raf = requestAnimationFrame((n) => this.frame(n));
     this.syncMood();
     this.load({ first: true });
@@ -152,9 +157,24 @@ export class Game {
     catch (e) { console.error('captcha mount failed', def.id, e); host.append(h('p', { class: 'mount-err' }, 'Cette vérification a eu un malaise (' + def.id + '). Gérard prétend que c’est volontaire.')); this.later(() => api.solve(), 1500); }
     this.onEvent({ type: 'level', level: this.level });
     this.hudRefresh();
+    this.fit();
+    this.fitMO = new MutationObserver(() => this.fitSoon()); this.fitMO.observe(host, { childList: true, subtree: true, characterData: true });
   }
 
-  destroyCur() { const c = this.cur; this.cur = null; if (c) { try { c.inst?.destroy?.(); } catch (e) { console.error(e); } } }
+  fit() {
+    const c = this.cur, slot = this.host; if (!c || !c.host || !slot) return;
+    const host = c.host; host.style.zoom = '';
+    const over = () => slot.scrollHeight > slot.clientHeight + 2;
+    if (over()) {
+      let z = 1;
+      for (let i = 0; i < 5 && over() && z > 0.7; i++) { z = Math.max(0.7, z * (slot.clientHeight - 2) / slot.scrollHeight); host.style.zoom = z.toFixed(3); }
+    }
+    this.slotMore();
+  }
+  fitSoon() { clearTimeout(this.fitT); this.fitT = setTimeout(() => this.fit(), 90); }
+  slotMore() { const s = this.host; s.classList.toggle('more', s.scrollHeight > s.clientHeight + 4 && s.scrollTop + s.clientHeight < s.scrollHeight - 4); }
+  destroyCur() {
+    this.fitMO?.disconnect(); this.fitMO = null; const c = this.cur; this.cur = null; if (c) { try { c.inst?.destroy?.(); } catch (e) { console.error(e); } } }
 
   frame(now) {
     this.raf = requestAnimationFrame((n) => this.frame(n));
@@ -285,6 +305,7 @@ export class Game {
   debugEnd(kind) { if (kind === 'win' && !this.stats.solves) { const st = this.stats; this.level = this.total + 1; st.solves = this.total; st.sumMs = this.total * 6200; st.fastest = 2400; st.maxStreak = this.total; } this.finish(kind); }
 
   destroy() {
+    removeEventListener('keydown', this.onKey); removeEventListener('pointerdown', this.onDown, true); removeEventListener('resize', this.onResize); clearTimeout(this.fitT);
     document.body.classList.remove('end-open');
     cancelAnimationFrame(this.raf); clearInterval(this.idleIv); this.timeouts.forEach(clearTimeout); this.timeouts.clear();
     this.destroyCur(); this.speaker?.destroy(); this.endSp?.destroy(); this.over = true;

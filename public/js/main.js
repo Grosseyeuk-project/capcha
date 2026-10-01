@@ -15,7 +15,7 @@ const baseSeed = q.get('seed') ? +q.get('seed') : Math.floor(Math.random() * 1e6
 const seedFor = q.get('seed') ? () => +q.get('seed') : (l) => baseSeed + l * 7919 + 13;
 
 // Le serveur pose un cookie sur la page ; un hébergement statique n'en pose pas : mode en ligne indisponible, sans aucune requête (zéro erreur console).
-const hasServer = /(?:^|; )capcha_srv=1/.test(document.cookie) || /^(localhost|127\.|\[::1\])/.test(location.hostname);
+const hasServer = /(?:^|; )capcha_srv=1/.test(document.cookie);
 const onlineReady = () => hasServer && typeof window.CAPCHA_ONLINE?.open === 'function';
 
 function showTitle() {

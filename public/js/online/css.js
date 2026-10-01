@@ -276,6 +276,27 @@ const CSS = `
 .ol-lanes{max-height:260px;overflow-y:auto;-webkit-mask-image:linear-gradient(#000 85%,transparent);mask-image:linear-gradient(#000 85%,transparent);padding-bottom:18px}
 @media (max-height:900px){.ol-pod.p1 .blk{height:80px}.ol-pod.p2 .blk{height:58px}.ol-pod.p3 .blk{height:40px}.ol-podium{min-height:150px}.ol-bigstamp{font-size:clamp(1.4rem,5vw,2.4rem)}.ol-end .ol-wrap{gap:8px}}
 @media (max-width:820px){.ol-root:has(.ol-race) .ol-toasts{top:150px;bottom:auto}}
+
+/* r6 */
+.ol-count b{font-size:clamp(200px,52vw,420px)!important;line-height:.9;animation-name:ol-slam2!important}
+@keyframes ol-slam2{0%{transform:scale(2.6) rotate(-5deg)}60%{transform:scale(.94) rotate(1.5deg)}100%{transform:scale(1) rotate(0)}}
+.ol-count{display:flex!important;flex-direction:column;align-items:center;justify-content:center}
+.ol-count .speaker{max-width:520px;margin-top:6px}
+.ol-count .avatar{width:56px;height:56px}
+.ol-endgrid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:1000px){.ol-wrap.ol-end{max-width:1100px}.ol-endgrid{grid-template-columns:1fr 1fr;align-items:start}}
+.ol-toasts .ol-toast{pointer-events:none}
+@media (max-width:820px){
+ .ol-root:has(.ol-race) .ol-toasts{top:auto;bottom:8px}
+ .ol-toast:not(:last-child){display:none}
+ .ol-toast{font-size:12px;padding:6px 10px}
+ .ol-race{margin-top:-2px}
+ .ol-gap{display:none}
+ .ol-rtop .pill:not(.ol-racing):not(.ol-rank){display:none}
+ .ol-rtop{gap:6px}
+ .ol-rtop .ol-rank{display:inline-flex}
+ .ol-wrap{padding-top:8px}
+}
 `;
 let done = false;
 export function injectCss() {

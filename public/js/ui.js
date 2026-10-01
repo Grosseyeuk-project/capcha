@@ -179,7 +179,7 @@ export function installMuteKey() { if (mKey) return; mKey = true; addEventListen
 export function titleScreen({ best, speaker, onSolo, onOnline, onlineReady }) {
   const online = h('button', { class: 'btn ghost', type: 'button' }, 'Mode en ligne', h('small', {}, ''));
   const sub = online.querySelector('small');
-  const refresh = () => { const ok = !!onlineReady(); online.classList.toggle('disabled', !ok); online.setAttribute('aria-disabled', String(!ok)); sub.textContent = ok ? 'défiez d’autres humains (présumés)' : (location.protocol === 'file:' || !/(^|; )capcha_srv=1/.test(document.cookie) && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) ? 'hors ligne ici : serveur requis' : 'bientôt — un stagiaire y travaille'; };
+  const refresh = () => { const ok = !!onlineReady(); online.classList.toggle('disabled', !ok); online.setAttribute('aria-disabled', String(!ok)); sub.textContent = ok ? 'défiez d’autres humains (présumés)' : !/(^|; )capcha_srv=1/.test(document.cookie) ? 'hors ligne ici : serveur requis' : 'bientôt — un stagiaire y travaille'; };
   refresh();
   online.addEventListener('click', () => { if (online.getAttribute('aria-disabled') === 'true') { sfx('bad'); onOnline(false); } else { sfx('click'); onOnline(true); } });
   const poll = setInterval(() => { if (!online.isConnected) return clearInterval(poll); refresh(); }, 600);

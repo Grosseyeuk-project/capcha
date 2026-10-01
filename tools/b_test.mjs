@@ -98,20 +98,18 @@ async function run(id) {
     await p.waitForSelector('.bb-orb', { timeout: 5000 });
     const hitReal = () => p.evaluate(() => new Promise((res) => { const f = () => { const st = document.querySelector('.bb-stage'); const o = document.querySelector('.bb-orb[aria-label="œil du boss"]:not(.boom)'); if (st && o && !st.classList.contains('inv')) { const r = o.getBoundingClientRect(); o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 27, clientY: r.top + 27 })); res(); } else requestAnimationFrame(f); }; f(); }));
     const hitInv = () => p.evaluate(() => new Promise((res) => { const f = () => { const st = document.querySelector('.bb-stage'); const o = document.querySelector('.bb-orb[aria-label="œil du boss"]:not(.boom)'); if (st && o && st.classList.contains('inv')) { const r = o.getBoundingClientRect(), sr = st.getBoundingClientRect(); const cx = r.left + 27, cy = r.top + 27; st.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: sr.right - (cx - sr.left), clientY: cy })); res(); } else requestAnimationFrame(f); }; f(); }));
-    const eyeP = async (n) => { for (let k = 0; k < n; k++) { await hitReal(); await sleep(900); } };
     await sleep(300); await shot('p1');
     await p.waitForSelector('.bb-stage.inv', { timeout: 12000 }); await shot('inv'); await hitInv(); await sleep(700); console.log('  inverted hit ->', await p.textContent('.bb-s'));
-    await p.waitForFunction(() => !document.querySelector('.bb-stage.inv')); await p.evaluate(() => document.querySelector('.bb-orb[aria-label="leurre"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await waitStrike('leurre'); await remount();
-    await eyeP(4);
-    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 15000 }); await shot('p2'); let a = JSON.parse(await ans()); console.log('  seq len', a.length);
-    for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(80); } await shot('p2done');
-    await p.waitForSelector('.bb-type input', { timeout: 5000 }); await shot('p3'); const rev = await ans();
-    await p.fill('.bb-type input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await waitStrike('typo'); await remount();
-    await eyeP(4);
-    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 15000 }); a = JSON.parse(await ans()); for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(80); }
-    await p.waitForSelector('.bb-type input', { timeout: 5000 }); const rev2 = await ans();
-    await p.keyboard.type(rev2.slice(0, 8), { delay: 20 }); await sleep(300); await shot('p3typing'); await p.fill('.bb-type input', rev2); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
-    const phrase = [...rev2].reverse().join(''); const fwd = phrase.split(' ').reverse().join(' '); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await sleep(900); await shot('end2'); await waitSolve();
+    await p.waitForFunction(() => !document.querySelector('.bb-stage.inv')); await sleep(500);
+    for (let k = 0; k < 3; k++) { await hitReal(); await sleep(900); }
+    await p.waitForSelector('.bb-sync', { timeout: 8000 }); await shot('p2');
+    const stopWhen = (inside) => p.evaluate((inside) => new Promise((res) => { const f = () => { const d = JSON.parse(document.querySelector('.cap-host').dataset.answer); const dd = Math.abs(d.pos - d.zc); if (inside ? dd < d.w * 0.3 : dd > 0.4) { document.querySelector('.bb-stop').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); res(); } else requestAnimationFrame(f); }; f(); }), inside);
+    await stopWhen(false); await waitStrike('synchro ratée (retry, phase gardée)'); await sleep(300);
+    for (let k = 0; k < 5; k++) { await stopWhen(true); await sleep(250); if (k === 2) await shot('tunnel'); }
+    await p.waitForSelector('.bb-type input', { timeout: 6000 }); await shot('p3'); const rev = await ans();
+    await p.fill('.bb-type input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await waitStrike('typo (retry)'); await sleep(300);
+    await p.keyboard.type(rev.slice(0, 5), { delay: 20 }); await p.fill('.bb-type input', rev); await shot('p3typed'); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
+    const phrase = [...rev].reverse().join(''); const fwd = phrase.split(' ').reverse().join(' '); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await sleep(900); await shot('end2'); await waitSolve();
   }
   end();
   async function end() { await sleep(300); if (errs.length) console.log(`  [${id}] ERRORS:`, errs.slice(0, 4)); await ctx.close(); }

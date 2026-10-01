@@ -74,9 +74,8 @@ function menu() {
     topbar(),
     h('h1', { class: 'ol-title' }, 'Course en ligne', h('small', {}, 'Mêmes CAPTCHAs, même graine, même panique. Trois erreurs et vous êtes officiellement un robot.')),
     h('div', { class: 'ol-menugrid' },
-      h('div', {}, gerard('menu', GL.menu), h('div', { class: 'ol-card' }, h('h3', {}, 'Identité'), nick, err)),
-      h('div', {}, h('div', { class: 'ol-card' }, h('h3', {}, 'Jouer'), h('div', { class: 'ol-row2' }, btnQ, btnC)),
-        h('div', { class: 'ol-card' }, h('h3', {}, 'Un code d’ami ?'), h('div', { class: 'ol-row2' }, code, btnJ))))));
+      h('div', {}, h('div', { class: 'ol-card' }, h('h3', {}, 'Identité'), nick, err), h('div', { class: 'ol-card' }, h('h3', {}, 'Jouer'), h('div', { class: 'ol-row2' }, btnQ, btnC))),
+      h('div', {}, gerard('menu', GL.menu), h('div', { class: 'ol-card' }, h('h3', {}, 'Un code d’ami ?'), h('div', { class: 'ol-row2' }, code, btnJ))))));
   if (!S.nick) setTimeout(() => nick.focus(), 50);
 }
 function paintMenuState() { (S.menuBtns || []).forEach((b) => { b.disabled = !S.up; }); }
@@ -127,7 +126,7 @@ function countdown(room) {
   let el = S.root.querySelector('.ol-count');
   if (!el) {
     S.cdSp ||= new Speaker();
-    el = h('div', { class: 'ol-count', role: 'status' }, S.cdSp.el, h('span', {}, 'La vérification commence'), h('b', {}, ''), h('span', {}, 'Même graine pour tous. Bonne chance.'));
+    el = h('div', { class: 'ol-count', role: 'status' }, h('b', { 'aria-live': 'off' }, ''), h('span', {}, 'La vérification commence · même graine pour tous'), S.cdSp.el);
     S.root.append(el); S.cdSp.say('Les candidats sont en place. Je lève le drapeau. C’est un mouchoir, mais passons.', 'smug');
   }
   S.cdEl = el;
@@ -167,8 +166,9 @@ function end(room) {
   const mp = me(); const win = mp && mp.rank === 1;
   const fastest = Math.min(...room.players.map((p) => p.best ?? Infinity));
   const sec = (ms) => ms == null || ms === Infinity ? '–' : (ms / 1000).toFixed(1).replace('.', ',') + ' s';
-  const head = !mp ? 'Partie terminée' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
-  const sub = win ? 'Le comité est (très) légèrement impressionné.' : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
+  const prog = mp ? mp.solved / Math.max(1, room.total) : 0, near = mp && mp.status === 'out' && mp.reason !== 'dq' && (prog >= 0.6 || mp.rank <= Math.ceil(room.players.length / 2));
+  const head = !mp ? 'Partie terminée' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : near ? 'Éliminé de justesse.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
+  const sub = win ? 'Le comité est (très) légèrement impressionné.' : near ? `Trois erreurs, mais ${mp.solved}/${room.total} vérifications : un dossier honorable. Gérard est presque ému.` : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
   const slot = (p, n, d) => p ? h('div', { class: `ol-pod p${n}`, style: `--c:${col(p)};--d:${d}ms` }, h('div', { class: 'av' }, ini(p)), h('div', { class: 'nm' }, p.nick), h('div', { class: 'sub' }, p.status === 'done' ? sec(p.finishMs) : `${p.solved}/${room.total}`), h('div', { class: 'blk' }, n)) : h('div', {});
   const pod = h('div', { class: 'ol-podium' }, slot(sorted[1], 2, 500), slot(sorted[0], 1, 900), slot(sorted[2], 3, 100));
   const tbl = h('table', { class: 'ol-tbl' }, h('thead', {}, h('tr', {}, ...['#', 'Joueur', 'Niveaux', 'Erreurs', 'Meilleur', 'Moyen'].map((x, i) => h('th', { class: i > 3 ? 'hm' : '' }, x)))),
@@ -184,14 +184,13 @@ function end(room) {
     return `${p.nick} : humain ${p.rank === 1 ? 'vainqueur' : 'homologué'}, rang ${p.rank}.`;
   };
   const verdicts = h('ul', { class: 'ol-verd' }, [...new Set([...sorted.slice(0, 3), mp].filter(Boolean))].sort((a, b) => a.rank - b.rank).map((p) => h('li', { class: p.id === S.me ? 'me' : '' }, verdictFor(p))));
-  const stampTxt = win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : 'ACCÈS REFUSÉ';
+  const stampTxt = win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : near ? 'PRESQUE HUMAIN' : 'ACCÈS REFUSÉ';
   mountScreen('end', h('div', { class: 'ol-wrap ol-end' },
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter')),
-    h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
+    h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' || near ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
     h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub)),
     gerard('end' + (win ? 'w' : beatenBy.length ? 'b' : mp?.status === 'done' ? 'p' : 'l'), win ? (beaten.length ? [`Vous avez battu ${beaten.length} script${beaten.length > 1 ? 's' : ''}. L’humanité marque un point. Je n’ai pas dit qu’elle le méritait.`, ...GL.win] : GL.win) : beatenBy.length ? [`Battu par ${beatenBy[0].nick} (un script). Un script, ${mp?.nick || 'vous'}. Je vais devoir l’écrire dans votre dossier.`, `${beatenBy[0].nick} vous devance. Il n’a ni mains, ni doutes. Vous avez les deux, ça se voit.`] : mp?.status === 'done' ? GL.place : GL.lose, win ? 'impressed' : 'smug'),
-    h('div', { class: 'ol-card' }, pod, verdicts),
-    h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl),
+    h('div', { class: 'ol-endgrid' }, h('div', { class: 'ol-card' }, pod, verdicts), h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl)),
     h('div', { class: 'ol-row2' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));
   if (win) confetti();
   sfx(win ? 'good' : 'bad');

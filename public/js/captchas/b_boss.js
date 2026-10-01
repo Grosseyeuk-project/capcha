@@ -22,6 +22,13 @@ css('boss', `
 .bb-pop b{font:800 14px var(--display)}.bb-pop .x{position:absolute;right:3px;top:0;border:0;background:none;font:700 11px var(--mono);cursor:pointer;color:#888;padding:2px 4px}
 .bb-pop .a{align-self:stretch;border:2px solid var(--ink);background:var(--green);font:800 13px var(--display);padding:7px;cursor:pointer;text-transform:uppercase}
 .bb-pop .a:hover{background:#7fe9d4}
+.bb-sync{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:0 18px}
+.bb-track{position:relative;height:50px;border:2px solid #fff;background:#10202a}
+.bb-zone{position:absolute;top:0;bottom:0;background:rgba(45,226,192,.55);border-left:2px solid #2de2c0;border-right:2px solid #2de2c0}
+.bb-zone.hit{background:#fff}
+.bb-beam{position:absolute;top:-6px;bottom:-6px;width:6px;margin-left:-3px;background:var(--yellow);box-shadow:0 0 12px var(--yellow)}
+.bb-tun{position:absolute;left:34%;width:32%;top:0;bottom:0;background:repeating-linear-gradient(45deg,#000 0 6px,#222 6px 12px);z-index:3;display:grid;place-items:center;font:700 10px var(--mono);color:#777;letter-spacing:.1em}
+.bb-stop{align-self:center;min-width:180px;min-height:54px;font-size:20px;background:var(--red);border-color:#fff;color:#fff;box-shadow:3px 3px 0 #fff}
 .bb-ret{position:absolute;left:0;top:0;width:28px;height:28px;border:3px solid var(--red);border-radius:50%;z-index:6;pointer-events:none;opacity:0;box-shadow:0 0 12px var(--red)}
 .bb-ret::before,.bb-ret::after{content:'';position:absolute;background:var(--red)}.bb-ret::before{left:11px;top:-8px;width:3px;height:36px}.bb-ret::after{top:11px;left:-8px;height:3px;width:36px}
 .bb-stage.inv .bb-ret{opacity:1}.bb-stage.inv{cursor:none;outline:3px dashed var(--red);outline-offset:-3px}.bb-stage.inv .bb-orb{cursor:none}
@@ -57,7 +64,7 @@ css('boss', `
 .bb-end{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:rgba(255,210,63,.93);color:var(--ink);font:800 20px/1.2 var(--display);padding:16px;animation:bk-flip .6s;z-index:9}
 `);
 const PADS = [{ s: '▲', c: '#ff6b6b' }, { s: '●', c: '#ffd23f' }, { s: '■', c: '#43d9a3' }, { s: '◆', c: '#5aa0ff' }];
-const PHRASES = ['je suis un humain tout a fait normal', 'jamais vu ce robot de ma vie', 'bonjour je suis une personne reelle'];
+const PHRASES = ['je suis humain', 'moi pas un robot', 'bonjour la terre', 'ceci est un test'];
 export default {
   id: 'b_boss', tier: 5, title: 'CAPCHA-ZILLA — le boss final', time: 20000,
   mount(host, api) {
@@ -77,15 +84,15 @@ export default {
     // ---- phase 1: l'œil ----
     function p1() {
       phase = 1; clear(); api.timer(22000); busy = false; let hits = 0, inv = false; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
-      setRule('Phase 1/3 — Réflexes', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿. Parfois, il inverse vos commandes.');
+      setRule('Phase 1/3 — Réflexes · 22 s', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿. Parfois, il inverse vos commandes.');
       stage.append(h('div', { class: 'bb-s' }, `Œil : 0/${NH}`));
       const ret = h('div', { class: 'bb-ret' }); stage.append(ret);
       const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
-      let orbs = []; const sp = (k) => (api.reducedMotion ? 0.6 : 1) * (170 + k * 100);
+      let orbs = []; const coarse = matchMedia('(pointer:coarse)').matches; const sp = (k) => (api.reducedMotion || coarse ? 0.62 : 1) * (170 + k * 100);
       const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
       function hit(real, el) {
         if (busy) return;
-        if (!real) { shake(root); busy = true; return api.fail('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Il rigole.'); }
+        if (!real) { shake(root); api.timer(18000); return api.fail('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Il rigole. (Les points marqués sont gardés.)', { retry: true }); }
         busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); stage.firstChild.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH));
         if (hits >= NH) { T(p2, 450); return; }
         api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); }, 400);
@@ -103,28 +110,28 @@ export default {
         orbs.forEach((o) => { const s = sp(hits); o.x += o.vx * s * dt; o.y += o.vy * s * dt; if (o.x < 0) { o.x = 0; o.vx = Math.abs(o.vx); } if (o.x > w - 54) { o.x = w - 54; o.vx = -Math.abs(o.vx); } if (o.y < 0) { o.y = 0; o.vy = Math.abs(o.vy); } if (o.y > hh - 54) { o.y = hh - 54; o.vy = -Math.abs(o.vy); } o.el.style.transform = `translate(${o.x}px,${o.y}px)`; }); };
       raf = requestAnimationFrame(loop);
     }
-    // ---- phase 2: mémoire inversée ----
+    // ---- phase 2: synchronisation (timing, tunnel) ----
     function p2() {
-      phase = 2; clear(); api.timer(30000); busy = true; face.dataset.m = '1';
-      const seq = []; for (let i = 0; i < 5; i++) { let v; do { v = api.int(0, 3); } while (i && v === seq[i - 1]); seq.push(v); }
-      setRule('Phase 2/3 — Mémoire', 'Observez 5 signaux, puis rejouez-les ', h('b', {}, 'à l’envers'), '. Les pads se mélangent en route (deux fois). (Touches 1-4 : chaque pad garde son numéro.)');
-      const status = h('div', { class: 'bb-s' }, 'Observez…'); stage.append(status);
-      const grid = h('div', { class: 'bb-pads' }); stage.append(grid);
-      const pads = PADS.map((p, i) => h('button', { class: 'bb-pad', type: 'button', disabled: true, 'aria-label': 'Pad ' + (i + 1), onclick: () => press(i) }, p.s, h('kbd', {}, i + 1)));
-      pads.forEach((p, i) => { p.style.setProperty('--c', PADS[i].c); grid.append(p); }); let pos = 0, acc = false;
-      const lit = (i, on) => pads[i].classList.toggle('lit', on);
-      let t = 600; const step = api.reducedMotion ? 750 : 560; seq.forEach((v) => { T(() => { lit(v, true); api.sfx('pop'); }, t); T(() => lit(v, false), t + step * 0.62); t += step; });
-      T(() => { acc = true; pads.forEach((p) => (p.disabled = false)); status.textContent = 'À l’envers !'; api.timer(17000); api.sfx('whoosh'); }, t + 80);
-      api.timer(t + 17000);
-      if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify([...seq].reverse());
-      function press(i) {
-        if (!acc) return; lit(i, true); T(() => lit(i, false), 130);
-        const want = seq[seq.length - 1 - pos];
-        if (i !== want) { acc = false; shake(root); return api.fail(pos === 0 && i === seq[0] ? 'Vous avez tapé le PREMIER signal. L’envers, c’est commencer par le dernier. Le boss pleure de rire.' : `Mauvais pad au rang ${pos + 1} (à l’envers). La mémoire à rebours, c’est un sport. Vous, vous êtes assis.`); }
-        api.sfx('click'); pos++; if (pos === 1) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((pp, k) => (pp.style.order = o[k])); api.sfx('whoosh'); api.say('Le boss mélange les pads en cours de route. Suivez les couleurs !', 'smug'); } if (pos === 3) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((pp, k) => (pp.style.order = o[k])); api.sfx('whoosh'); } if (pos >= 5) { acc = false; pads.forEach((p) => (p.disabled = true)); hp(33); T(p3, 700); }
+      phase = 2; clear(); api.timer(32000); busy = false; face.dataset.m = '1'; let hits = 0, ph = 0, last = performance.now(), zc = 0.5; const NH = 5, ZW = [0.26, 0.21, 0.17, 0.14, 0.12];
+      setRule('Phase 2/3 — Synchronisation · 32 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), '. ', NH + ' fois. La zone rétrécit, et un ', h('b', {}, 'tunnel'), ' finit par cacher le curseur.');
+      const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
+      const zone = h('div', { class: 'bb-zone' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
+      const track = h('div', { class: 'bb-track' }, zone, tun, beam);
+      const stop = h('button', { class: 'bk-btn bb-stop', type: 'button', onpointerdown: (e) => { e.preventDefault(); press(); } }, 'STOP');
+      stage.append(lab, h('div', { class: 'bb-sync' }, track, stop));
+      const place = () => { const w = ZW[Math.min(hits, NH - 1)]; zc = w / 2 + 0.05 + api.rng() * (0.9 - w); zone.style.left = ((zc - w / 2) * 100) + '%'; zone.style.width = (w * 100) + '%'; tun.style.display = hits >= 2 ? '' : 'none'; };
+      place(); const spd = () => (api.reducedMotion || matchMedia('(pointer:coarse)').matches ? 0.5 : 0.62) + hits * 0.1;
+      let pos = 0; const tri = (x) => { x %= 2; return x < 1 ? x : 2 - x; };
+      const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 2 && pos > 0.34 && pos < 0.66; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) { host.dataset.answer = JSON.stringify({ pos, zc, w: ZW[Math.min(hits, NH - 1)] }); } };
+      function press() {
+        if (busy) return; const w = ZW[Math.min(hits, NH - 1)], d = pos - zc;
+        if (Math.abs(d) <= w / 2) { hits++; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 2 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
+        else { shake(root); const m = Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = 0; lab.textContent = `Synchro : 0/${NH}`; place(); api.timer(30000); api.fail(m + ' Retour à zéro (la phase seulement).', { retry: true }); }
       }
-      const key = (e) => { const k = '1234'.indexOf(e.key); if (k > -1 && !e.repeat && !e.ctrlKey && !e.metaKey) press(k); };
-      window.addEventListener('keydown', key); const old = cleanup; cleanup = () => window.removeEventListener('keydown', key);
+      const key = (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(); } };
+      window.addEventListener('keydown', key);
+      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; ph += dt * spd() * 2; pos = tri(ph); upd(); };
+      raf = requestAnimationFrame(loop); cleanup = () => window.removeEventListener('keydown', key);
     }
     // ---- phase 3: phrase à l'envers puis erratum ----
     function p3() {
@@ -135,7 +142,7 @@ export default {
       stage.append(h('div', { class: 'bb-s' }, 'Dernier test : 1/2'), h('div', { class: 'bb-type' }, ph, echo, inp, sub));
       const fwdWords = phrase.split(' ').reverse().join(' ');
       const want = () => (step === 0 ? rev : fwdWords);
-      setRule('Phase 3/3 — Dactylographie', 'Retapez la phrase ', h('b', {}, 'À L’ENVERS'), ', lettre par lettre. Les cases vertes disent juste si votre frappe est bonne : pas la réponse.');
+      setRule('Phase 3/3 — Dactylographie · 55 s', 'Retapez la phrase ', h('b', {}, 'À L’ENVERS'), ', lettre par lettre. Les cases vertes disent juste si votre frappe est bonne : pas la réponse.');
       if (/cheat=1/.test(location.search)) host.dataset.answer = rev;
       function render() { const w = [...want()], v = [...inp.value]; echo.replaceChildren(...w.map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, i < v.length ? (v[i] === c ? '▪' : '✕') : '·'))); }
       render(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 50);
@@ -146,8 +153,8 @@ export default {
       const piv = setInterval(popup, 4800); T(popup, 2200); cleanup = () => clearInterval(piv);
       function ok() {
         if (busy) return; const v = inp.value, w = want();
-        if (v !== w) { shake(root); busy = true; const i = [...v].findIndex((c, k) => c !== [...w][k]); const msg = !v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? `Il manque la fin : « ${[...w].slice([...v].length).join('')} ». On ne rend pas copie blanche à moitié.` : `Caractère n° ${i + 1} : « ${[...v][i]} » au lieu de « ${[...w][i]} ». ${step ? 'Mots à l’endroit, ordre des mots inversé. Oui, c’est un piège.' : 'À l’envers, ça ne pardonne pas.'}`; return api.fail(msg); }
-        if (step === 0) { step = 1; inp.value = ''; api.sfx('whoosh'); hp(10); face.classList.remove('hurt'); stage.firstChild.textContent = 'Dernier test : 2/2'; ph.textContent = phrase; setRule('Erratum de dernière minute', 'En fait, gardez les mots ', h('b', {}, 'à l’endroit'), ' mais inversez leur ', h('b', {}, 'ORDRE'), ' (dernier mot d’abord). Désolé. Non : pas désolé.'); api.say('Les mots à l’endroit, dans l’ordre inverse. J’ai changé d’avis. J’en ai le droit, je suis le boss.', 'smug'); api.timer(30000); render(); inp.focus(); return; }
+        if (v !== w) { shake(root); const i = [...v].findIndex((c, k) => c !== [...w][k]); const msg = !v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? `Il manque la fin : « ${[...w].slice([...v].length).join('')} ». On ne rend pas copie blanche à moitié.` : `Caractère n° ${i + 1} : « ${[...v][i]} » au lieu de « ${[...w][i]} ». ${step ? 'Mots à l’endroit, ordre des mots inversé. Oui, c’est un piège.' : 'À l’envers, ça ne pardonne pas.'}`; api.timer(step ? 30000 : 40000); return api.fail(msg + ' (Votre progression dans le boss est conservée.)', { retry: true }); }
+        if (step === 0) { step = 1; inp.value = ''; api.sfx('whoosh'); hp(10); face.classList.remove('hurt'); stage.firstChild.textContent = 'Dernier test : 2/2'; ph.textContent = phrase; setRule('Erratum de dernière minute · 30 s', 'En fait, gardez les mots ', h('b', {}, 'à l’endroit'), ' mais inversez leur ', h('b', {}, 'ORDRE'), ' (dernier mot d’abord). Désolé. Non : pas désolé.'); api.say('Les mots à l’endroit, dans l’ordre inverse. J’ai changé d’avis. J’en ai le droit, je suis le boss.', 'smug'); api.timer(30000); render(); inp.focus(); return; }
         busy = true; hp(0); face.dataset.m = 'x'; api.sfx('stamp'); api.sfx('confetti'); stage.querySelectorAll('.bb-pop').forEach((x) => x.remove());
         stage.classList.remove('bb-sq'); void stage.offsetWidth; if (!api.reducedMotion) { stage.classList.add('bb-sq'); root.classList.add('bk-shake'); }
         const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌'];
