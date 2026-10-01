@@ -276,3 +276,55 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
 }
 
 body:has(> .ol-root) #app { visibility: hidden !important; }
+
+/* ---------- r3 : un seul point de focus, rien ne bouge ---------- */
+.game-root .bubble { height: 82px; min-height: 0; overflow: hidden; }
+.game-root .bubble-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 0; }
+.game-root .avatar { align-self: flex-start; }
+.ledger { margin: 0; }
+.ledger-bar { display: none; }
+.ledger-btn { position: relative; font: 800 1.15rem/1 var(--display); flex: none; }
+.ledger-btn .lb-count { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--yellow); color: var(--ink); font: 700 .65rem/18px var(--mono); font-style: normal; text-align: center; padding: 0 4px; }
+.ledger-btn.new { animation: lbnew .5s; }
+.ledger-btn[data-kind="bad"] { border-color: var(--red); color: var(--red); }
+.ledger-btn[data-kind="ok"] { border-color: var(--green); color: var(--green); }
+@media (min-width: 1280px) { .game-root:not(.online) .ledger-btn { display: none; } }
+.rule-toast { position: fixed; left: 50%; bottom: 14px; transform: translate(-50%, 30px); width: min(520px, calc(100vw - 24px)); z-index: 34; pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; }
+.rule-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.rule-toast .rule { margin: 0; animation: none; }
+@media (min-width: 1280px) { .game-root:not(.online) .rule-toast { display: none; } }
+.ch-n { font: 800 1.7rem/1 var(--display); color: var(--yellow); margin-right: 12px; letter-spacing: -.03em; }
+.card-head { justify-content: flex-start; }
+.card-head .ch-title { flex: 1; min-width: 0; }
+.stamp { top: 14px; left: auto; right: 14px; transform: rotate(6deg); padding: 2px 12px; border-width: 4px; background: rgba(246, 241, 228, .9); }
+.stamp b { font-size: clamp(1.1rem, 4vw, 1.5rem); }
+.stamp.show { animation: stampc .3s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes stampc { from { transform: rotate(6deg) scale(2.4); opacity: 0; } to { transform: rotate(6deg) scale(1); opacity: 1; } }
+.stamp i { display: none; }
+.online .hud-l { display: none; }
+.online .hud { grid-template-columns: 1fr auto; }
+@media (max-width: 640px) {
+  .game-root, .stage { gap: 8px; }
+  #app { padding-top: 8px; }
+  .brand { display: none; }
+  .lv-w { display: none; }
+  .hud { grid-template-columns: auto 1fr; padding: 6px 8px; gap: 6px 8px; }
+  .hud-c { grid-column: 1 / -1; grid-row: 2; }
+  .hud-r { grid-column: 2; justify-self: end; gap: 6px; }
+  .hud-l { grid-column: 1; }
+  .lvl-num { font-size: .95rem; font-weight: 700; }
+  .icon-btn { width: 36px; height: 36px; }
+  .strikes-lbl, .clock-lbl { display: none; }
+  .clock { min-width: 44px; } .clock-val { font-size: 1.25rem; }
+  .pips li { height: 6px; }
+  .online .hud { grid-template-columns: 1fr auto; } .online .hud-c { grid-column: 1; grid-row: 1; align-self: center; } .online .hud-r { grid-column: 2; grid-row: 1; }
+  .game-root .avatar { width: 48px; height: 48px; border-width: 2px; }
+  .game-root .bubble { height: 74px; padding: 7px 10px; border-radius: 4px 12px 12px 12px; }
+  .game-root .bubble::before { top: 14px; }
+  .game-root .nameplate { display: none; }
+  .game-root .bubble-text { -webkit-line-clamp: 3; font-size: .84rem; line-height: 1.28; }
+  .card-head { padding: 7px 12px; } .ch-n { font-size: 1.4rem; margin-right: 10px; } .ch-title { font-size: .72rem; }
+  .card { min-height: 0; }
+  .cap-host { padding: 12px; }
+}
+@media (max-width: 640px) { .rule-toast { bottom: 10px; } }

@@ -155,7 +155,7 @@ export function confetti(x, y, n = 60, colors = ['#ffd23f', '#2de2c0', '#ff4757'
 function tick() {
   cx.clearRect(0, 0, innerWidth, innerHeight);
   parts = parts.filter((p) => p.life > 0 && p.y < innerHeight + 30);
-  for (const p of parts) { p.vy += 0.38; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life -= 0.006; cx.save(); cx.globalAlpha = Math.min(1, p.life * 2); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.hh / 2, p.w, p.hh); cx.restore(); }
+  for (const p of parts) { p.vy += 0.38; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life -= 0.016; cx.save(); cx.globalAlpha = Math.min(1, p.life * 2); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.hh / 2, p.w, p.hh); cx.restore(); }
   raf = parts.length ? requestAnimationFrame(tick) : 0;
   if (!parts.length) cx.clearRect(0, 0, innerWidth, innerHeight);
 }

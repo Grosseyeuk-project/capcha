@@ -42,23 +42,21 @@ export class Game {
     const pips = h('ol', { class: 'pips', 'aria-hidden': 'true' });
     for (let i = 0; i < this.total; i++) pips.append(h('li', {}));
     this.pips = pips;
-    this.levelLabel = h('span', { class: 'lvl-num' }); this.levelTitle = h('span', { class: 'lvl-title' });
+    this.levelLabel = h('span', { class: 'lvl-num' }); this.levelN = h('span', { class: 'ch-n' }); this.levelTitle = h('span', { class: 'lvl-title' });
     this.strikeEls = [0, 1, 2].map(() => h('span', { class: 'strike' }, h('b', {}, '✕')));
     this.clock = h('span', { class: 'clock-val' }, '--'); this.clockBox = h('div', { class: 'clock', role: 'timer', 'aria-label': 'Temps restant' }, h('span', { class: 'clock-lbl', 'aria-hidden': 'true' }, 'Temps'), this.clock);
     this.hud = h('header', { class: 'hud' },
       h('div', { class: 'hud-l' }, h('span', { class: 'brand', 'aria-hidden': 'true' }, 'CAPCHA™'), h('div', { class: 'lvl' }, this.levelLabel)),
       h('div', { class: 'hud-c' }, pips),
-      h('div', { class: 'hud-r' }, h('div', { class: 'strikes', role: 'img', 'aria-label': 'Erreurs : 0 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Erreurs'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
+      h('div', { class: 'hud-r' }, this.lbBar = h('button', { class: 'icon-btn ledger-btn', type: 'button', 'aria-expanded': 'false', 'aria-label': 'Registre de conformité', title: 'Registre de conformité', onclick: () => this.toggleLedger() }, h('span', { 'aria-hidden': 'true' }, '§'), this.lbCount = h('i', { class: 'lb-count', 'aria-hidden': 'true' }, '0')), h('div', { class: 'strikes', role: 'img', 'aria-label': 'Erreurs : 0 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Erreurs'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
     this.strikesBox = this.hud.querySelector('.strikes');
     this.speaker = new Speaker();
     this.nOk = 0; this.nBad = 0;
-    this.lbText = h('span', { class: 'lb-text' }, 'Registre de conformité : aucune règle encore.');
-    this.lbCount = h('span', { class: 'lb-count', 'aria-hidden': 'true' });
-    this.lbBar = h('button', { class: 'ledger-bar', type: 'button', 'aria-expanded': 'false', onclick: () => this.toggleLedger() }, h('span', { class: 'lb-ic', 'aria-hidden': 'true' }, '§'), this.lbText, this.lbCount, h('span', { class: 'lb-more', 'aria-hidden': 'true' }, '▴'));
+    this.lbText = { textContent: '' };
     this.list = h('ol', { class: 'ledger-list', 'aria-label': 'Registre des vérifications' }, h('li', { class: 'rule-head', 'aria-hidden': 'true' }, 'Registre de conformité'));
-    this.ledger = h('section', { class: 'ledger' + (this.mode === 'solo' ? ' ledger-wide' : ''), 'aria-label': 'Registre de conformité' }, this.lbBar, this.list);
+    this.ledger = h('section', { class: 'ledger' + (this.mode === 'solo' ? ' ledger-wide' : ''), 'aria-label': 'Registre de conformité' }, this.list);
     this.stamp = h('div', { class: 'stamp', 'aria-hidden': 'true' });
-    this.cardHead = h('div', { class: 'card-head' }, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
+    this.cardHead = h('div', { class: 'card-head' }, this.levelN, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
     this.host = h('div', { class: 'cap-slot' });
     this.card = h('section', { class: 'card', 'aria-label': 'Vérification en cours' }, this.cardHead, this.host, this.stamp, h('div', { class: 'card-foot', 'aria-hidden': 'true' }, 'Protégé par CAPCHA™ · Vos erreurs sont consignées · ', h('u', {}, 'Confidentialité (non)')));
     this.bar = h('div', { class: 'bar' }, h('i', {}));
@@ -66,7 +64,9 @@ export class Game {
     this.flashEl = h('div', { class: 'flash', 'aria-hidden': 'true' });
     this.banner = h('div', { class: 'banner', 'aria-hidden': 'true' });
     this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card, this.bar);
-    this.root.append(this.stage, this.ledger, this.flashEl);
+    this.toastEl = h('div', { class: 'rule-toast', 'aria-hidden': 'true' });
+    this.root.append(this.stage, this.ledger, this.flashEl, this.toastEl);
+    if (this.mode !== 'solo') this.root.classList.add('online');
     this.card.append(this.banner);
   }
   speak(t, mood = 'neutral', force = false) { this.sayTok++; this.speaker.say(t, mood, { force }); }
@@ -79,7 +79,7 @@ export class Game {
   }
   hudRefresh() {
     const def = CAPTCHAS[this.level - 1];
-    this.levelLabel.textContent = `Vérification ${pad(Math.min(this.level, this.total))}/${pad(this.total)}`;
+    this.levelLabel.replaceChildren(h('span', { class: 'lv-w' }, 'Vérification '), `${pad(Math.min(this.level, this.total))}/${pad(this.total)}`); this.levelN.textContent = pad(Math.min(this.level, this.total));
     if (def) { this.levelTitle.textContent = def.title; this.card.querySelector('.threat').textContent = '●'.repeat(def.tier || 1) + '○'.repeat(Math.max(0, 5 - (def.tier || 1))); this.card.querySelector('.threat').title = 'Niveau de menace'; }
     [...this.pips.children].forEach((li, i) => { li.className = i < this.level - 1 ? 'done' : i === this.level - 1 ? 'now' : ''; });
     this.strikeEls.forEach((el, i) => el.classList.toggle('on', i < this.strikes));
@@ -176,10 +176,10 @@ export class Game {
     const st = this.stats; st.solves++; st.sumMs += ms; st.streak++; st.maxStreak = Math.max(st.maxStreak, st.streak); if (!st.fastest || ms < st.fastest) st.fastest = ms;
     sfx('good'); sfx('stamp'); bg.pulse('good');
     this.card.classList.add('solved'); this.stamp.className = 'stamp ok show'; this.stamp.innerHTML = '';
-    this.stamp.append(h('b', {}, 'VALIDÉ'), h('i', {}, fmtSec(ms)));
+    this.stamp.append(h('b', {}, 'VALIDÉ'));
     this.flash('good');
     const r = this.card.getBoundingClientRect(); const fast = ms < c.limit * 0.3;
-    sfx('confetti'); confetti(r.left + r.width / 2, r.top + r.height / 3, fast ? 110 : 55);
+    sfx('confetti'); confetti(r.left, r.top + 40, fast ? 30 : 16); confetti(r.right, r.top + 40, fast ? 30 : 16);
     this.root.style.setProperty('--pressure', '0'); this.root.dataset.pressure = 'low'; setTension(this.susp * 0.5); bg.set({ pressure: 0 });
     this.rule('ok', `Règle ${pad(this.level)} respectée`, c.def.title, fmtSec(ms));
     this.onEvent({ type: 'solve', level: this.level, ms });
@@ -192,12 +192,12 @@ export class Game {
   toggleLedger(force) { const o = force ?? !this.ledger.classList.contains('open'); this.ledger.classList.toggle('open', o); this.lbBar.setAttribute('aria-expanded', String(o)); }
   rule(kind, title, text, meta) {
     kind === 'ok' ? this.nOk++ : this.nBad++;
-    this.lbText.textContent = (kind === 'ok' ? '✓ ' : '✕ ') + (kind === 'ok' ? `${text} — validée en ${meta}` : text);
-    this.lbBar.dataset.kind = kind; this.lbCount.textContent = `✓${this.nOk} ✕${this.nBad}`;
-    this.lbBar.classList.remove('new'); void this.lbBar.offsetWidth; this.lbBar.classList.add('new');
+    this.lbCount.textContent = String(this.nOk + this.nBad);
+    this.lbBar.dataset.kind = kind; this.lbBar.classList.remove('new'); void this.lbBar.offsetWidth; this.lbBar.classList.add('new');
     const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
       h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
     this.list.firstChild.after(li);
+    const t = li.cloneNode(true); this.toastEl.replaceChildren(t); this.toastEl.className = 'rule-toast show'; clearTimeout(this.toastT); this.toastT = setTimeout(() => { this.toastEl.className = 'rule-toast'; }, 3400);
     const cap = this.mode === 'solo' ? 9 : 3;
     while (this.list.childElementCount > cap) this.list.lastChild.remove();
     return li;
@@ -211,10 +211,10 @@ export class Game {
     const idx = this.strikes - 1; this.strikeEls[idx]?.classList.add('hit');
     this.stage.classList.remove('shake'); void this.stage.offsetWidth; if (!RM()) this.stage.classList.add('shake');
     this.card.classList.add('struck');
-    this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'), h('i', {}, `erreur ${this.strikes}/3`));
+    this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'));
     const over = this.strikes >= 3;
     const why = timeout ? 'Le chronomètre a expiré avant votre réponse.' : (msg && msg !== 'cheat' ? msg : 'Réponse incorrecte : elle ne respecte pas la règle affichée.');
-    this.rule('bad', `Règle ${pad(this.level)} enfreinte`, why, `erreur ${this.strikes}/3`);
+    this.rule('bad', `Règle ${pad(this.level)} enfreinte · ${this.strikes}/3`, why);
     if (!over) {
       const key = timeout ? 'timeout' : this.strikes === 1 ? 'strike1' : 'strike2';
       this.speak(say(key, Math.random, this.ctx()), timeout ? moodFor('timeout', this.ctx()) : this.strikes >= 2 ? 'angry' : 'smug', true);
@@ -243,7 +243,7 @@ export class Game {
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
     const sp = new Speaker(); const key = win ? 'win' : 'over';
     const el = endScreen({ kind, stats: st, rank, total: this.total, speaker: sp, onReplay: this.onReplay, onMenu: this.onMenu });
-    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say(say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true }); }, win ? 500 : 100);
+    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say(say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true, instant: true }); }, win ? 500 : 100);
     this.endEl = el; this.endSp = sp;
     this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } });
   }
