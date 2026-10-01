@@ -22,7 +22,7 @@ function toast(text, kind = '', ms = 3600) {
 const me = () => S.room?.players.find((p) => p.id === S.me);
 const validNick = (n) => n.trim().length >= 2;
 
-function mountScreen(name, node) { S.view = name; S.main.replaceChildren(node); S.tick = null; S.root.scrollTo?.(0, 0); }
+function mountScreen(name, node) { S.view = name; S.main.replaceChildren(node); S.tick = S.pendingTick || null; S.pendingTick = null; S.root.scrollTo?.(0, 0); }
 function topbar(extra) {
   S.liveEl = h('span', { class: 'ol-live' + (S.up ? '' : ' off') }, h('i'), h('span', {}, ''));
   paintOnline();
@@ -84,8 +84,8 @@ function lobby(room) {
     const m = h('i'), t = h('span', {});
     kids.push(h('div', { class: 'ol-card' }, h('h3', {}, 'Recherche d’adversaires'), t, h('div', { class: 'ol-meter' }, m)));
     const total = S.fillTotal || (S.fillTotal = Math.max(1000, room.fillAt - S.net.now()));
-    S.tick = () => { const left = Math.max(0, room.fillAt - S.net.now()); t.textContent = left > 0 ? `Les bots arrivent dans ${Math.ceil(left / 1000)} s — ou lancez dès que tout le monde est prêt.` : 'Recrutement de figurants…'; m.style.width = (100 - left / total * 100) + '%'; };
-    S.tick();
+    S.pendingTick = () => { const left = Math.max(0, room.fillAt - S.net.now()); t.textContent = left > 0 ? `Les bots arrivent dans ${Math.ceil(left / 1000)} s — ou lancez dès que tout le monde est prêt.` : 'Recrutement de figurants…'; m.style.width = (100 - left / total * 100) + '%'; };
+    S.pendingTick();
   }
   const act = h('div', { class: 'ol-row2' }, ready);
   if (!room.quick && isHost) {
@@ -182,7 +182,7 @@ function onRoom(m) {
   const e = m.evt;
   if (e) {
     if (S.view === 'lobby' || S.view === 'menu') {
-      if (['join', 'leave', 'host', 'back', 'emote', 'rematch'].includes(e.k)) toast(e.text, e.k === 'leave' ? 'warn' : '');
+      if (e.id !== S.me && ['join', 'leave', 'host', 'back', 'emote', 'rematch'].includes(e.k)) toast(e.text, e.k === 'leave' ? 'warn' : '');
     }
     if (S.view === 'race' || S.view === 'lobby') {
       if (e.k === 'emote' && S.view === 'race') toast(`${e.nick} : ${e.text}`);

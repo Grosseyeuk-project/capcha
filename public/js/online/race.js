@@ -191,7 +191,8 @@ export class RaceView {
       this.rankEl.classList.remove('up', 'down', 'pop'); void this.rankEl.offsetWidth;
       this.rankEl.classList.add(me.rank < prev ? 'up' : 'down', 'pop');
       const sorted = [...room.players].sort((a, b) => a.rank - b.rank);
-      if (me.status === 'racing') {
+      if (me.status === 'racing' && performance.now() - (this.lastOvt || 0) > 3000) {
+        this.lastOvt = performance.now();
         if (me.rank < prev) { const o = sorted[me.rank]; if (o) { this.toast(`Vous doublez ${o.nick} !`, 'good'); this.sfx('good'); } }
         else { const o = sorted[me.rank - 2]; if (o) { this.toast(`${o.nick} vous double.`, 'bad'); this.sfx('pop'); } }
       }
