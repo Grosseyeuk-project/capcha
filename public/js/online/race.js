@@ -217,7 +217,9 @@ export class RaceView {
     { const sorted = [...room.players].sort((a, b) => a.rank - b.rank), lead = sorted[0], sc = (p) => this.eff(p).solved;
       const d = me.rank === 1 ? sc(me) - (sorted[1] ? sc(sorted[1]) : 0) : sc(lead) - sc(me);
       const pl = (n) => `${n} niveau${n > 1 ? 'x' : ''}`;
-      if (!this.quipUntil) this.gapEl.replaceChildren(h('b', {}, `Rang #${me.rank}/${room.players.length}`), me.status !== 'racing' ? ' · course terminée pour vous' : me.rank === 1 ? ` · vous menez${d > 0 ? ' de ' + pl(d) : ' (égalité)'}` : ` · à ${d > 0 ? pl(d) : 'un souffle'} de ${lead.nick}${lead.bot ? ' (un script)' : ''}`); }
+      if (!this.quipUntil) { const pick = [...new Set([...sorted.slice(0, 3), me])].sort((x, y) => x.rank - y.rank);
+        this.gapEl.replaceChildren(h('b', {}, `#${me.rank}/${room.players.length}`), ...pick.map((p) => { const pct = p.status === 'done' ? 100 : Math.min(100, this.eff(p).solved / room.total * 100); return h('span', { class: 'ol-chip2' + (p.id === me.id ? ' me' : '') + (p.status === 'out' ? ' out' : ''), style: `--c:${col(p)}`, title: p.nick }, h('i', {}, ini(p)), h('s', {}, h('u', { style: `width:${pct}%` }))); }),
+          h('span', { class: 'sr-only' }, me.status !== 'racing' ? 'Course terminée pour vous' : me.rank === 1 ? `Vous menez de ${d > 0 ? pl(d) : '0 niveau'}` : `À ${d > 0 ? pl(d) : 'un souffle'} de ${lead.nick}`)); } }
     this.prevRank = me.rank;
   }
 }

@@ -123,7 +123,7 @@ function lobby(room) {
 }
 function emotes(room) { return h('div', { class: 'ol-emotes' }, (room.emotes || []).map((t, i) => h('button', { onclick: () => S.net.send({ t: 'emote', e: i }) }, t))); }
 
-const CD = { 3: ['Trois. Respirez. Ou pas, ça m’est égal.', 'worried'], 2: ['Deux. Je note ceux qui transpirent déjà.', 'smug'], 1: ['Un. Que le moins mauvais humain gagne.', 'angry'] };
+const CD = { 0: ['Partez !', 'impressed'], 3: ['Trois. Respirez. Ou pas, ça m’est égal.', 'worried'], 2: ['Deux. Je note ceux qui transpirent déjà.', 'smug'], 1: ['Un. Que le moins mauvais humain gagne.', 'angry'] };
 function countdown(room) {
   let el = S.root.querySelector('.ol-count');
   if (!el) {
@@ -133,17 +133,17 @@ function countdown(room) {
   }
   S.cdEl = el;
   S.cdTick = () => {
-    const left = room.startAt - S.net.now(); const n = Math.max(1, Math.ceil(left / 1000));
+    const left = room.startAt - S.net.now(); const total = Math.max(1200, S.cdTotal || (S.cdTotal = Math.max(1200, left))); const q = total / 4; const n = left > q * 3 ? 3 : left > q * 2 ? 2 : left > q ? 1 : 0;
     const b = el.querySelector('b');
     if (S.lastCd !== n) {
-      S.lastCd = n; b.textContent = n > 3 ? '…' : n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+      S.lastCd = n; b.textContent = n || 'GO'; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
       el.className = 'ol-count n' + n; sfx('tick'); sfx('stamp'); bg.pulse('level'); bg.set({ suspicion: 0.2 + (4 - Math.min(3, n)) * 0.2 });
       if (CD[n]) S.cdSp.say(CD[n][0], CD[n][1], { force: true, instant: true });
     }
   };
   S.cdTick();
 }
-function dropCountdown() { if (S.main) S.main.inert = false; S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
+function dropCountdown() { S.cdTotal = 0; if (S.main) S.main.inert = false; S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
 
 // ---------------- race
 function race(room) {
@@ -169,10 +169,11 @@ function end(room) {
   const fastest = Math.min(...room.players.map((p) => p.best ?? Infinity));
   const sec = (ms) => ms == null || ms === Infinity ? '–' : (ms / 1000).toFixed(1).replace('.', ',') + ' s';
   const prog = mp ? mp.solved / Math.max(1, room.total) : 0, near = mp && mp.status === 'out' && mp.reason !== 'dq' && (prog >= 0.6 || mp.rank <= Math.ceil(room.players.length / 2));
-  const head = !mp ? 'Partie terminée' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : near ? 'Éliminé de justesse.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
-  const sub = win ? 'Le comité est (très) légèrement impressionné.' : near ? `Trois erreurs, mais ${mp.solved}/${room.total} vérifications : un dossier honorable. Gérard est presque ému.` : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
+  const byAttr = win && mp.status !== 'done';
+  const head = !mp ? 'Partie terminée' : byAttr ? 'Dernier debout.' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : near ? 'Éliminé de justesse.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
+  const sub = byAttr ? `Humain par forfait : les autres ont craqué, vous aviez ${mp.solved}/${room.total}. Le comité accepte la victoire, pas le mérite.` : win ? 'Le comité est (très) légèrement impressionné.' : near ? `Trois erreurs, mais ${mp.solved}/${room.total} vérifications : un dossier honorable. Gérard est presque ému.` : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
   const slot = (p, n, d) => p ? h('div', { class: `ol-pod p${n}`, style: `--c:${col(p)};--d:${d}ms` }, h('div', { class: 'av' }, ini(p)), h('div', { class: 'nm' }, p.nick), h('div', { class: 'sub' }, p.status === 'done' ? sec(p.finishMs) : `${p.solved}/${room.total}`), h('div', { class: 'blk' }, n)) : h('div', {});
-  const pod = h('div', { class: 'ol-podium' }, slot(sorted[1], 2, 500), slot(sorted[0], 1, 900), slot(sorted[2], 3, 100));
+  const pod = h('div', { class: 'ol-podium' }, ...[[1, 2, 500], [0, 1, 900], [2, 3, 100]].filter(([i]) => sorted[i]).map(([i, n, d]) => slot(sorted[i], n, d)));
   const tbl = h('table', { class: 'ol-tbl' }, h('thead', {}, h('tr', {}, ...['#', 'Joueur', 'Niveaux', 'Erreurs', 'Meilleur', 'Moyen'].map((x, i) => h('th', { class: i > 3 ? 'hm' : '' }, x)))),
     h('tbody', {}, sorted.map((p) => h('tr', { class: p.id === S.me ? 'me' : '' },
       h('td', {}, p.rank), h('td', {}, p.nick, p.best != null && p.best === fastest ? ' ⚡' : '', h('span', { class: 'ol-tag ' + (p.bot ? 'bot' : p.status === 'out' ? 'no' : 'ok') }, p.bot ? 'script' : p.status === 'out' ? 'robot' : 'humain')), h('td', {}, p.status === 'done' ? '✓ ' + p.solved + '/' + room.total : `${p.solved}/${room.total}${p.reason === 'dq' ? ' DQ' : ''}`), h('td', {}, p.strikes + '/3'),
@@ -182,11 +183,13 @@ function end(room) {
   const verdictFor = (p) => {
     const mine = p.id === S.me;
     if (p.bot) return p.rank === 1 ? `${p.nick} gagne. Un script de 40 lignes. Pas de stress, pas de mère.` : `${p.nick} : script, rang ${p.rank}. ${p.status === 'out' ? 'Même lui a craqué.' : 'Il n’a pas transpiré.'}`;
-    if (mine) return p.rank === 1 ? `Vous : premier${beaten.length ? `, devant ${beaten.length} script${beaten.length > 1 ? 's' : ''}. Ils vous détestent déjà.` : '.'}` : beatenBy.length ? `Vous : battu par ${beatenBy[0].nick} (un script). Je ne dis rien. Je note.` : `Vous : ${p.rank}e, derrière des humains. C’est moins humiliant.`;
+    if (mine) return p.rank === 1 && p.status !== 'done' ? `Vous : dernier debout (${p.solved}/${room.total}). Humain par forfait : la meilleure des victoires, la plus discrète.` : p.rank === 1 ? `Vous : premier${beaten.length ? `, devant ${beaten.length} script${beaten.length > 1 ? 's' : ''}. Ils vous détestent déjà.` : '.'}` : beatenBy.length ? `Vous : battu par ${beatenBy[0].nick} (un script). Je ne dis rien. Je note.` : `Vous : ${p.rank}e, derrière des humains. C’est moins humiliant.`;
+    if (p.status === 'out') return `${p.nick} : éliminé après ${p.solved}/${room.total} (trois erreurs). Rang ${p.rank}, sans mention.`;
+    if (p.status !== 'done') return p.rank === 1 ? `${p.nick} : dernier debout, humain par forfait.` : `${p.nick} : toujours en course quand le portique a fermé. Rang ${p.rank}.`;
     return `${p.nick} : humain ${p.rank === 1 ? 'vainqueur' : 'homologué'}, rang ${p.rank}.`;
   };
   const verdicts = h('ul', { class: 'ol-verd' }, [...new Set([...sorted.slice(0, 3), mp].filter(Boolean))].sort((a, b) => a.rank - b.rank).map((p) => h('li', { class: p.id === S.me ? 'me' : '' }, verdictFor(p))));
-  const stampTxt = win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : near ? 'PRESQUE HUMAIN' : 'ACCÈS REFUSÉ';
+  const stampTxt = byAttr ? 'DERNIER DEBOUT' : win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : near ? 'PRESQUE HUMAIN' : 'ACCÈS REFUSÉ';
   mountScreen('end', h('div', { class: 'ol-wrap ol-end' },
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter')),
     h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' || near ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
@@ -263,7 +266,7 @@ function teardown() {
 
 function open(opts = {}) {
   if (S.root) return;
-  injectCss(); bg.eyeTo({ left: innerWidth - 120, top: 84, width: 200, height: 96 }); S.opts = opts; S.up = false; S.online = null;
+  injectCss(); bg.eyeTo(innerWidth < 821 ? { left: innerWidth / 2 - 90, top: innerHeight - 96, width: 180, height: 64 } : { left: innerWidth - 120, top: 84, width: 200, height: 96 }); S.opts = opts; S.up = false; S.online = null;
   S.root = h('div', { class: 'ol-root', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Course en ligne' });
   S.main = h('div', {}); S.toasts = h('div', { class: 'ol-toasts', 'aria-live': 'polite' });
   S.root.append(S.main, S.toasts); document.body.append(S.root);

@@ -328,6 +328,23 @@ const CSS = `
 .ol-count b{min-height:1em}
 
 .ol-feed{max-height:none!important;overflow:visible!important}.ol-feed p{white-space:normal;overflow-wrap:anywhere}
+
+/* r11 */
+.ol-gap{display:flex;align-items:center;gap:10px}
+.ol-gap.quip{display:block}
+.ol-chip2{display:inline-flex;align-items:center;gap:5px;flex:1;min-width:0}
+.ol-chip2 i{font:800 11px var(--disp);font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--c);color:var(--ink);display:grid;place-items:center;border:2px solid var(--ink);flex:none}
+.ol-chip2 s{flex:1;height:7px;border-radius:5px;background:rgba(246,241,228,.18);overflow:hidden;text-decoration:none;display:block}
+.ol-chip2 u{display:block;height:100%;background:var(--c);text-decoration:none;transition:width .5s}
+.ol-chip2.me i{outline:2px solid var(--yel)}.ol-chip2.out{opacity:.45}
+.ol-count.n0 b{color:#2de2c0;text-shadow:0 8px 0 #000,0 0 90px rgba(45,226,192,.8)}
+.ol-podium{display:flex;justify-content:center;align-items:flex-end;gap:14px}
+.ol-pod{flex:0 1 170px;min-width:0}
+.ol-end .ol-actions{background:rgba(4,7,10,.97);border-top:2px solid rgba(246,241,228,.18)}
+@media (min-width:1000px){.ol-end .ol-wrap{display:flex}.ol-end .ol-top{order:-3}.ol-end .ol-actions{order:-2;position:static;background:none;border:0;padding:0}}
+@media (max-width:820px){.ol-gap .ol-chip2 s{height:6px}}
+
+@media (min-width:821px){.ol-game{max-width:760px}.online .card{max-height:calc(100dvh - 210px);min-height:calc(100dvh - 210px)}}
 `;
 let done = false;
 export function injectCss() {

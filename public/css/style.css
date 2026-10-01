@@ -337,7 +337,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .game-root .card { min-height: 0; }
 .online .card { min-height: 200px; }
 .cap-slot { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.online .card { max-height: calc(100dvh - 270px); }
+.online .card { max-height: calc(100dvh - 210px); }
 .btn.ghost { background: rgba(7, 11, 15, .82); }
 .ticket { line-height: 1.55; }
 @media (max-width: 640px) {
@@ -545,3 +545,13 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   #app { padding-top: 6px; padding-bottom: 8px; }
   .game-root, .stage { gap: 8px; }
 }
+
+.game-root.cine .stage, .game-root.cine .ledger { opacity: 0; transform: scale(.97); pointer-events: none; transition: opacity .25s, transform .25s; }
+.tier-beat { position: fixed; inset: 0; z-index: 27; display: grid; place-content: center; justify-items: center; gap: 8px; text-align: center; pointer-events: none; }
+.tier-beat i { font: 600 clamp(1rem, 4vw, 1.5rem)/1 var(--mono); font-style: normal; letter-spacing: .5em; text-transform: uppercase; color: var(--yellow); text-shadow: 0 2px 12px #000; animation: slamfade .4s both; }
+.tier-beat b { font: 800 clamp(5rem, 24vw, 14rem)/.9 var(--display); letter-spacing: -.04em; color: var(--paper); text-shadow: 0 .05em 0 #000, 0 0 60px var(--tint, #2de2c0); animation: beatin .55s cubic-bezier(.2, 1.5, .4, 1) both; }
+.tier-beat span { font: 600 clamp(1rem, 4vw, 1.6rem)/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #fff; background: rgba(7, 11, 15, .7); padding: 8px 16px; border: 2px solid var(--red); border-radius: 6px; animation: slamfade .5s .25s both; }
+@keyframes beatin { from { transform: scale(3.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.flash.win { background: radial-gradient(circle at 50% 45%, rgba(255, 245, 200, .85), rgba(255, 220, 120, 0) 70%); animation: fl .8s ease-out; }
+.bark { position: absolute; left: 8px; right: 8px; top: 8px; z-index: 7; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; padding: 6px 10px; font: 500 .8rem/1.25 var(--body); box-shadow: 0 4px 0 #000; pointer-events: none; animation: slamfade .25s both; }
+.bark.out { opacity: 0; transition: opacity .3s; }

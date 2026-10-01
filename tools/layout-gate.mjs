@@ -1,4 +1,4 @@
-// Layout gate (touch emulation). node tools/layout-gate.mjs [--port N] [--only id] [--skip-cls] [--skip-online] [--skip-drag]
+// Layout gate (touch emulation). node tools/layout-gate.mjs [--quick (390x800, geometry+fonts+targets only, ~2 min)] [--port N] [--only id1,id2] [--skip-cls] [--skip-online] [--skip-drag]
 // Starts its own server on a free port unless --port / PORT env is given. Exit code != 0 on any failure.
 // For EVERY captcha at 360x640 / 390x800 / 1280x800 (hasTouch), without scrolling the page:
 //   - no zoom anywhere in the host, no page scroll, no horizontal overflow
@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 const a = process.argv.slice(2);
 const opt = (k, d) => { const i = a.indexOf('--' + k); return i > -1 ? a[i + 1] : d; };
-const only = opt('only'), skipCls = a.includes('--skip-cls'), skipOnline = a.includes('--skip-online'), skipDrag = a.includes('--skip-drag');
+const onlyList = opt('only') ? opt('only').split(',') : null, quick = a.includes('--quick'), skipCls = quick || a.includes('--skip-cls'), skipOnline = quick || a.includes('--skip-online'), skipDrag = quick || a.includes('--skip-drag');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let port = +(opt('port', process.env.PORT || 0)), srv = null;
 if (!port) {
@@ -20,7 +20,7 @@ if (!port) {
   for (let i = 0; i < 40; i++) { try { if ((await fetch(`http://localhost:${port}/healthz`)).ok) break; } catch { /* */ } await sleep(150); }
 }
 const base = `http://localhost:${port}/`;
-const VPS = [[360, 640], [390, 800], [1280, 800]];
+const VPS = quick ? [[390, 800]] : [[360, 640], [390, 800], [1280, 800]];
 // click-to-solve captchas: no final button, so they must fit without internal scrolling.
 // Layout bugs owned by the captcha builders, reported but not blocking the shell gate.
 const KNOWN = { a_bins: 'card pile overflows its own container, partly under the footer (captchas-a)' };
@@ -50,7 +50,7 @@ const fails = []; const bad = (m) => { fails.push(m); console.log('  FAIL', m); 
 
 const p0 = await page(1280, 800); await go(p0, base + '?cheat=1'); await p0.waitForTimeout(1500);
 const ids = await p0.evaluate(async () => (await import('/js/captchas/index.js')).CAPTCHAS.map((c) => c.id)); await p0.close();
-const list = only ? ids.filter((i) => i === only) : ids;
+const list = onlyList ? ids.filter((i) => onlyList.includes(i)) : ids;
 console.log('captchas:', list.join(' '), ' port', port);
 
 const measure = () => {
@@ -168,7 +168,7 @@ for (const [w, h] of VPS) {
       console.log(`   drag ${msg} ${ok ? 'ok' : 'DRIFT'}`); if (!ok) bad(`${tag} drag accuracy: ${msg}`);
     }
   }
-  { // narrator bubble must never clip the longest lines; solo end screen must keep its actions reachable + contrasted
+  if (!quick) { // narrator bubble must never clip the longest lines; solo end screen must keep its actions reachable + contrasted
     await go(p, `${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
     const longest = await p.evaluate(async () => { const m = await import('/js/narrator.js'); const all = []; for (const v of Object.values(m.LINES)) (Array.isArray(v) ? v : Object.values(v).flat()).forEach((x) => all.push(x)); return all.sort((x, y) => y.length - x.length).slice(0, 8); });
     let worst = 0; for (const t of longest) {
@@ -193,7 +193,7 @@ for (const [w, h] of VPS) {
   await p.context().close();
 }
 
-{
+if (!quick) {
   console.log('\n== ledger sheet');
   const p = await page(390, 800); await go(p, `${base}?cap=a_checkbox&cheat=1`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
   const open = () => p.evaluate(() => document.querySelector('.ledger').classList.contains('open'));
@@ -204,6 +204,20 @@ for (const [w, h] of VPS) {
   await p.context().close();
 }
 
+if (!quick) {
+  console.log('\n== cinematics (390x800)');
+  const p = await page(390, 800); await go(p, `${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
+  await p.evaluate(() => { const g = __cap.game; g.lastTier = 1; g.level = 10; g.beginLevel(); });
+  await p.waitForSelector('.tier-beat', { timeout: 10000 }).catch(() => bad('tier change: .tier-beat overlay never appeared')); await p.waitForTimeout(600);
+  const so = await p.evaluate(() => +getComputedStyle(document.querySelector('.stage')).opacity); if (so > 0.1) bad(`tier change: card/stage still visible during the 3D beat (opacity ${so})`);
+  await p.mouse.click(5, 5); await p.waitForSelector('.cap-host', { timeout: 8000 }).catch(() => bad('tier change: skip did not resume the level')); 
+  { const gone = await p.evaluate(() => !document.querySelector('.tier-beat')); if (!gone) bad('tier change: overlay still present after skip'); }
+  await p.evaluate(() => __cap.win()); await p.waitForSelector('.slam', { timeout: 20000 }).catch(() => bad('win: stamp never slammed'));
+  const sw = await p.evaluate(() => +getComputedStyle(document.querySelector('.stage')).opacity); if (sw > 0.1) bad(`win: card still visible during the gate beat (opacity ${sw})`);
+  await p.mouse.click(5, 5); await p.waitForSelector('.screen.end', { timeout: 10000 }).catch(() => bad('win: skip did not reveal the stat card'));
+  if (p.errs.length) bad(`cinematics console errors: ${[...new Set(p.errs)].slice(0, 3).join(' / ')}`); else console.log('  tier beat + win beat: card hidden, skip works, no console errors');
+  await p.context().close();
+}
 if (!skipCls) {
   console.log('\n== CLS (mount + strike + solve)');
   for (const [w, h] of VPS) for (const id of ['a_checkbox', 'a_grid']) {
@@ -230,6 +244,8 @@ if (!skipOnline) {
   await A.click('text=Créer une salle'); await A.waitForSelector('.ol-code b'); const code = await A.textContent('.ol-code b');
   await B.fill('input[aria-label="Code de salle"]', code); await B.click('text=Rejoindre'); await B.waitForSelector('.ol-code b');
   await A.click('text=+ Ajouter un bot'); await B.click('text=Je suis prêt'); await sleep(600); await A.click('text=Lancer la partie');
+  { const seen = []; for (let i = 0; i < 60; i++) { const t = await B.evaluate(() => { const b = document.querySelector('.ol-count b'); return b ? b.textContent : document.querySelector('.ol-race') ? 'RACE' : null; }); if (t === 'RACE') break; if (t !== null) seen.push(t); await sleep(120); }
+    console.log(`  countdown numerals seen: ${[...new Set(seen)].join(' ')}`); if (seen.some((t) => !/^(3|2|1|GO)$/.test(t))) bad(`online countdown shows a non-numeral/blank: ${[...new Set(seen)].map((x) => JSON.stringify(x)).join(',')}`); if (!seen.includes('3')) bad('online countdown never showed 3'); }
   await B.waitForSelector('.ol-race', { timeout: 15000 }); await B.evaluate(() => { window.__cls = 0; window.__clsSrc = []; }); /* CLS counted from race start */ await B.waitForSelector('.cap-host', { timeout: 15000 }); await sleep(2500);
   const solve = (p) => p.evaluate(() => window.CAPCHA_ONLINE.game?.cur?.api.solve());
   const fail = (p) => p.evaluate(() => window.CAPCHA_ONLINE.game?.cur?.api.fail('La case cochée était la mauvaise, selon le règlement.'));

@@ -90,7 +90,13 @@ export class Game {
     if (this.mode !== 'solo') this.root.classList.add('online');
     this.card.append(this.banner);
   }
-  speak(t, mood = 'neutral', force = false) { this.sayTok++; this.speaker.say(t, mood, { force }); }
+  speak(t, mood = 'neutral', force = false) {
+    this.sayTok++; this.speaker.say(t, mood, { force });
+    // téléphone court : la bulle est réduite, on affiche brièvement la réplique en entier au-dessus de la carte
+    if (t && t.length > 60 && matchMedia('(max-width: 640px) and (max-height: 720px)').matches && this.card?.isConnected) {
+      this.bark?.remove(); const b = this.bark = h('div', { class: 'bark', 'aria-hidden': 'true' }, t); this.card.append(b); clearTimeout(this.barkT); this.barkT = setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 300); }, 2600);
+    }
+  }
   narrate(key, extra) { const t = say(key, Math.random, { ...this.ctx(), ...extra }); this.speak(t, moodFor(key, this.ctx())); return t; }
   syncMood() {
     const susp = clamp01(this.strikes / 3 * 0.7 + this.progress * 0.3);
@@ -127,11 +133,19 @@ export class Game {
       else if (tier > this.lastTier && this.lastTier && LINES_TIER(tier)) this.narrate('tier' + tier);
       else if (!first && this.level >= 3 && Math.random() < 0.4 && this.callback()) this.speak(this.callback(), 'smug');
       else if (first || Math.random() < 0.33) this.narrate('level');
-      if (tier !== this.lastTier) { bg.tier(tier); if (first) bg.state.tierT = 0; if (this.lastTier && tier > this.lastTier) this.tierNote = `Palier ${tier} / 5 · la menace augmente`; }
+      if (tier !== this.lastTier) { bg.tier(tier); if (first) bg.state.tierT = 0; if (this.lastTier && tier > this.lastTier) this.tierJump = true; if (this.lastTier && tier > this.lastTier) this.tierNote = `Palier ${tier} / 5 · la menace augmente`; }
       this.lastTier = tier;
     }
+    const TN = { 2: 'La menace augmente', 3: 'Cruauté recommandée', 4: 'Épreuves absurdes', 5: 'Dernière ligne droite' };
+    const beat = !retry && !first && this.tierJump && !RM() && this.mode === 'solo' ? 1250 : 0; this.tierJump = false;
     this.tierNote = null;
-    this.later(() => this.mount(def, seed ?? this.seedFor(this.level)), delay);
+    const go = () => this.mount(def, seed ?? this.seedFor(this.level));
+    if (beat) {
+      this.root.classList.add('cine'); const ov = h('div', { class: 'tier-beat', 'aria-hidden': 'true' }, h('i', {}, 'Palier'), h('b', {}, `${tier} / 5`), h('span', {}, TN[tier] || '')); document.body.append(ov);
+      let done = false; const fin = () => { if (done) return; done = true; ov.remove(); this.root.classList.remove('cine'); removeEventListener('pointerdown', fin, true); removeEventListener('keydown', fin, true); clearTimeout(id); go(); };
+      const id = this.later(fin, delay + beat); setTimeout(() => { if (!done) { addEventListener('pointerdown', fin, true); addEventListener('keydown', fin, true); } }, 300);
+      this.beatSkip = fin;
+    } else this.later(go, delay);
   }
 
   mount(def, seed) {
@@ -347,7 +361,7 @@ export class Game {
     if (cine) {
       this.stage.classList.add('dim');
       // Cinéma : le portail 3D s'ouvre (victoire) ou l'Œil vous verrouille puis le portail claque (défaite) ; le tampon s'abat ; puis la fiche.
-      this.later(() => { slam = h('div', { class: 'slam ' + (win ? 'win' : 'over'), 'aria-hidden': 'true' }, h('b', {}, win ? 'HUMAIN' : 'ROBOT'), h('i', {}, win ? 'accès accordé' : 'accès refusé')); document.body.append(slam); sfx('stamp'); bg.shake(1); bg.pulse(win ? 'good' : 'bad'); this.flash(win ? 'good' : 'bad'); confettiBurst(); }, win ? 1300 : 1250);
+      this.later(() => { slam = h('div', { class: 'slam ' + (win ? 'win' : 'over'), 'aria-hidden': 'true' }, h('b', {}, win ? 'HUMAIN' : 'ROBOT'), h('i', {}, win ? 'accès accordé' : 'accès refusé')); document.body.append(slam); sfx('stamp'); bg.shake(1); bg.pulse(win ? 'level' : 'bad'); this.flash(win ? 'win' : 'bad'); confettiBurst(); }, win ? 1300 : 1250);
       this.later(show, win ? 3600 : 3000);
       setTimeout(() => { addEventListener('pointerdown', skip, true); addEventListener('keydown', skip, true); }, 400);
     } else this.later(show, win ? 500 : 100);
@@ -368,6 +382,7 @@ export class Game {
   debugEnd(kind) { if (kind === 'win' && !this.stats.solves) { const st = this.stats; this.level = this.total + 1; st.solves = this.total; st.sumMs = this.total * 6200; st.fastest = 2400; st.maxStreak = this.total; } this.finish(kind); }
 
   destroy() {
+    document.querySelectorAll('.tier-beat').forEach((e) => e.remove()); this.root.classList.remove('cine');
     document.querySelectorAll('.slam').forEach((e) => e.remove());
     removeEventListener('keydown', this.onKey); removeEventListener('pointerdown', this.onDown, true); removeEventListener('resize', this.onResize); if (this.onVV) visualViewport.removeEventListener('resize', this.onVV); clearTimeout(this.fitT);
     document.body.classList.remove('end-open');
