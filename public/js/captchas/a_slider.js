@@ -55,7 +55,7 @@ export default {
     }
     tmr = setTimeout(twist, 9000);
     const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision : ±' + tol + ' px. Un robot ferait ±0. Soyez humain, pas trop.', body: [stage, tr, redo], onVerify: check });
-    host.append(fr.el);
+    fr.el.style.maxWidth = '400px'; host.append(fr.el);
     const cheatOn = /cheat=1/.test(location.search); if (cheatOn) host.dataset.answer = tx;
     function set(v) { const k = stage.clientWidth / W; val = Math.max(0, Math.min(W - P, v)); pc.style.transform = `translateX(${(val - tx) * k}px)`; const trw = tr.clientWidth - 46; hd.style.left = (val / (W - P)) * trw + 'px'; fill.style.width = (val / (W - P)) * trw + 23 + 'px'; hd.setAttribute('aria-valuenow', Math.round(val)); if (val > 4) hint.style.opacity = 0; }
     set(0);

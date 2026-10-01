@@ -26,6 +26,23 @@ const NO_ACTION = new Set(['a_checkbox', 'b_flip', 'b_hunt', 'b_memory', 'b_robo
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const CLS_INIT = () => { window.__cls = 0; window.__clsSrc = []; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__clsSrc.push([e.value, (e.sources || []).map((s) => (s.node && (s.node.className || s.node.nodeName)) + '').join('|') + ':' + e.value.toFixed(3) + '@' + Math.round(performance.now())]); } }).observe({ type: 'layout-shift', buffered: true }); } catch { /* */ } };
 const page = async (w, h) => { const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: true }); await ctx.addInitScript(CLS_INIT); const p = await ctx.newPage(); p.errs = []; p.on('pageerror', (e) => p.errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && !/CERT|fonts\.g/.test(m.text()) && p.errs.push(m.text())); return p; };
+
+const CONTRAST = (rootSel) => {
+  const parse = (c) => (c.match(/[\d.]+/g) || []).map(Number);
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const bgOf = (e) => { for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.backgroundImage !== 'none') return null; const c = parse(cs.backgroundColor); const a = c.length > 3 ? c[3] : 1; if (a >= 0.95) return c; if (a > 0.02) return null; } return [255, 255, 255]; };
+  const out = []; const root = document.querySelector(rootSel); if (!root) return ['no ' + rootSel];
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || e.closest('svg,script,style')) continue; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    if (r.width < 2 || r.height < 2 || cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity < 0.9) continue;
+    const bg = bgOf(e); if (!bg) continue; const fg = parse(cs.color); if (fg.length > 3 && fg[3] < 0.95) continue;
+    const L1 = lum(fg), L2 = lum(bg), ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+    const big = parseFloat(cs.fontSize) >= 24 || (parseFloat(cs.fontSize) >= 18.66 && +cs.fontWeight >= 700);
+    if (ratio < (big ? 3 : 4.5)) out.push(`${n.textContent.trim().slice(0, 22)} ${ratio.toFixed(2)}`);
+  }
+  return [...new Set(out)];
+};
 const fails = []; const bad = (m) => { fails.push(m); console.log('  FAIL', m); };
 
 const p0 = await page(1280, 800); await p0.goto(base + '?cheat=1'); await p0.waitForTimeout(1500);
@@ -73,6 +90,8 @@ const measure = () => {
     const lw = e.offsetWidth || r.width, lh = e.offsetHeight || r.height; /* layout size: ignores transient scale animations */ if (Math.min(Math.max(r.width, lw), Math.max(r.height, lh)) < 39.5) small.push(`${(e.tagName + '.' + (e.className || '')).toString().slice(0, 22)}[${(e.textContent || '').trim().slice(0, 8)}] ${Math.round(r.width)}x${Math.round(r.height)}`);
   }
   o.small = [...new Set(small)];
+  const ell = []; document.querySelectorAll('.stage *, .ledger *, .cap-host *').forEach((e) => { const cs = getComputedStyle(e); const lc = cs.webkitLineClamp; if (((cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1) || (lc && lc !== 'none' && e.scrollHeight > e.clientHeight + 1)) && cs.display !== 'none' && e.getBoundingClientRect().width > 0 && !e.classList.contains('bubble-text')) ell.push((e.className || e.tagName).toString().slice(0, 20) + ':' + (e.textContent || '').trim().slice(0, 22)); });
+  o.ell = [...new Set(ell)];
   return o;
 };
 
@@ -104,6 +123,7 @@ for (const [w, h] of VPS) {
     else if (!NO_ACTION.has(id)) bad(`${tag} no primary action found (declare data-primary or add to NO_ACTION)`);
     else if (m.scroll > 2) bad(`${tag} click-to-solve captcha scrolls internally by ${m.scroll}px`);
     if (m.fonts.length) bad(`${tag} text < 12px: ${m.fonts.slice(0, 5).join(', ')}`);
+    if (m.ell.length) bad(`${tag} text truncated with ellipsis: ${m.ell.slice(0, 3).join(' | ')}`);
     if (m.small.length) bad(`${tag} tap targets < 40px: ${m.small.slice(0, 4).join(', ')}`);
     const d = DRAGS[id];
     if (d && !skipDrag) {
@@ -115,6 +135,21 @@ for (const [w, h] of VPS) {
       else { if (res.during == null) { bad(`${tag} drag: no dragged row`); continue; } const del = res.during - (d.start ? res.start : res.before); const want = d[d.axis]; ok = Math.abs(del - want) / want <= 0.08; msg = `finger ${want} element ${del.toFixed(0)}`; }
       console.log(`   drag ${msg} ${ok ? 'ok' : 'DRIFT'}`); if (!ok) bad(`${tag} drag accuracy: ${msg}`);
     }
+  }
+  { // narrator bubble must never clip the longest lines; solo end screen must keep its actions reachable + contrasted
+    await p.goto(`${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
+    const longest = await p.evaluate(async () => { const m = await import('/js/narrator.js'); const all = []; for (const v of Object.values(m.LINES)) (Array.isArray(v) ? v : Object.values(v).flat()).forEach((x) => all.push(x)); return all.sort((x, y) => y.length - x.length).slice(0, 8); });
+    let worst = 0; for (const t of longest) {
+      const r = await p.evaluate((t) => { window.__game.speaker.say(t, 'neutral', { force: true, instant: true }); const tx = document.querySelector('.game-root .bubble-text'), bu = document.querySelector('.game-root .bubble'); return { over: tx.scrollHeight - tx.clientHeight, gap: bu.getBoundingClientRect().bottom - tx.getBoundingClientRect().bottom }; }, t);
+      worst = Math.max(worst, r.over); if (r.over > 1 || r.gap < 0) bad(`${w}x${h} narrator bubble clips ${t.length}-char line (over ${r.over}px, gap ${r.gap.toFixed(1)}): "${t.slice(0, 30)}…"`);
+    }
+    console.log(`   narrator longest-8 lines clip=${worst}px`);
+    await p.evaluate(() => { __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Rapidité suspecte sur « Texte tordu » (1,2 s)'); __cap.game.charge('Respiration jugée trop régulière'); __cap.over(); }); await p.waitForTimeout(2500);
+    const e = await p.evaluate((CONTRAST) => { const f = eval(CONTRAST); const vh = innerHeight; const b = [...document.querySelectorAll('.screen.end .actions .btn')].map((x) => x.getBoundingClientRect().bottom); const stat = [...document.querySelectorAll('.screen.end .stat')].map((x) => x.textContent).join('|'); return { btnBottom: Math.max(...b), vh, contrast: f('.screen.end .verdict-card'), stat }; }, `(${CONTRAST.toString()})`);
+    console.log(`   solo game-over: actions bottom ${Math.round(e.btnBottom)}/${e.vh}; ${e.contrast.length} contrast issues`);
+    if (e.btnBottom > e.vh + 1) bad(`${w}x${h} game-over actions below fold (${Math.round(e.btnBottom)} > ${e.vh})`);
+    if (e.contrast.length) bad(`${w}x${h} game-over contrast < 4.5: ${e.contrast.slice(0, 4).join(', ')}`);
+    if (/\d\s*\/\s*3/.test(e.stat.split('|')[2] || '')) bad(`${w}x${h} game-over shows an "n / 3" error count that can exceed 3: ${e.stat}`);
   }
   if (p.errs.length) bad(`${w}x${h} console errors: ${[...new Set(p.errs)].slice(0, 3).join(' / ')}`);
   await p.context().close();
@@ -168,6 +203,19 @@ if (!skipOnline) {
   if (o.speaker !== 'none') bad('online 390: Gérard visible during race');
   if (o.cls >= 0.1) bad(`online 390 CLS ${o.cls.toFixed(3)} >= 0.1`);
   if (o.page > 1) bad(`online 390 page scrolls by ${o.page}px`);
+  // finish the match with real solve calls, then audit the results screen (podium, sticky actions, contrast)
+  let podium = false; for (let i = 0; i < 220 && !podium; i++) { await solve(A); await solve(B); await sleep(450); podium = !!(await B.$('.ol-podium')); }
+  if (!podium) bad('online: match never reached the podium'); else {
+    await sleep(2500);
+    for (const [P, name] of [[B, '390'], [A, '1280']]) {
+      const r = await P.evaluate((C) => { const f = eval(C); const root = document.querySelector('.ol-root'); root.scrollTo(0, root.scrollHeight); const acts = [...document.querySelectorAll('.ol-actions .ol-btn')].map((x) => x.getBoundingClientRect()); const rows = [...document.querySelectorAll('.ol-tbl tbody tr')].map((x) => x.getBoundingClientRect().bottom); const bar = document.querySelector('.ol-actions').getBoundingClientRect();
+        return { vh: innerHeight, bottom: Math.max(...acts.map((x) => x.bottom)), top: Math.min(...acts.map((x) => x.top)), lastRow: Math.max(...rows), barTop: bar.top, contrast: f('.ol-end') }; }, `(${CONTRAST.toString()})`);
+      console.log(`  results ${name}: actions ${Math.round(r.top)}-${Math.round(r.bottom)} of ${r.vh}, last row ${Math.round(r.lastRow)} vs bar top ${Math.round(r.barTop)}, contrast issues ${r.contrast.length}`);
+      if (r.bottom > r.vh + 1) bad(`online results ${name}: actions below fold`);
+      if (r.lastRow > r.barTop + 1) bad(`online results ${name}: result list hidden under the sticky bar`);
+      if (r.contrast.length) bad(`online results ${name} contrast < 4.5: ${r.contrast.slice(0, 5).join(', ')}`);
+    }
+  }
 }
 await b.close(); srv?.kill();
 console.log('\n' + (fails.length ? `GATE FAILED (${fails.length})\n- ` + fails.join('\n- ') : 'GATE PASSED'));

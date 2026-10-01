@@ -66,7 +66,7 @@ export default {
       if (!bad.length && !miss.length) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();
       let m;
-      if (bad.length) { m = red.has(bad[0]) ? (isFeu ? 'Ce feu est rouge. Le rectificatif de la direction (en bleu, au-dessus) les a suspendus. Il fallait lire la bannière, elle était bleue.' : 'Ce vélo est rouge. Le rectificatif de la direction (en bleu, au-dessus) les a réquisitionnés. La bannière était bleue, pourtant.') : M.hit[order[bad[0]]] + (bad.length > 1 ? ` (Et ${bad.length - 1} autre${bad.length > 2 ? 's' : ''} du même acabit.)` : '') + (miss.length ? ` Vous en avez aussi oublié ${miss.length}.` : ''); }
+      if (bad.length) { m = red.has(bad[0]) ? (isFeu ? 'Ce feu est rouge. Le rectificatif de la direction (bannière bleue) les a suspendus. Il fallait lire la bannière, elle était bleue.' : 'Ce vélo est rouge. Le rectificatif de la direction (bannière bleue) les a réquisitionnés. La bannière était bleue, pourtant.') : M.hit[order[bad[0]]] + (bad.length > 1 ? ` (Et ${bad.length - 1} autre${bad.length > 2 ? 's' : ''} du même acabit.)` : '') + (miss.length ? ` Vous en avez aussi oublié ${miss.length}.` : ''); }
       else m = sel.size ? `Il en reste ${miss.length} à cliquer. Vous avez le regard sélectif.` : `Vous n’avez rien sélectionné. Il y en avait pourtant ${T.size}, des ${M.target}. Courage, regardez les images.`;
       api.fail(m);
     }

@@ -42,7 +42,7 @@ export default {
     host.append(fr.el); if (!coarse()) setTimeout(() => inp.focus(), 50);
     function check() {
       const raw = inp.value.trim(); const v = raw.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '');
-      if (hasRule('a_wavy', 'R1') && raw !== raw.toLowerCase()) { return void ruleHit(api, fr, 'R1', 'Règle 1 : « ' + raw + ' » est correct… mais en majuscules. Vous avez lu la règle ? Elle est juste au-dessus. En petit.'); }
+      if (hasRule('a_wavy', 'R1') && raw !== raw.toLowerCase()) { return void ruleHit(api, fr, 'R1', 'Règle 1 : « ' + raw + ' » est correct… mais en majuscules. Vous avez lu la règle ? Elle est dans la liste, et elle est passée au rouge pendant que vous tapiez.'); }
       if (v === word) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); api.sfx('bad');
       let m;

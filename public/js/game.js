@@ -17,7 +17,7 @@ export class Game {
     this.stats = { solves: 0, sumMs: 0, fastest: 0, streak: 0, maxStreak: 0, strikes: 0, reached: startLevel, totalMs: 0 };
     this.dossier = []; this.past = { fast: null, slow: null, strikes: [] }; this.timeouts = new Set(); this.idleN = 0; this.lastAct = performance.now(); this.lastTier = 0; this.sayTok = 0;
   }
-  charge(t) { this.dossier.push(t); }
+  charge(t) { const e = this.dossier.find((d) => d.t === t); if (e) e.n++; else this.dossier.push({ t, n: 1 }); }
   dossierLine() { const n = this.dossier.length; if (!n) return ''; return `Dossier : ${n} charge${n > 1 ? 's' : ''} · suspicion ${Math.round((this.susp || 0) * 100)} %`; }
   callback() {
     const q = this.past, sec = (ms) => fmtSec(ms), pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -59,12 +59,12 @@ export class Game {
     for (let i = 0; i < this.total; i++) pips.append(h('li', {}));
     this.pips = pips;
     this.levelLabel = h('span', { class: 'lvl-num' }); this.levelN = h('span', { class: 'ch-n' }); this.levelTitle = h('span', { class: 'lvl-title' });
-    this.strikeEls = [0, 1, 2].map(() => h('span', { class: 'strike' }, h('b', {}, '✕')));
+    this.strikeEls = [0, 1, 2].map(() => h('span', { class: 'strike' }, h('b', {}, '♥')));
     this.clock = h('span', { class: 'clock-val' }, '--'); this.clockBox = h('div', { class: 'clock', role: 'timer', 'aria-label': 'Temps restant' }, h('span', { class: 'clock-lbl', 'aria-hidden': 'true' }, 'Temps'), this.clock);
     this.hud = h('header', { class: 'hud' },
       h('div', { class: 'hud-l' }, h('span', { class: 'brand', 'aria-hidden': 'true' }, 'CAPCHA™'), h('div', { class: 'lvl' }, this.levelLabel)),
       h('div', { class: 'hud-c' }, pips),
-      h('div', { class: 'hud-r' }, this.lbBar = h('button', { class: 'icon-btn ledger-btn', type: 'button', 'aria-expanded': 'false', 'aria-label': 'Registre de conformité', title: 'Registre de conformité', onclick: () => this.toggleLedger() }, h('span', { 'aria-hidden': 'true' }, '§'), this.lbCount = h('i', { class: 'lb-count', 'aria-hidden': 'true' }, '0')), h('div', { class: 'strikes', role: 'img', 'aria-label': 'Erreurs : 0 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Erreurs'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
+      h('div', { class: 'hud-r' }, this.lbBar = h('button', { class: 'icon-btn ledger-btn', type: 'button', 'aria-expanded': 'false', 'aria-label': 'Registre de conformité', title: 'Registre de conformité', onclick: () => this.toggleLedger() }, h('span', { 'aria-hidden': 'true' }, '§'), this.lbCount = h('i', { class: 'lb-count', 'aria-hidden': 'true' }, '0')), h('div', { class: 'strikes', role: 'img', 'aria-label': 'Vies restantes : 3 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Vies'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
     this.strikesBox = this.hud.querySelector('.strikes');
     this.speaker = new Speaker();
     this.nOk = 0; this.nBad = 0;
@@ -74,7 +74,7 @@ export class Game {
     this.stamp = h('div', { class: 'stamp', 'aria-hidden': 'true' });
     this.cardHead = h('div', { class: 'card-head' }, this.levelN, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
     this.host = h('div', { class: 'cap-slot' });
-    this.footDefault = 'Protégé par CAPCHA™ · Vos erreurs sont consignées · Confidentialité (non)';
+    this.footBase = this.footDefault = 'Protégé par CAPCHA™ · Vos erreurs sont consignées · Confidentialité (non)';
     this.foot = h('div', { class: 'card-foot', 'aria-hidden': 'true' }, this.footDefault);
     this.srEl = h('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
     this.card = h('section', { class: 'card', 'aria-label': 'Vérification en cours' }, this.cardHead, this.host, this.stamp, this.foot);
@@ -98,11 +98,11 @@ export class Game {
   }
   hudRefresh() {
     const def = CAPTCHAS[this.level - 1];
-    this.levelLabel.replaceChildren(h('span', { class: 'lv-w' }, 'Vérification '), `${pad(Math.min(this.level, this.total))}/${pad(this.total)}`); this.levelN.textContent = pad(Math.min(this.level, this.total));
+    this.levelLabel.replaceChildren(h('span', { class: 'lv-w' }, 'Vérification '), `${pad(Math.min(this.level, this.total))}/${pad(this.total)}`, h('span', { class: 'lv-t' }, ' · ' + (CAPTCHAS[this.level - 1]?.title || ''))); this.levelN.textContent = pad(Math.min(this.level, this.total));
     if (def) { this.levelTitle.textContent = def.title; this.card.querySelector('.threat').textContent = '●'.repeat(def.tier || 1) + '○'.repeat(Math.max(0, 5 - (def.tier || 1))); this.card.querySelector('.threat').title = 'Niveau de menace'; }
     [...this.pips.children].forEach((li, i) => { li.className = i < this.level - 1 ? 'done' : i === this.level - 1 ? 'now' : ''; });
     this.strikeEls.forEach((el, i) => el.classList.toggle('on', i < this.strikes));
-    this.strikesBox.setAttribute('aria-label', `Erreurs : ${this.strikes} sur 3`);
+    this.strikesBox.setAttribute('aria-label', `Vies restantes : ${3 - this.strikes} sur 3`);
   }
 
   beginLevel({ retry = false, seed, first = false } = {}) {
@@ -113,10 +113,10 @@ export class Game {
     this.hudRefresh(); this.syncMood();
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0'); this.clock.textContent = '--';
     const tier = def.tier || 1;
-    if (!retry) { this.card.classList.remove('struck', 'solved'); this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
+    if (!retry) { this.card.classList.remove('struck', 'solved'); this.footDefault = matchMedia('(max-width: 640px) and (max-height: 720px)').matches ? `${pad(this.level)} · ${def.title} · CAPCHA™` : this.footBase; this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
     const fast = this.mode !== 'solo';
     const delay = retry ? 0 : RM() ? 120 : fast ? 260 : 640;
-    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1] + ' »')) : null));
+    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1].t + ' »')) : null));
     if (!retry) { this.banner.className = 'banner show'; this.card.classList.add('entering'); this.host.replaceChildren(); this.host.classList.remove('ready'); }
     if (!retry) { sfx('level'); bg.pulse('level'); }
     // narration
@@ -178,6 +178,12 @@ export class Game {
       if (cs.display === 'none') return;
       if ((cs.cursor === 'grab' || cs.cursor === 'pointer') && !e.matches(tsel) && !e.closest(tsel) && e.getBoundingClientRect().height > 8 && e.getBoundingClientRect().height < 40 && ![...e.children].some((k) => ['grab', 'pointer'].includes(getComputedStyle(k).cursor))) e.style.setProperty('min-height', '40px', 'important');
       if (parseFloat(cs.fontSize) < 12 && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) e.style.setProperty('font-size', '12px', 'important');
+    });
+    // texte tronqué par une ellipse : on autorise le retour à la ligne plutôt que de cacher des mots
+    host.querySelectorAll('*').forEach((e) => {
+      const cs = getComputedStyle(e);
+      const lc = cs.webkitLineClamp; if (lc && lc !== 'none' && e.scrollHeight > e.clientHeight + 1) { e.style.setProperty('-webkit-line-clamp', 'unset', 'important'); e.style.setProperty('display', 'block', 'important'); e.style.setProperty('overflow', 'visible', 'important'); e.style.setProperty('max-height', 'none', 'important'); }
+      if (cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1) { e.style.setProperty('white-space', 'normal', 'important'); e.style.setProperty('text-overflow', 'clip', 'important'); e.style.setProperty('overflow-wrap', 'anywhere', 'important'); }
     });
     host.querySelectorAll(tsel).forEach((e) => {
       const r = e.getBoundingClientRect(); if (!r.width || !r.height) return;
@@ -280,7 +286,7 @@ export class Game {
     const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
       h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
     this.list.firstChild.after(li);
-    const msg = kind === 'ok' ? `✓ ${title.split(' ').slice(0, 2).join(' ')} · ${text} · ${meta}` : `✕ ${text}`;
+    const msg = kind === 'ok' ? `✓ ${title.split(' ').slice(0, 2).join(' ')} · ${text} · ${meta}` : `✕ ${title} · ${meta}${/chronom/i.test(text) ? ' · temps écoulé' : ''}`;
     this.foot.className = 'card-foot v-' + kind; this.foot.textContent = msg; this.srEl.textContent = (kind === 'ok' ? '' : title + ' : ') + msg;
     const cap = this.mode === 'solo' ? 9 : 3;
     while (this.list.childElementCount > cap) this.list.lastChild.remove();
@@ -299,7 +305,7 @@ export class Game {
     const over = this.strikes >= 3;
     const tt = CAPTCHAS[this.level - 1]?.title || 'une vérification'; this.past.strikes.push(tt); this.charge(timeout ? `A laissé expirer « ${tt} »` : `Échec à « ${tt} » (pièce à conviction n° ${pad(this.level)})`);
     const why = timeout ? 'Le chronomètre a expiré avant votre réponse.' : (msg && msg !== 'cheat' ? msg : 'Réponse incorrecte : elle ne respecte pas la règle affichée.');
-    this.rule('bad', `Règle ${pad(this.level)} enfreinte · ${this.strikes}/3`, why);
+    this.rule('bad', `Règle ${pad(this.level)} enfreinte`, why, `${this.strikes}/3`);
     if (!over) {
       const key = timeout ? 'timeout' : this.strikes === 1 ? 'strike1' : 'strike2';
       this.speak(say(key, Math.random, this.ctx()), timeout ? moodFor('timeout', this.ctx()) : this.strikes >= 2 ? 'angry' : 'smug', true);

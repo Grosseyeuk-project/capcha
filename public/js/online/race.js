@@ -47,6 +47,12 @@ export class RaceView {
   }
   tick() {
     const r = this.room; if (!r) return;
+    const now = performance.now(); this.quipAt ||= now + 20000;
+    if (this.mode === 'play' && now > this.quipAt) {
+      const Q = ['Gérard : ne regardez pas les autres, ils trichent.', 'Gérard : respirez. Les scripts, eux, n’en ont pas besoin.', 'Gérard : je note vos hésitations. Au crayon.', 'Gérard : un humain concentré, c’est beau. Un peu long, mais beau.', 'Gérard : le classement ne ment pas. Moi, si.'];
+      this.quipTxt = Q[Math.floor(Math.random() * Q.length)]; this.quipUntil = now + 5200; this.quipAt = now + 26000 + Math.random() * 14000; this.gapEl.classList.add('quip'); this.gapEl.textContent = this.quipTxt;
+    }
+    if (this.quipUntil && now > this.quipUntil) { this.quipUntil = 0; this.gapEl.classList.remove('quip'); this.paint(); }
     if (r.lastCallAt) {
       const s = Math.max(0, Math.ceil((r.lastCallAt - this.net.now()) / 1000));
       this.lastEl.hidden = false; this.lastEl.textContent = `DERNIER APPEL — le portique ferme dans ${s} s`;
@@ -211,7 +217,7 @@ export class RaceView {
     { const sorted = [...room.players].sort((a, b) => a.rank - b.rank), lead = sorted[0], sc = (p) => this.eff(p).solved;
       const d = me.rank === 1 ? sc(me) - (sorted[1] ? sc(sorted[1]) : 0) : sc(lead) - sc(me);
       const pl = (n) => `${n} niveau${n > 1 ? 'x' : ''}`;
-      this.gapEl.replaceChildren(h('b', {}, `Rang #${me.rank}/${room.players.length}`), me.status !== 'racing' ? ' · course terminée pour vous' : me.rank === 1 ? ` · vous menez${d > 0 ? ' de ' + pl(d) : ' (égalité)'}` : ` · à ${d > 0 ? pl(d) : 'un souffle'} de ${lead.nick}${lead.bot ? ' (un script)' : ''}`); }
+      if (!this.quipUntil) this.gapEl.replaceChildren(h('b', {}, `Rang #${me.rank}/${room.players.length}`), me.status !== 'racing' ? ' · course terminée pour vous' : me.rank === 1 ? ` · vous menez${d > 0 ? ' de ' + pl(d) : ' (égalité)'}` : ` · à ${d > 0 ? pl(d) : 'un souffle'} de ${lead.nick}${lead.bot ? ' (un script)' : ''}`); }
     this.prevRank = me.rank;
   }
 }

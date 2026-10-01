@@ -111,7 +111,7 @@ function lobby(room) {
   if (!room.quick && isHost) {
     act.append(h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'start' }) }, 'Lancer la partie', h('small', {}, `${room.players.filter((p) => p.ready || p.id === S.me || p.bot).length}/${room.players.length} prêts`)));
   }
-  kids.push(h('div', { class: 'ol-card' }, act));
+  kids.push(h('div', { class: 'ol-card ol-sticky' }, act));
   if (!room.quick && isHost) kids.push(h('div', { class: 'ol-row2' },
     h('button', { class: 'ol-btn', disabled: room.players.length >= 8 ? '' : null, onclick: () => S.net.send({ t: 'addbot' }) }, '+ Ajouter un bot'),
     h('button', { class: 'ol-btn', onclick: () => S.net.send({ t: 'rmbot' }) }, '− Retirer un bot')));

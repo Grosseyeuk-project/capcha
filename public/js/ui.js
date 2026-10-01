@@ -208,16 +208,16 @@ export function endScreen({ kind, dossier = [], stats, rank, total, onReplay, on
   const copy = h('button', { class: 'btn ghost small', type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(summary); copy.textContent = 'Copié. Gérard est flatté.'; } catch { copy.textContent = 'Copie impossible. Recopiez à la main.'; } } }, 'Copier mon dossier');
   const again = h('button', { class: 'btn primary', type: 'button', onclick: () => { sfx('click'); onReplay?.(); } }, 'Rejouer');
   const el = h('section', { class: 'screen end ' + (win ? 'win' : 'over'), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'endttl' },
-    h('div', { class: 'verdict-card' },
+    h('div', { class: 'verdict-card' }, h('div', { class: 'vc-body' },
       h('div', { class: 'big-stamp', 'aria-hidden': 'true' }, win ? 'HUMAIN' : 'ROBOT'),
       h('h2', { id: 'endttl' }, win ? 'Accès accordé' : 'Accès refusé'),
       h('p', { class: 'rank-label' }, 'Votre rang officiel'),
       h('p', { class: 'rank' }, rank),
       h('dl', { class: 'stats' },
-        stat('Vérifications', `${lvl} / ${total}`), stat('Temps total', fmtTime(stats.totalMs)), stat('Erreurs', `${stats.strikes} / 3`),
+        stat('Vérifications', `${lvl} / ${total}`), stat('Temps total', fmtTime(stats.totalMs)), stat('Erreurs commises', String(stats.strikes)),
         stat('Plus rapide', stats.fastest ? fmtSec(stats.fastest) : '—'), stat('Meilleure série', String(stats.maxStreak)), stat('Temps moyen', stats.solves ? fmtSec(stats.sumMs / stats.solves) : '—')),
-      dossier.length ? h('div', { class: 'dossier' }, h('h3', {}, 'Casier de la partie'), h('ul', {}, dossier.slice(-5).reverse().map((d) => h('li', {}, d)))) : null,
-      speaker ? speaker.el : null,
+      dossier.length ? h('div', { class: 'dossier' }, h('h3', {}, 'Casier de la partie'), h('ul', {}, dossier.slice(-5).reverse().map((d) => h('li', {}, d.t + (d.n > 1 ? ' ×' + d.n : ''))))) : null,
+      speaker ? speaker.el : null),
       h('div', { class: 'actions' }, again, onMenu ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { sfx('click'); onMenu(); } }, 'Menu principal') : null, copy)
     ));
   setTimeout(() => again.focus({ preventScroll: true }), 50);

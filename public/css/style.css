@@ -80,7 +80,7 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
 .bubble { position: relative; flex: 1; min-width: 0; background: var(--paper); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 4px 16px 16px 16px; padding: 10px 16px 12px; min-height: 5.2rem; box-shadow: 5px 5px 0 rgba(0, 0, 0, .75); cursor: default; }
 .bubble::before { content: ''; position: absolute; left: -11px; top: 22px; width: 18px; height: 18px; background: var(--paper); border-left: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg); }
 .nameplate { display: block; font: 600 .66rem/1 var(--mono); letter-spacing: .12em; color: #b0281f; margin-bottom: 5px; text-transform: uppercase; }
-.nameplate i { font-style: normal; color: #6b6a5c; letter-spacing: .04em; }
+.nameplate i { font-style: normal; color: #4a4838; letter-spacing: .04em; }
 .bubble-text { margin: 0; font: 500 1.02rem/1.35 var(--body); min-height: 2.7em; }
 .bubble.typing .bubble-text::after { content: '▍'; margin-left: 1px; animation: caret .5s steps(2) infinite; color: #b0281f; }
 @keyframes caret { 50% { opacity: 0; } }
@@ -138,7 +138,7 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
 .cap-slot { flex: 1; display: flex; flex-direction: column; }
 .cap-host { padding: 16px; flex: 1; display: flex; flex-direction: column; align-items: stretch; animation: capin .35s ease-out; }
 @keyframes capin { from { opacity: 0; transform: translateY(8px); } }
-.card-foot { padding: 6px 14px; font: 400 .62rem/1.3 var(--mono); color: #7a7767; border-top: 1px dashed #c8c0a8; background: var(--paper-2); }
+.card-foot { padding: 6px 14px; font: 400 .62rem/1.3 var(--mono); color: #4a4838; border-top: 1px dashed #c8c0a8; background: var(--paper-2); }
 .card.entering { animation: cardin .4s cubic-bezier(.2, .9, .3, 1); }
 @keyframes cardin { from { opacity: 0; transform: translateX(40px) rotate(1.2deg); } }
 .card.leaving { animation: cardout .26s ease-in forwards; }
@@ -175,11 +175,11 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
 @keyframes stampin2 { from { transform: rotate(-6deg) scale(3.2); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
 .end.over .big-stamp { color: #c8102e; } .end.win .big-stamp { color: #0e8a6d; }
 .verdict-card h2 { margin: 6px 0 0; font: 800 1.9rem/1.1 var(--display); letter-spacing: -.02em; }
-.rank-label { margin: 14px 0 0; font: 600 .66rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #7a7767; }
+.rank-label { margin: 14px 0 0; font: 600 .66rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #4a4838; }
 .rank { margin: 4px 0 14px; font: 800 clamp(1.2rem, 4.4vw, 1.65rem)/1.15 var(--display); letter-spacing: -.01em; text-wrap: balance; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 18px; }
 .stat { background: var(--paper-2); border: 2px solid var(--ink); border-radius: 8px; padding: 8px 4px; }
-.stat dt { font: 600 .58rem/1.1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #6b6a5c; }
+.stat dt { font: 600 .58rem/1.1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #4a4838; }
 .stat dd { margin: 4px 0 0; font: 800 1.15rem/1.1 var(--mono); font-variant-numeric: tabular-nums; }
 .verdict-card .speaker { margin-bottom: 18px; }
 .verdict-card .avatar { width: 72px; height: 72px; }
@@ -367,7 +367,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .bn-d { margin-top: 12px; font: 600 .74rem/1.4 var(--mono); letter-spacing: .06em; color: var(--yellow); text-transform: uppercase; display: flex; flex-direction: column; gap: 3px; max-width: 32ch; }
 .bn-d i { font: 500 .78rem/1.3 var(--body); font-style: italic; color: var(--dim); text-transform: none; letter-spacing: 0; }
 .dossier { text-align: left; margin: 0 0 14px; padding: 10px 12px; background: var(--paper-2); border: 2px dashed rgba(16, 32, 42, .5); border-radius: 10px; }
-.dossier h3 { margin: 0 0 6px; font: 600 .62rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #7a7767; }
+.dossier h3 { margin: 0 0 6px; font: 600 .62rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #4a4838; }
 .dossier ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font: 500 .78rem/1.3 var(--mono); color: var(--ink); }
 .dossier li::before { content: '§ '; color: #c8102e; font-weight: 700; }
 @media (max-width: 640px) { .dossier li:nth-child(n+4) { display: none; } .dossier { padding: 8px 10px; margin-bottom: 10px; } .dossier ul { font-size: .7rem; } }
@@ -411,7 +411,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .online .hud { grid-template-columns: 1fr auto; padding: 4px 8px 9px; }
   .online .hud .pips { max-width: none; } .online .hud-c { display: block; }
   .online .hud-r .sound { display: none; }
-  .online .card { max-height: calc(100dvh - 172px); }
+  .online .card { max-height: calc(100dvh - 206px); }
 }
 .cap-host { animation: none !important; }
 .speaker.big .bubble-text { min-height: 2.8em; }
@@ -463,3 +463,35 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 
 .strike.heal { animation: healpop .9s; }
 @keyframes healpop { 0% { box-shadow: 0 0 0 0 var(--green); transform: scale(1.5); border-color: var(--green); } 100% { box-shadow: 0 0 0 14px transparent; transform: none; } }
+
+
+/* ---------- r8 ---------- */
+.strike { width: auto; height: auto; border: 0; background: none; padding: 0 1px; }
+.strike b { display: block; font: 400 1.35rem/1 var(--display); color: var(--red); opacity: 1; transform: none; text-shadow: 0 0 10px rgba(255, 59, 78, .55); transition: color .25s, text-shadow .25s; }
+.strike.on { background: none; border: 0; }
+.strike.on b { color: #3b4a52; text-shadow: none; opacity: 1; transform: none; }
+.strike.on b::after { content: ''; }
+.strike-row { gap: 1px; }
+.strikes-lbl { display: block; }
+.lv-t { display: none; }
+.card-foot { font-size: .75rem; }
+.screen.end .verdict-card .actions { position: sticky; bottom: -2px; z-index: 5; background: linear-gradient(transparent, var(--paper) 30%); padding: 14px 0 4px; margin: 0; }
+@media (max-width: 640px) {
+  .strikes-lbl, .clock-lbl { display: block; font-size: .55rem; }
+  .game-root .bubble { height: 52px; }
+  .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .74rem; line-height: 1.15; -webkit-line-clamp: 3; }
+  .card-foot { font-size: .75rem; height: 36px; line-height: 1.15; }
+}
+@media (max-width: 640px) and (max-height: 720px) {
+  .card-head { display: none; }
+  .strikes-lbl, .clock-lbl { display: none; }
+  .game-root .bubble { height: 51px; padding: 3px 8px; }
+  .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .72rem; line-height: 1.12; -webkit-line-clamp: 3; }
+  .card-foot { height: 34px; padding: 3px 10px; font-size: .75rem; line-height: 1.1; }
+  .screen.end { align-items: start; }
+}
+
+.screen.end .verdict-card { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); overflow: hidden; }
+.screen.end .vc-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+.screen.end .verdict-card .actions { position: static; background: none; padding: 12px 0 0; flex: none; }
+.screen.end { align-items: center; }
