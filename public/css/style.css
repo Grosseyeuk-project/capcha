@@ -439,3 +439,8 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .cap-host { padding: 6px 8px; }
   #app { padding-top: 6px; padding-bottom: 8px !important; }
 }
+.bubble { isolation: isolate; }
+.bubble::before { z-index: -1; }
+.game-root .bubble { overflow: visible; }
+.game-root:not(.online) .card { flex: 1 1 auto; }
+#app.game-root { overflow: clip; }

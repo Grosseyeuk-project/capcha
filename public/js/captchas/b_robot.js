@@ -15,14 +15,14 @@ css('robot', `
 export default {
   id: 'b_robot', tier: 4, title: 'Preuve de robotitude', time: 30000,
   mount(host, api) {
-    const { h } = api; let alive = true, idx = 0, tStart = 0, life = 1250, running = false, cur = null, nextEl = null, expiry = 0; const N = 10; let sumMs = 0;
+    const { h } = api; let alive = true, misses = 0, idx = 0, tStart = 0, life = 1250, running = false, cur = null, nextEl = null, expiry = 0; const N = 10; let sumMs = 0;
     const W = 'AZERQSDFWX'; const keys = api.shuffle(W.split('')).slice(0, N);
     const arena = h('div', { class: 'br-arena', 'aria-label': 'Zone de test de robotitude' });
     const hud = h('div', { class: 'br-hud' }, 'CIBLE 00/' + N), start = h('div', { class: 'br-start' }, h('button', { class: 'bk-btn', type: 'button', onclick: go, autofocus: true }, 'Je suis prêt (robot)'));
     arena.append(hud, start);
     const pips = h('b', {}, '0/' + N);
-    const avg = h('span', {}, 'Temps de réaction moyen : —');
-    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en moins de ', h('b', {}, '1 s environ'), '. Clic ou touche indiquée. Aucun raté.'));
+    const avg = h('span', {}, 'Réaction moyenne : — · ratés 0/2');
+    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en moins de ', h('b', {}, '1 s environ'), '. Clic ou touche indiquée. Deux ratés tolérés (les robots aussi ont des jours sans).'));
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, avg, pips)); host.append(root);
     const pts = []; const rect = () => ({ w: arena.clientWidth, h: arena.clientHeight });
     for (let i = 0; i <= N; i++) pts.push([api.rng(), api.rng()]);
@@ -36,7 +36,7 @@ export default {
     }
     function show(i) {
       idx = i; if (nextEl) nextEl.remove(); nextEl = null;
-      const coarse = matchMedia('(pointer:coarse)').matches; life = Math.max(coarse ? 1000 : 800, 1300 - i * 50);
+      const coarse = matchMedia('(pointer:coarse)').matches; life = Math.max(coarse ? 1300 : 800, 1300 - i * 50);
       const el = h('button', { class: 'br-t', type: 'button', 'aria-label': 'Cible ' + keys[i], onpointerdown: (e) => { e.stopPropagation(); e.preventDefault(); hit(); } }, keys[i]);
       el.style.setProperty('--life', life + 'ms'); place(el, i); arena.append(el); cur = el; tStart = performance.now(); expiry = tStart + life; hud.textContent = `CIBLE ${String(i + 1).padStart(2, '0')}/${N}`;
       if (i + 1 < N) { nextEl = h('div', { class: 'br-n' }, keys[i + 1]); place(nextEl, i + 1); arena.append(nextEl); }
@@ -45,19 +45,21 @@ export default {
     function hit() {
       if (!running || !cur) return; const ms = performance.now() - tStart; sumMs += ms; api.sfx('click');
       const pop = h('div', { class: 'br-pop', style: { left: cur.style.left, top: cur.style.top } }, Math.round(ms) + ' ms'); arena.append(pop); setTimeout(() => pop.remove(), 650);
-      cur.remove(); cur = null; pips.textContent = (idx + 1) + '/' + N; avg.textContent = `Temps de réaction moyen : ${Math.round(sumMs / (idx + 1))} ms`;
+      cur.remove(); cur = null; pips.textContent = (idx + 1) + '/' + N; avg.textContent = `Réaction moyenne : ${Math.round(sumMs / (idx + 1))} ms · ratés ${misses}/2`;
       if (idx + 1 >= N) { running = false; if (nextEl) nextEl.remove(); api.say('Aucun raté. Soit vous êtes un robot, soit vous êtes un humain très entraîné, soit votre souris vous aide.', 'impressed'); setTimeout(() => alive && api.solve(), 250); return; }
       show(idx + 1);
     }
+    const tolerate = (why) => { if (misses >= 2) return false; misses++; api.sfx('bad'); avg.textContent = avg.textContent.replace(/ratés \d\/2/, `ratés ${misses}/2`); const pop = h('div', { class: 'br-pop', style: { left: '50%', top: '14px', color: '#ff8a96' } }, `${why} — toléré (${misses}/2)`); arena.append(pop); setTimeout(() => pop.remove(), 900); return true; };
     arena.addEventListener('pointerdown', (e) => {
       if (!running || !cur) return; const r = cur.getBoundingClientRect(), d = Math.round(Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)));
       if (d < (matchMedia('(pointer:coarse)').matches ? 90 : 64)) { api.sfx('tick'); const pop = h('div', { class: 'br-pop', style: { left: (e.clientX - arena.getBoundingClientRect().left) + 'px', top: (e.clientY - arena.getBoundingClientRect().top) + 'px' } }, 'à côté (toléré)'); arena.append(pop); setTimeout(() => pop.remove(), 650); return; }
+      if (tolerate(`Raté de ${d} px`)) return;
       running = false; shake(root);
-      api.fail(`Raté de ${d} px. Un robot aurait visé le centre. Vous avez visé « à peu près », la devise humaine.`);
+      api.fail(`Raté de ${d} px, troisième erreur. Un robot aurait visé le centre. Vous avez visé « à peu près », la devise humaine.`);
     });
-    const key = (e) => { if (!running || !cur || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return; const k = e.key.toUpperCase(); if (k.length !== 1) return; if (k === keys[idx]) { e.preventDefault(); hit(); } else if (W.includes(k)) { running = false; shake(root); api.fail(`Touche ${k} au lieu de ${keys[idx]}. Les doigts humains sont adorables, mais pas ici.`); } };
+    const key = (e) => { if (!running || !cur || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return; const k = e.key.toUpperCase(); if (k.length !== 1) return; if (k === keys[idx]) { e.preventDefault(); hit(); } else if (W.includes(k)) { if (tolerate(`Touche ${k} au lieu de ${keys[idx]}`)) return; running = false; shake(root); api.fail(`Touche ${k} au lieu de ${keys[idx]}. Les doigts humains sont adorables, mais pas ici.`); } };
     window.addEventListener('keydown', key);
-    let raf; const loop = (now) => { raf = requestAnimationFrame(loop); if (running && cur && now > expiry) { running = false; const s = ((now - tStart) / 1000).toFixed(1).replace('.', ','); shake(root); api.fail(`Cible ${idx + 1} trop lente : ${s} s. Un robot aurait mis 4 ms. Vous, vous avez hésité, soupiré, probablement cligné des yeux.`); } };
+    let raf; const loop = (now) => { raf = requestAnimationFrame(loop); if (running && cur && now > expiry) { if (tolerate(`Cible ${idx + 1} trop lente`)) { const i0 = idx; cur.remove(); cur = null; show(i0); return; } running = false; const s = ((now - tStart) / 1000).toFixed(1).replace('.', ','); shake(root); api.fail(`Cible ${idx + 1} trop lente : ${s} s. Un robot aurait mis 4 ms. Vous, vous avez hésité, soupiré, probablement cligné des yeux.`); } };
     raf = requestAnimationFrame(loop);
     return { destroy() { alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', key); } };
   }

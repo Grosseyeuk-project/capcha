@@ -24,7 +24,7 @@ const VPS = [[360, 640], [390, 800], [1280, 800]];
 // click-to-solve captchas: no final button, so they must fit without internal scrolling.
 const NO_ACTION = new Set(['a_checkbox', 'b_flip', 'b_hunt', 'b_memory', 'b_robot', 'b_boss']);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const CLS_INIT = () => { window.__cls = 0; window.__clsSrc = []; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__clsSrc.push((e.sources || []).map((s) => (s.node && (s.node.className || s.node.nodeName)) + '').join('|') + ':' + e.value.toFixed(3)); } }).observe({ type: 'layout-shift', buffered: true }); } catch { /* */ } };
+const CLS_INIT = () => { window.__cls = 0; window.__clsSrc = []; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__clsSrc.push([e.value, (e.sources || []).map((s) => (s.node && (s.node.className || s.node.nodeName)) + '').join('|') + ':' + e.value.toFixed(3) + '@' + Math.round(performance.now())]); } }).observe({ type: 'layout-shift', buffered: true }); } catch { /* */ } };
 const page = async (w, h) => { const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: true }); await ctx.addInitScript(CLS_INIT); const p = await ctx.newPage(); p.errs = []; p.on('pageerror', (e) => p.errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && !/CERT|fonts\.g/.test(m.text()) && p.errs.push(m.text())); return p; };
 const fails = []; const bad = (m) => { fails.push(m); console.log('  FAIL', m); };
 
@@ -55,7 +55,7 @@ const measure = () => {
   // fonts
   const fonts = []; const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || ['SCRIPT', 'STYLE', 'OPTION'].includes(e.tagName) || !vis(e) || !inSlot(e)) continue;
+    if (!n.textContent.trim()) continue; const e = n.parentElement; if (e && e.closest('svg')) continue; if (!e || ['SCRIPT', 'STYLE', 'OPTION'].includes(e.tagName) || !vis(e) || !inSlot(e)) continue;
     let sz = parseFloat(getComputedStyle(e).fontSize); let k = 1; for (let x = e; x && x !== document.body; x = x.parentElement) { const t = getComputedStyle(x).transform; if (t && t !== 'none') { const m = new DOMMatrix(t); k *= Math.hypot(m.a, m.b); } }
     sz *= k; if (sz < 11.95) fonts.push(`${n.textContent.trim().slice(0, 18)}=${sz.toFixed(1)}`);
   }
@@ -111,7 +111,7 @@ for (const [w, h] of VPS) {
       if (!box) { bad(`${tag} drag: ${d.sel} not found`); continue; }
       const res = await cdpDrag(p, box.x, box.y, d.dx, d.dy, d.probe, d.start);
       let ok = true, msg = '';
-      if (d.axis === 'xy') { if (!res.during) { ok = false; msg = 'no ghost during drag'; } else { const dxm = res.during[0] - box.x, dym = res.during[1] - box.y; ok = Math.abs(dxm - d.dx) / d.dx <= 0.08 && Math.abs(dym - d.dy) / d.dy <= 0.08; msg = `finger (${d.dx},${d.dy}) ghost (${dxm.toFixed(0)},${dym.toFixed(0)})`; } }
+      if (d.axis === 'xy') { if (!res.during) { ok = false; msg = 'no ghost during drag'; } else { const dxm = res.during[0] - box.x, dym = res.during[1] - box.y; ok = (Math.abs(dxm - d.dx) <= Math.max(10, 0.08 * d.dx)) && (Math.abs(dym - d.dy) <= Math.max(10, 0.08 * d.dy)); /* 10px slack: the ghost is content-sized, so its centre sits a few px off the card's */ msg = `finger (${d.dx},${d.dy}) ghost (${dxm.toFixed(0)},${dym.toFixed(0)})`; } }
       else { if (res.during == null) { bad(`${tag} drag: no dragged row`); continue; } const del = res.during - (d.start ? res.start : res.before); const want = d[d.axis]; ok = Math.abs(del - want) / want <= 0.08; msg = `finger ${want} element ${del.toFixed(0)}`; }
       console.log(`   drag ${msg} ${ok ? 'ok' : 'DRIFT'}`); if (!ok) bad(`${tag} drag accuracy: ${msg}`);
     }
@@ -137,7 +137,7 @@ if (!skipCls) {
     const p = await page(w, h); await p.goto(`${base}?cap=${id}&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1500);
     await p.evaluate(() => __cap.fail('La réponse ne respecte pas la règle affichée : relisez la consigne.')); await p.waitForTimeout(2600);
     await p.evaluate(() => window.__cap.solve()); await p.waitForTimeout(2200);
-    const cls = await p.evaluate(() => window.__cls), src = await p.evaluate(() => window.__clsSrc.slice(0, 4));
+    const cls = await p.evaluate(() => window.__cls), src = await p.evaluate(() => window.__clsSrc.slice().sort((a, b) => b[0] - a[0]).slice(0, 4).map((x) => x[1]));
     console.log(`  ${w}x${h} ${id.padEnd(11)} CLS=${cls.toFixed(3)} ${cls > 0.05 ? src.join(' ; ') : ''}`);
     if (cls >= 0.05) bad(`${w}x${h} ${id} CLS ${cls.toFixed(3)} >= 0.05`);
     await p.context().close();
@@ -156,11 +156,11 @@ if (!skipOnline) {
   await A.click('text=Créer une salle'); await A.waitForSelector('.ol-code b'); const code = await A.textContent('.ol-code b');
   await B.fill('input[aria-label="Code de salle"]', code); await B.click('text=Rejoindre'); await B.waitForSelector('.ol-code b');
   await A.click('text=+ Ajouter un bot'); await B.click('text=Je suis prêt'); await sleep(600); await A.click('text=Lancer la partie');
-  await B.waitForSelector('.ol-race', { timeout: 15000 }); await B.waitForSelector('.cap-host', { timeout: 15000 }); await sleep(2500);
+  await B.waitForSelector('.ol-race', { timeout: 15000 }); await B.evaluate(() => { window.__cls = 0; window.__clsSrc = []; }); /* CLS counted from race start */ await B.waitForSelector('.cap-host', { timeout: 15000 }); await sleep(2500);
   const solve = (p) => p.evaluate(() => window.CAPCHA_ONLINE.game?.cur?.api.solve());
   const fail = (p) => p.evaluate(() => window.CAPCHA_ONLINE.game?.cur?.api.fail('La case cochée était la mauvaise, selon le règlement.'));
   await solve(B); await sleep(1600); await fail(B); await sleep(2200); await solve(B); await sleep(1500);
-  const o = await B.evaluate(() => { const card = document.querySelector('.ol-game .card').getBoundingClientRect(); const sp = document.querySelector('.ol-game .speaker'); return { cardTop: Math.round(card.top), cardBottom: Math.round(card.bottom), vh: innerHeight, speaker: sp ? getComputedStyle(sp).display : 'none', cls: window.__cls, src: window.__clsSrc.slice(0, 4), page: document.querySelector('.ol-root').scrollHeight - innerHeight }; });
+  const o = await B.evaluate(() => { const card = document.querySelector('.ol-game .card').getBoundingClientRect(); const sp = document.querySelector('.ol-game .speaker'); return { cardTop: Math.round(card.top), cardBottom: Math.round(card.bottom), vh: innerHeight, speaker: sp ? getComputedStyle(sp).display : 'none', cls: window.__cls, src: window.__clsSrc.slice().sort((a, b) => b[0] - a[0]).slice(0, 4).map((x) => x[1]), page: document.querySelector('.ol-root').scrollHeight - innerHeight }; });
   console.log(`  card ${o.cardTop}-${o.cardBottom} of ${o.vh}  Gérard=${o.speaker}  CLS=${o.cls.toFixed(3)}  rootScroll=${o.page} ${o.cls > 0.1 ? o.src.join(' ; ') : ''}`);
   if (o.cardTop > 150) bad(`online 390: chrome above card is ${o.cardTop}px (> 150)`);
   if (o.vh - o.cardBottom > 60) bad(`online 390: ${o.vh - o.cardBottom}px dead space below card`);

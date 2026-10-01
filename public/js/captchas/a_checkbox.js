@@ -45,12 +45,12 @@ export default {
       if (e && e.pointerType === 'touch') return { ok: true, why: 'Pouce légèrement moite : humain. Merci.' };
       const mouse = e && e.pointerType === 'mouse' && e.detail > 0;
       if (!mouse) return { ok: true, why: 'Pas de souris : on vous croit sur parole (sans enthousiasme).' };
-      const now = performance.now(), p = pts.filter((q) => now - q.t < 4000);
+      const now = performance.now(), p = pts.filter((q) => now - q.t < 5000);
       if (p.length < 3) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
       const a = p[0], b = p[p.length - 1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       let dev = 0, path = 0;
       p.forEach((q, i) => { dev = Math.max(dev, Math.abs((b.x - a.x) * (a.y - q.y) - (a.x - q.x) * (b.y - a.y)) / L); if (i) path += Math.hypot(q.x - p[i - 1].x, q.y - p[i - 1].y); });
-      if (dev < 3.5) S.straight = true; return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` };
+      if (dev < 3.5) { S.straight = true; return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` }; }
       return { ok: true, why: 'Tremblements réalistes détectés. Bravo, vous êtes visiblement stressé·e.' };
     };
     const touchy = (e) => e.pointerType === 'touch' || e.pointerType === 'pen';

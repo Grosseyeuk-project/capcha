@@ -43,7 +43,7 @@ export default {
       return c;
     });
     function under(ev) { const e = document.elementFromPoint(ev.clientX, ev.clientY); return e && e.closest && e.closest('[data-b]') && Object.values(bins).includes(e.closest('[data-b]')) ? e.closest('[data-b]') : null; }
-    function pick(i) { selected = selected === i ? -1 : i; api.sfx('click'); render(); }
+    function pick(i) { if (selected >= 0 && selected !== i && place[i] !== 'p') return mv(selected, place[i]); selected = selected === i ? -1 : i; api.sfx('click'); render(); }
     for (const b of [binH, binR]) b.addEventListener('click', (e) => { if (selected >= 0 && !e.target.closest('.ab-c')) { mv(selected, b.dataset.b); } });
     pool.addEventListener('click', (e) => { if (selected >= 0 && !e.target.closest('.ab-c')) mv(selected, 'p'); });
     function mv(i, to) {

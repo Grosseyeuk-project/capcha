@@ -27,8 +27,19 @@ css('boss', `
 .bb-zone{position:absolute;top:0;bottom:0;background:rgba(45,226,192,.55);border-left:2px solid #2de2c0;border-right:2px solid #2de2c0}
 .bb-zone.hit{background:#fff}
 .bb-beam{position:absolute;top:-6px;bottom:-6px;width:6px;margin-left:-3px;background:var(--yellow);box-shadow:0 0 12px var(--yellow)}
-.bb-tun{position:absolute;left:34%;width:32%;top:0;bottom:0;background:repeating-linear-gradient(45deg,#000 0 6px,#222 6px 12px);z-index:3;display:grid;place-items:center;font:700 10px var(--mono);color:#777;letter-spacing:.1em}
+.bb-tun{position:absolute;left:37%;width:26%;top:0;bottom:0;background:repeating-linear-gradient(45deg,#000 0 6px,#222 6px 12px);z-index:3;display:grid;place-items:center;font:700 10px var(--mono);color:#777;letter-spacing:.1em}
 .bb-stop{align-self:center;min-width:180px;min-height:54px;font-size:20px;background:var(--red);border-color:#fff;color:#fff;box-shadow:3px 3px 0 #fff}
+.bb-ch{position:absolute;left:8px;right:8px;top:22px;display:flex;gap:6px;flex-wrap:wrap}
+.bb-ch span{font:700 10px var(--mono);border:1px solid #567;color:#9ab;padding:1px 6px;letter-spacing:.04em;text-transform:uppercase}.bb-ch span.done{background:#2de2c0;color:var(--ink);border-color:#2de2c0;text-decoration:line-through}
+.bb-fin{position:absolute;left:0;right:0;top:26px;bottom:0;padding:6px 14px 10px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.bb-area{position:relative;flex:1;min-height:100px}
+.bb-cb{position:absolute;left:0;top:0;appearance:none;border:2px solid #fff;background:#fff;color:var(--ink);font:700 16px var(--body);padding:10px 14px;min-height:46px;cursor:pointer;display:flex;gap:8px;align-items:center;transition:left .25s,top .25s}
+.bb-cb b{font-size:24px;line-height:1}.bb-cb.hop{animation:bk-flip .35s}.bb-cb.ok{background:var(--green)}
+.bb-rl{display:flex;flex-wrap:wrap;gap:4px}.bb-rl span{font:600 11px var(--mono);padding:2px 6px;background:#3a1f26;color:#ffb3bb;border:1px solid #7a3a44}.bb-rl span.ok{background:#12372f;color:#7fe9d4;border-color:#2de2c0}
+.bb-row{display:flex;gap:8px}.bb-row input{flex:1;min-width:0}
+.bb-chips{display:flex;gap:6px}.bb-chips button{border:2px solid #fff;background:#10202a;color:#fff;font:700 14px var(--mono);min-width:40px;height:34px;padding:0 8px;cursor:pointer}
+.bb-fin input{font:700 17px var(--mono);padding:9px 10px;border:2px solid #fff;background:#10202a;color:#fff;outline:none;border-radius:0}.bb-fin input:focus{border-color:var(--yellow)}.bb-fin input.chomp{animation:bk-flip .4s}
+.bb-fin .bb-phrase{font-size:20px}
 .bb-ret{position:absolute;left:0;top:0;width:28px;height:28px;border:3px solid var(--red);border-radius:50%;z-index:6;pointer-events:none;opacity:0;box-shadow:0 0 12px var(--red)}
 .bb-ret::before,.bb-ret::after{content:'';position:absolute;background:var(--red)}.bb-ret::before{left:11px;top:-8px;width:3px;height:36px}.bb-ret::after{top:11px;left:-8px;height:3px;width:36px}
 .bb-stage.inv .bb-ret{opacity:1}.bb-stage.inv{cursor:none;outline:3px dashed var(--red);outline-offset:-3px}.bb-stage.inv .bb-orb{cursor:none}
@@ -44,7 +55,7 @@ css('boss', `
 .bb-hp b{display:flex;justify-content:space-between;font:800 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;gap:8px}
 .bb-bar{height:20px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden}
 .bb-bar i{position:absolute;inset:0;background:repeating-linear-gradient(135deg,var(--red) 0 10px,#ff6677 10px 20px);transform-origin:0 0;transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
-.bb-stage{border:2px solid var(--ink);background:#0d1b24;color:#fff;height:210px;position:relative;overflow:hidden;box-shadow:4px 4px 0 var(--ink)}
+.bb-stage{border:2px solid var(--ink);background:#0d1b24;color:#fff;height:250px;position:relative;overflow:hidden;box-shadow:4px 4px 0 var(--ink)}
 .bb-orb{position:absolute;left:0;top:0;width:54px;height:54px;padding:0;border:0;background:none;font-size:42px;line-height:54px;text-align:center;cursor:crosshair;will-change:transform;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;touch-action:manipulation}
 .bb-orb s{display:block;text-decoration:none}.bb-orb.boom s{animation:bb-boom .35s forwards}
 .bb-orb:focus-visible{outline:3px solid #7fe9d4;border-radius:50%}
@@ -63,6 +74,7 @@ css('boss', `
 .bb-s{position:absolute;left:8px;top:6px;font:600 10px var(--mono);color:#7fe9d4;letter-spacing:.08em;text-transform:uppercase;z-index:3}
 .bb-end{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:rgba(255,210,63,.93);color:var(--ink);font:800 20px/1.2 var(--display);padding:16px;animation:bk-flip .6s;z-index:9}
 `);
+let CK = { phase: 0, t: 0 };
 const PADS = [{ s: '▲', c: '#ff6b6b' }, { s: '●', c: '#ffd23f' }, { s: '■', c: '#43d9a3' }, { s: '◆', c: '#5aa0ff' }];
 const PHRASES = ['je suis humain', 'moi pas un robot', 'bonjour la terre', 'ceci est un test'];
 export default {
@@ -112,59 +124,86 @@ export default {
     }
     // ---- phase 2: synchronisation (timing, tunnel) ----
     function p2() {
-      phase = 2; clear(); api.timer(32000); busy = false; face.dataset.m = '1'; let hits = 0, ph = 0, last = performance.now(), zc = 0.5; const NH = 5, ZW = [0.26, 0.21, 0.17, 0.14, 0.12];
-      setRule('Phase 2/3 — Synchronisation · 32 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), '. ', NH + ' fois. La zone rétrécit, et un ', h('b', {}, 'tunnel'), ' finit par cacher le curseur.');
+      phase = 2; clear(); api.timer(40000); busy = false; face.dataset.m = '1'; let hits = 0, ph = 0, last = performance.now(), zc = 0.5; const NH = 5, ZW = [0.3, 0.27, 0.24, 0.22, 0.2]; CK.phase = 2;
+      setRule('Phase 2/3 — Synchronisation · 40 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), '. ', NH + ' fois. Une erreur vous fait seulement perdre un point de progrès. Au 4e coup, un ', h('b', {}, 'tunnel'), ' cache le curseur (il continue de passer).');
       const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
       const zone = h('div', { class: 'bb-zone' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
       const track = h('div', { class: 'bb-track' }, zone, tun, beam);
       const stop = h('button', { class: 'bk-btn bb-stop', type: 'button', onpointerdown: (e) => { e.preventDefault(); press(); } }, 'STOP');
       stage.append(lab, h('div', { class: 'bb-sync' }, track, stop));
-      const place = () => { const w = ZW[Math.min(hits, NH - 1)]; zc = w / 2 + 0.05 + api.rng() * (0.9 - w); zone.style.left = ((zc - w / 2) * 100) + '%'; zone.style.width = (w * 100) + '%'; tun.style.display = hits >= 2 ? '' : 'none'; };
-      place(); const spd = () => (api.reducedMotion || matchMedia('(pointer:coarse)').matches ? 0.5 : 0.62) + hits * 0.1;
+      const place = () => { const w = ZW[Math.min(hits, NH - 1)]; zc = w / 2 + 0.05 + api.rng() * (0.9 - w); zone.style.left = ((zc - w / 2) * 100) + '%'; zone.style.width = (w * 100) + '%'; tun.style.display = hits >= 3 ? '' : 'none'; };
+      place(); const spd = () => (api.reducedMotion || matchMedia('(pointer:coarse)').matches ? 0.17 : 0.2) + hits * 0.03;
       let pos = 0; const tri = (x) => { x %= 2; return x < 1 ? x : 2 - x; };
-      const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 2 && pos > 0.34 && pos < 0.66; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) { host.dataset.answer = JSON.stringify({ pos, zc, w: ZW[Math.min(hits, NH - 1)] }); } };
+      const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 3 && pos > 0.37 && pos < 0.63; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) { host.dataset.answer = JSON.stringify({ pos, zc, w: ZW[Math.min(hits, NH - 1)] }); } };
       function press() {
         if (busy) return; const w = ZW[Math.min(hits, NH - 1)], d = pos - zc;
-        if (Math.abs(d) <= w / 2) { hits++; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 2 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
-        else { shake(root); const m = Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = 0; lab.textContent = `Synchro : 0/${NH}`; place(); api.timer(30000); api.fail(m + ' Retour à zéro (la phase seulement).', { retry: true }); }
+        if (Math.abs(d) <= w / 2) { hits++; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 3 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
+        else { shake(root); api.sfx('bad'); const m = Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = Math.max(0, hits - 1); lab.textContent = `Synchro : ${hits}/${NH}`; place(); api.say(m + ' Vous perdez un point de progrès, pas une vie.', 'smug'); }
       }
       const key = (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(); } };
       window.addEventListener('keydown', key);
-      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; ph += dt * spd() * 2; pos = tri(ph); upd(); };
+      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.3, (t - last) / 1000); last = t; ph += dt * spd() * 2; pos = tri(ph); upd(); };
       raf = requestAnimationFrame(loop); cleanup = () => window.removeEventListener('keydown', key);
     }
-    // ---- phase 3: phrase à l'envers puis erratum ----
+    // ---- phase 3 : le procès (3 chefs d'accusation, rappels de toute la partie) ----
     function p3() {
-      phase = 3; clear(); busy = false; face.dataset.m = '2'; api.timer(55000);
-      const phrase = api.pick(PHRASES); const rev = [...phrase].reverse().join(''); let step = 0;
-      const ph = h('div', { class: 'bb-phrase' }, phrase), echo = h('div', { class: 'bb-echo', 'aria-hidden': 'true' }), inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', oninput: render, onkeydown: (e) => { if (e.key === 'Enter') ok(); } });
-      const sub = h('button', { class: 'bk-btn', type: 'button', onclick: ok, style: { alignSelf: 'center', minHeight: '38px', padding: '6px 16px' } }, 'Valider');
-      stage.append(h('div', { class: 'bb-s' }, 'Dernier test : 1/2'), h('div', { class: 'bb-type' }, ph, echo, inp, sub));
-      const fwdWords = phrase.split(' ').reverse().join(' ');
-      const want = () => (step === 0 ? rev : fwdWords);
-      setRule('Phase 3/3 — Dactylographie · 55 s', 'Retapez la phrase ', h('b', {}, 'À L’ENVERS'), ', lettre par lettre. Les cases vertes disent juste si votre frappe est bonne : pas la réponse.');
-      if (/cheat=1/.test(location.search)) host.dataset.answer = rev;
-      function render() { const w = [...want()], v = [...inp.value]; echo.replaceChildren(...w.map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, i < v.length ? (v[i] === c ? '▪' : '✕') : '·'))); }
-      render(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 50);
-      let pops = 0;
-      const popup = () => { if (busy || pops >= 3 || stage.querySelector('.bb-pop')) return; pops++; const close = () => { pp.remove(); api.sfx('click'); inp.focus(); }; const names = ['🍪 Ce boss utilise des cookies. 114 partenaires aimeraient connaître vos opinions.', '🔔 CAPCHA-ZILLA souhaite vous envoyer des notifications. Toutes les 4 secondes.', '⭐ Votre avis nous intéresse ! Sondage de 47 questions (obligatoire).'];
-        const pp = h('div', { class: 'bb-pop', role: 'dialog' }, h('b', {}, 'Un instant !'), h('span', {}, names[(pops - 1) % 3]), h('button', { class: 'a', type: 'button', onclick: close }, 'Tout accepter'), h('button', { class: 'x', type: 'button', 'aria-label': 'Fermer', onclick: close }, '×'));
-        stage.append(pp); api.sfx('whoosh'); if (pops === 1) api.say('Une fenêtre publicitaire. Le boss a des sponsors.', 'smug'); };
-      const piv = setInterval(popup, 4800); T(popup, 2200); cleanup = () => clearInterval(piv);
-      function ok() {
-        if (busy) return; const v = inp.value, w = want();
-        if (v !== w) { shake(root); const i = [...v].findIndex((c, k) => c !== [...w][k]); const msg = !v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? `Il manque la fin : « ${[...w].slice([...v].length).join('')} ». On ne rend pas copie blanche à moitié.` : `Caractère n° ${i + 1} : « ${[...v][i]} » au lieu de « ${[...w][i]} ». ${step ? 'Mots à l’endroit, ordre des mots inversé. Oui, c’est un piège.' : 'À l’envers, ça ne pardonne pas.'}`; api.timer(step ? 30000 : 40000); return api.fail(msg + ' (Votre progression dans le boss est conservée.)', { retry: true }); }
-        if (step === 0) { step = 1; inp.value = ''; api.sfx('whoosh'); hp(10); face.classList.remove('hurt'); stage.firstChild.textContent = 'Dernier test : 2/2'; ph.textContent = phrase; setRule('Erratum de dernière minute · 30 s', 'En fait, gardez les mots ', h('b', {}, 'à l’endroit'), ' mais inversez leur ', h('b', {}, 'ORDRE'), ' (dernier mot d’abord). Désolé. Non : pas désolé.'); api.say('Les mots à l’endroit, dans l’ordre inverse. J’ai changé d’avis. J’en ai le droit, je suis le boss.', 'smug'); api.timer(30000); render(); inp.focus(); return; }
-        busy = true; hp(0); face.dataset.m = 'x'; api.sfx('stamp'); api.sfx('confetti'); stage.querySelectorAll('.bb-pop').forEach((x) => x.remove());
+      phase = 3; clear(); busy = false; face.dataset.m = '2'; CK.phase = 3; let step = 0;
+      const lab = h('div', { class: 'bb-s' }, 'Chef d’accusation 1/3'); const body = h('div', { class: 'bb-fin' });
+      const charges = h('div', { class: 'bb-ch' }, ['Robotisme présumé', 'Mots de passe suspects', 'Dactylographie à l’envers'].map((t) => h('span', {}, t)));
+      stage.append(lab, body);
+      const markCharge = () => {};
+      const win = () => {
+        busy = true; hp(0); face.dataset.m = 'x'; CK.phase = 0; api.sfx('stamp'); api.sfx('confetti'); body.replaceChildren();
         stage.classList.remove('bb-sq'); void stage.offsetWidth; if (!api.reducedMotion) { stage.classList.add('bb-sq'); root.classList.add('bk-shake'); }
-        const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌'];
-        for (let k = 0; k < 44; k++) { const an = Math.random() * 6.283, d = 70 + Math.random() * 190; const pt = h('span', { class: 'bb-part', style: { left: '50%', top: '50%' } }, em[k % em.length]); pt.style.setProperty('--dx', Math.cos(an) * d + 'px'); pt.style.setProperty('--dy', Math.sin(an) * d * 0.7 + 'px'); pt.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg'); pt.style.animationDelay = Math.random() * 0.25 + 's'; stage.append(pt); }
-        T(() => { api.sfx('win'); stage.append(h('div', { class: 'bb-end' }, h('div', {}, h('b', {}, 'CAPCHA-ZILLA est vaincu.'), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'Vous êtes un humain. Il n’y a pas de médaille pour ça. Juste mon respect et un accusé de réception.')))); }, 750);
-        api.say('Bon. Vous êtes humain. Je vais devoir vous le dire en face : félicitations. Ne le répétez pas à mon supérieur.', 'impressed'); T(() => api.solve(), 2400);
+        const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌', '🐥', '🐛', '🌕'];
+        for (let k = 0; k < 54; k++) { const an = Math.random() * 6.283, d = 70 + Math.random() * 200; const pt = h('span', { class: 'bb-part', style: { left: '50%', top: '50%' } }, em[k % em.length]); pt.style.setProperty('--dx', Math.cos(an) * d + 'px'); pt.style.setProperty('--dy', Math.sin(an) * d * 0.7 + 'px'); pt.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg'); pt.style.animationDelay = Math.random() * 0.3 + 's'; stage.append(pt); }
+        T(() => { api.sfx('win'); stage.append(h('div', { class: 'bb-end' }, h('div', {}, h('b', {}, 'Charges abandonnées : 3/3'), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'CAPCHA-ZILLA est vaincu. Vous êtes un humain. Il n’y a pas de médaille pour ça. Juste mon respect et un accusé de réception.')))); }, 750);
+        api.say('Trois charges, trois abandons. Je ne dirai pas que je suis impressionné. Je l’écrirai, par contre. Dans un rapport. Avec votre nom.', 'impressed'); T(() => api.solve(), 2600);
+      };
+      const next = () => { markCharge(step); api.sfx('good'); step++; hp([15, 9, 4][step - 1]); if (step >= 3) { win(); return; } T(stepIn, 700); };
+      // 1 : la case « je ne suis pas un robot » qui se dérobe
+      function stepA() {
+        api.timer(22000); lab.textContent = 'Chef d’accusation 1/3 · 22 s'; setRule('Charge n° 1 — Robotisme présumé', 'Cochez ', h('b', {}, '« Je ne suis pas un robot »'), '. Elle se dérobe les deux premières fois : insistez (clic, toucher, ou Entrée).');
+        let presses = 0; const area = h('div', { class: 'bb-area' }); body.append(area);
+        const lines = ['Trop lent. Un robot aurait déjà coché.', 'Vous hésitez ? C’est suspect. Réessayez.', 'Bon. Passez.'];
+        const cb = h('button', { class: 'bb-cb', type: 'button', onclick: () => { if (busy) return; presses++; api.sfx(presses < 3 ? 'bad' : 'pop'); if (presses < 3) { cb.classList.remove('hop'); void cb.offsetWidth; cb.classList.add('hop'); place(); api.say(lines[presses - 1], 'smug'); } else { cb.classList.add('ok'); cb.firstChild.textContent = '☑'; busy = true; T(() => { busy = false; next(); }, 450); } } }, h('b', {}, '☐'), ' Je ne suis pas un robot');
+        area.append(cb);
+        const place = () => { const r = area.getBoundingClientRect(); const mx = Math.max(0, r.width - cb.offsetWidth - 4), my = Math.max(0, r.height - cb.offsetHeight - 4); cb.style.left = (presses % 2 ? mx * (0.55 + api.rng() * 0.4) : mx * api.rng() * 0.4) + 'px'; cb.style.top = (my * api.rng()) + 'px'; };
+        place(); if (/cheat=1/.test(location.search)) host.dataset.answer = 'cb';
       }
+      // 2 : mini mot de passe en direct, grignoté par le boss
+      function stepB() {
+        api.timer(40000); lab.textContent = 'Chef d’accusation 2/3 · 40 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Le boss en ', h('b', {}, 'grignote la fin'), ' toutes les 8 s.');
+        const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Un chiffre', (p) => /\d/.test(p)], ['Contient « Gérard »', (p) => p.includes('Gérard')], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
+        const ul = h('div', { class: 'bb-rl' }, mk.map(([t]) => h('span', {}, t)));
+        const inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe…', oninput: ck, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
+        const chips = h('div', { class: 'bb-chips' }, [['Gérard', 'Gérard'], ['é', 'é'], ['7', '7'], ['x', 'x']].map(([c, l]) => h('button', { type: 'button', 'aria-label': l, onclick: () => { inp.value += c; ck(); inp.focus(); } }, c)));
+        const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
+        body.append(ul, h('div', { class: 'bb-row' }, inp, sub), chips);
+        function ck() { const p = inp.value; mk.forEach(([, f], i) => ul.children[i].classList.toggle('ok', f(p))); if (/cheat=1/.test(location.search)) host.dataset.answer = 'Gérard7x' + 'x'.repeat(4); return mk.every(([, f]) => f(p)); }
+        function go() { if (busy) return; if (ck()) { busy = true; next(); } else { shake(root); api.say('Une règle manque encore. Regardez les rouges.', 'smug'); } }
+        const bite = setInterval(() => { if (busy || !inp.value) return; inp.value = [...inp.value].slice(0, -1).join(''); field(); api.sfx('bad'); ck(); }, 8000);
+        const field = () => { inp.classList.remove('chomp'); void inp.offsetWidth; inp.classList.add('chomp'); };
+        cleanup = () => clearInterval(bite); ck(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
+      }
+      // 3 : la phrase à l'envers (ticks seulement)
+      function stepC() {
+        api.timer(34000); lab.textContent = 'Chef d’accusation 3/3 · 34 s'; const phrase = api.pick(PHRASES), rev = [...phrase].reverse().join('');
+        setRule('Charge n° 3 — Dactylographie à l’envers', 'Retapez la phrase ', h('b', {}, 'à l’envers'), ', lettre par lettre (dernière lettre d’abord). Les cases vertes vous disent si votre frappe est bonne, pas laquelle.');
+        const ph = h('div', { class: 'bb-phrase' }, phrase), echo = h('div', { class: 'bb-echo', 'aria-hidden': 'true' });
+        const inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', oninput: render, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
+        const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
+        body.append(ph, echo, h('div', { class: 'bb-row' }, inp, sub));
+        function render() { const w = [...rev], v = [...inp.value]; echo.replaceChildren(...w.map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, i < v.length ? (v[i] === c ? '▪' : '✕') : '·'))); }
+        function go() { if (busy) return; const v = inp.value; if (v === rev) { busy = true; next(); } else { shake(root); const i = [...v].findIndex((c, k) => c !== [...rev][k]); api.say(!v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? 'Il en manque encore. Continuez à reculer.' : `Une lettre est fausse (n° ${i + 1}). Rien n’est perdu, corrigez.`, 'smug'); } }
+        if (/cheat=1/.test(location.search)) host.dataset.answer = rev; render(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
+      }
+      function stepIn() { body.replaceChildren(); if (cleanup) cleanup(); cleanup = null; busy = false; [stepA, stepB, stepC][step](); }
+      stepIn();
     }
-    setRule('Combat de boss', 'Trois épreuves, trois mécaniques que vous connaissez déjà. Il a juste changé les règles.'); hp(100);
-    T(p1, 900);
-    return { destroy() { alive = false; tm.forEach(clearTimeout); window.removeEventListener('pointermove', look); clear(); } };
+    const resume = CK.phase && performance.now() - CK.t < 7000 ? CK.phase : 1;
+    setRule('Combat de boss', resume > 1 ? 'Reprise au dernier point de sauvegarde. Le boss a de la mémoire, lui aussi.' : 'Trois épreuves, trois mécaniques que vous connaissez déjà. Il a juste changé les règles.'); hp(resume === 1 ? 100 : resume === 2 ? 40 : 15);
+    T(resume === 3 ? p3 : resume === 2 ? p2 : p1, 900);
+    return { destroy() { alive = false; tm.forEach(clearTimeout); window.removeEventListener('pointermove', look); CK.t = performance.now(); clear(); } };
   }
 };

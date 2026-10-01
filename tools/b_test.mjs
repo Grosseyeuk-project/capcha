@@ -70,7 +70,7 @@ async function run(id) {
   } else if (id === 'b_robot') {
     const pd = (sel, dx = 0, dy = 0) => p.evaluate(([sel, dx, dy]) => { const el = document.querySelector(sel); const r = el.getBoundingClientRect(); const x = r.left + (dx || r.width / 2), y = r.top + (dy || r.height / 2); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y })); }, [sel, dx, dy]);
     const go = () => p.evaluate(() => document.querySelector('.br-start button').click());
-    await go(); await pd('.br-arena', 6, 290); await waitStrike('raté'); await remount();
+    await go(); await pd('.br-arena', 6, 290); await sleep(200); console.log('  1 stray tolerated, strikes:', (await st()).strikes); await pd('.br-arena', 6, 290); await pd('.br-arena', 6, 290); await waitStrike('3e raté'); await remount();
     await go();
     await p.evaluate(() => new Promise((res) => { let n = 0, last = null; const f = () => { const el = document.querySelector('.br-t'); if (el && el !== last) { last = el; n++; if (n % 2) { const r = el.getBoundingClientRect(); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 26, clientY: r.top + 26 })); } else window.dispatchEvent(new KeyboardEvent('keydown', { key: document.querySelector('.cap-host').dataset.answer.toLowerCase() })); } if (n >= 10 && !document.querySelector('.br-t')) return res(); requestAnimationFrame(f); }; f(); }));
     console.log('  state', JSON.stringify(await st()), await p.textContent('.br-hud')); await waitSolve();
@@ -103,13 +103,18 @@ async function run(id) {
     await p.waitForFunction(() => !document.querySelector('.bb-stage.inv')); await sleep(500);
     for (let k = 0; k < 3; k++) { await hitReal(); await sleep(900); }
     await p.waitForSelector('.bb-sync', { timeout: 8000 }); await shot('p2');
-    const stopWhen = (inside) => p.evaluate((inside) => new Promise((res) => { const f = () => { const d = JSON.parse(document.querySelector('.cap-host').dataset.answer); const dd = Math.abs(d.pos - d.zc); if (inside ? dd < d.w * 0.3 : dd > 0.4) { document.querySelector('.bb-stop').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); res(); } else requestAnimationFrame(f); }; f(); }), inside);
-    await stopWhen(false); await waitStrike('synchro ratée (retry, phase gardée)'); await sleep(300);
-    for (let k = 0; k < 5; k++) { await stopWhen(true); await sleep(250); if (k === 2) await shot('tunnel'); }
-    await p.waitForSelector('.bb-type input', { timeout: 6000 }); await shot('p3'); const rev = await ans();
-    await p.fill('.bb-type input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await waitStrike('typo (retry)'); await sleep(300);
-    await p.keyboard.type(rev.slice(0, 5), { delay: 20 }); await p.fill('.bb-type input', rev); await shot('p3typed'); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
-    const phrase = [...rev].reverse().join(''); const fwd = phrase.split(' ').reverse().join(' '); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await sleep(900); await shot('end2'); await waitSolve();
+    const stopWhen = (inside) => p.evaluate((inside) => new Promise((res) => { const f = () => { if (!document.querySelector('.bb-sync')) return res(); const d = JSON.parse(document.querySelector('.cap-host').dataset.answer); const dd = Math.abs(d.pos - d.zc); if (inside ? dd < d.w * 0.42 : dd > 0.4) { document.querySelector('.bb-stop').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); res(); } else requestAnimationFrame(f); }; f(); }), inside);
+    const s0 = (await st()).strikes; await stopWhen(false); await sleep(400); console.log('  miss costs strike?', (await st()).strikes !== s0, await p.textContent('.bb-s'));
+    for (let k = 0; k < 25; k++) { if (await p.evaluate(() => !document.querySelector('.bb-sync'))) break; await stopWhen(true); await sleep(250); if (k === 3) await shot('tunnel'); }
+    await p.waitForSelector('.bb-cb', { timeout: 8000 }).catch(async (e) => { console.log('  lab:', await p.textContent('.bb-s').catch(() => '?'), JSON.stringify(await st())); await shot('dbg'); throw e; }); await shot('p3a');
+    // timeout at phase 3 -> must resume at phase 3, not phase 1
+    await p.evaluate(() => window.__cap.left(300)); await waitStrike('timeout p3'); await remount(); await sleep(1200);
+    console.log('  resumed at:', await p.evaluate(() => !!document.querySelector('.bb-cb') ? 'phase 3' : document.querySelector('.bb-sync') ? 'phase 2' : 'phase 1'));
+    await p.waitForSelector('.bb-cb', { timeout: 6000 });
+    for (let k = 0; k < 3; k++) { await p.evaluate(() => document.querySelector('.bb-cb').click()); await sleep(450); } await sleep(800); await shot('p3b');
+    await p.waitForSelector('.bb-fin input', { timeout: 6000 }); const pw = await ans(); await p.fill('.bb-fin input', 'abc'); await p.keyboard.press('Enter'); await sleep(300); await p.fill('.bb-fin input', pw); await shot('p3b2'); await p.keyboard.press('Enter'); await sleep(1300);
+    await p.waitForSelector('.bb-echo', { timeout: 6000 }); const rev = await ans(); await p.fill('.bb-fin input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await sleep(300); console.log('  typo strikes:', (await st()).strikes);
+    await p.keyboard.type('xx', { delay: 20 }); await p.fill('.bb-fin input', rev); await shot('p3c'); await p.keyboard.press('Enter'); await sleep(700); await shot('end'); await sleep(1000); await shot('end2'); await waitSolve();
   }
   end();
   async function end() { await sleep(300); if (errs.length) console.log(`  [${id}] ERRORS:`, errs.slice(0, 4)); await ctx.close(); }
