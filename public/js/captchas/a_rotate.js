@@ -5,7 +5,7 @@ css('rot', `
 .ar-lb{position:absolute;top:6px;font:700 10px system-ui;letter-spacing:.12em;color:#9fb0d0;pointer-events:none;text-transform:uppercase}
 .ar-dv{position:absolute;left:50%;top:10px;bottom:10px;width:1px;background:rgba(255,255,255,.18)}
 .ar-bt{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
-.ar-bt button{height:40px;border:1px solid #c9ccd1;border-radius:4px;background:#fff;font-size:17px;cursor:pointer;color:#1a3d7c;transition:background .12s,transform .08s,border-color .12s;padding:0}
+.ar-bt button{height:36px;border:1px solid #c9ccd1;border-radius:4px;background:#fff;font-size:17px;cursor:pointer;color:#1a3d7c;transition:background .12s,transform .08s,border-color .12s;padding:0}
 .ar-bt button:hover{background:#e8f0fe;border-color:#1a73e8}.ar-bt button:active{transform:scale(.92)}
 `);
 // orientation = 3x3 int matrix (row-major). Rotations about world axes by 90deg.
@@ -19,7 +19,7 @@ const CELLS = [[0, 0, 0, '#e53935'], [1, 0, 0, '#fdd835'], [2, 0, 0, '#43a047'],
 export default {
   id: 'a_rotate', tier: 2, title: 'Rotation 3D', time: 50000,
   mount(host, api) {
-    const { h, THREE } = api, W = 360, H = 190, noUp = hasRule('a_rotate', 'R4');
+    const { h, THREE } = api, W = 360, H = 165, noUp = hasRule('a_rotate', 'R4');
     // all 24 orientations via BFS with distances
     const dist = new Map([[key(I), 0]]), q = [I]; while (q.length) { const m = q.shift(); for (const mv of MOVES) { const n = mul(mv, m), k = key(n); if (!dist.has(k)) { dist.set(k, dist.get(key(m)) + 1); q.push(n); } } }
     const all = [...dist.keys()].map((k) => k.split(',').map(Number));
@@ -34,7 +34,7 @@ export default {
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
     defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; bt.append(h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 4 : ↑ en maintenance' : l, disabled: dis ? '' : null, style: dis ? { opacity: .35, cursor: 'not-allowed', textDecoration: 'line-through' } : {}, onclick: () => rot(i) }, t)); });
-    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Chaque cube a sa couleur, donc une seule pose est la bonne. Par quarts de tour.', body: [stage, bt], onVerify: check });
+    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt], onVerify: check });
     host.append(fr.el);
     if (/cheat=1/.test(location.search)) { // BFS path for tests
       const par = new Map([[key(cur), null]]), qq = [cur]; let hit = null;

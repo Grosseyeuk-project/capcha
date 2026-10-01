@@ -30,9 +30,9 @@ css('base', `
 export const ORDER = ['a_checkbox', 'a_wavy', 'a_grid', 'a_math', 'a_slider', 'a_bins', 'a_order', 'a_rotate'];
 export const RULES = [
   { after: 'a_checkbox', k: 'R1', t: 'minuscules', full: 'Règle 1 : toute réponse tapée doit être en minuscules.' },
-  { after: 'a_wavy', k: 'R2', t: 'zéro chiffre', full: 'Règle 2 : les nombres s’écrivent désormais en toutes lettres.' },
-  { after: 'a_grid', k: 'R3', t: 'patience 2 s', full: 'Règle 3 : « Vérifier » ne s’active que 2 s après l’affichage, pour prouver votre calme.' },
-  { after: 'a_order', k: 'R4', t: '↑ en panne', full: 'Règle 4 : le bouton ↑ est suspendu pour maintenance. Il reviendra.' }
+  { after: 'a_wavy', k: 'R2', t: 'sans chiffres', full: 'Règle 2 : les nombres s’écrivent désormais en toutes lettres.' },
+  { after: 'a_grid', k: 'R3', t: 'patience', full: 'Règle 3 : « Vérifier » ne s’active que 2 s après l’affichage, pour prouver votre calme.' },
+  { after: 'a_order', k: 'R4', t: '↑ HS', full: 'Règle 4 : le bouton ↑ est suspendu pour maintenance. Il reviendra.' }
 ];
 export const lvOf = (id) => Math.max(0, ORDER.indexOf(id));
 export const rulesFor = (id) => RULES.filter((r) => ORDER.indexOf(r.after) < ORDER.indexOf(id));
@@ -49,9 +49,9 @@ css('esc', `
 .ak-sub{display:block;font-size:10.5px;letter-spacing:.04em;opacity:.9;margin-top:3px;min-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ak-inc{position:absolute;inset:0;background:#b3261e;color:#fff;padding:9px 16px;font-size:12.5px;line-height:1.3;display:flex;align-items:center;animation:ak-pop .25s both;z-index:3;overflow:hidden}
 .ak-inc.old{background:#5f4a00}
-.ak-rl{padding:6px 10px 0;display:flex;flex-wrap:wrap;gap:4px;min-height:24px;align-content:flex-start}
-.ak-chip{font:700 9.5px/1 system-ui;letter-spacing:.05em;text-transform:uppercase;padding:4px 6px;border-radius:9px;background:#fff3cd;color:#664d03;border:1px solid #ecd48a;cursor:help}
-.ak-mock{display:flex;align-items:center;gap:7px;padding:5px 12px 0;font-size:11px;color:#5f6368;min-height:24px;width:100%;appearance:none;background:none;border:0;text-align:left;cursor:pointer;font-family:inherit}
+.ak-rl{padding:6px 10px 0;display:flex;flex-wrap:nowrap;gap:3px;min-height:22px;align-content:flex-start}
+.ak-chip{font:700 9px/1 system-ui;letter-spacing:.03em;text-transform:uppercase;padding:3px 5px;border-radius:9px;background:#fff3cd;color:#664d03;border:1px solid #ecd48a;cursor:help}
+.ak-mock{display:flex;align-items:center;gap:7px;padding:4px 12px 0;font-size:10.5px;color:#5f6368;min-height:20px;width:100%;appearance:none;background:none;border:0;text-align:left;cursor:pointer;font-family:inherit}
 .ak-mock i{flex:none;width:15px;height:15px;border:2px solid #9aa0a6;border-radius:3px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:900;line-height:1;color:#188038}
 .ak-mock:hover i{border-color:var(--ak-acc)}
 /* escalation */
@@ -89,7 +89,7 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
   const noteEl = note != null ? h('div', { class: 'ak-note' }, note) : null;
   const sub = h('span', { class: 'ak-sub' }, SUB[lv]);
   const head = h('div', { class: 'ak-head' }, h('small', {}, small || 'Sélectionnez'), h('b', {}, title), sub);
-  const rl = rules.length ? h('div', { class: 'ak-rl', 'aria-label': 'Règles en vigueur' }, rules.map((r) => h('span', { class: 'ak-chip', title: r.full }, r.k + ' · ' + r.t))) : null;
+  const rl = rules.length ? h('div', { class: 'ak-rl', 'aria-label': 'Règles en vigueur' }, rules.map((r) => h('span', { class: 'ak-chip', title: r.full }, r.k + ' ' + r.t))) : null;
   let mock = null;
   if (MOCK[lv]) { mock = h('button', { class: 'ak-mock', type: 'button', onclick: () => api && api.say(MOCKSAY[lv], 'smug') }, h('i', {}, MOCK[lv][0]), MOCK[lv][1]); }
   const el = h('div', { class: 'ak-w', role: 'group', 'aria-label': title, 'data-lv': lv },
