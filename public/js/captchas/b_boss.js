@@ -152,7 +152,7 @@ export default {
       }
       const key = (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(); } };
       window.addEventListener('keydown', key);
-      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.3, (t - last) / 1000); last = t; ph += dt * vNow(); pos = tri(ph); upd(); };
+      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(1, (t - last) / 1000); last = t; ph += dt * vNow(); pos = tri(ph); upd(); };
       raf = requestAnimationFrame(loop); cleanup = () => window.removeEventListener('keydown', key);
     }
     // ---- phase 3 : le procès (3 chefs d'accusation) ----

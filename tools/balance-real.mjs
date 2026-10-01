@@ -14,13 +14,13 @@ for (const [name, bias, sd] of PROFILES) {
     await p.waitForSelector('.bb-sync', { timeout: 15000 }).catch(() => {}); if (!(await p.$('.bb-sync'))) continue; await sleep(400);
     const r = await p.evaluate(({ bias, sd, N }) => new Promise((res) => {
       const randn = () => { let u = 0; while (!u) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.2832 * Math.random()); };
-      let ok = 0, tot = 0; const host = document.querySelector('.cap-host'); const lab = () => +document.querySelector('.bb-s').textContent.match(/(\d)\/5/)[1];
+      let ok = 0, tot = 0, late = 0, nl = 0; const host = document.querySelector('.cap-host'); const lab = () => +document.querySelector('.bb-s').textContent.match(/(\d)\/5/)[1];
       const eta = (s) => { let x = s.pos, d = s.dir, t = 0; for (let k = 0; k < 5; k++) { const toZ = (s.zc - x) * d; if (toZ > 0) return t + toZ / s.v; const edge = d > 0 ? 1 : 0; t += Math.abs(edge - x) / s.v; x = edge; d = -d; } return t; };
       const one = () => {
         if (!document.querySelector('.bb-sync') || tot >= N) return res({ ok, tot });
         const s = host.__p2(); const h0 = s.hits; let t = eta(s); if (t < 0.3) t += 2 / s.v; // lead time : on vise le passage suivant
-        const when = Math.max(0, t * 1000 + bias + sd * randn());
-        setTimeout(() => { if (!document.querySelector('.bb-sync')) return res({ ok, tot }); document.querySelector('.bb-stop').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        const when = Math.max(0, t * 1000 + bias + sd * randn() - (nl ? late / nl : 0)); const planned = performance.now() + when;
+        setTimeout(() => { late += performance.now() - planned; nl++; if (!document.querySelector('.bb-sync')) return res({ ok, tot }); document.querySelector('.bb-stop').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
           setTimeout(() => { const h1 = document.querySelector('.bb-sync') ? lab() : 5; tot++; if (h1 > h0) ok++; setTimeout(one, 300 + 100 * Math.random()); }, 80); }, when);
       }; one();
     }), { bias, sd, N: N - tot });
