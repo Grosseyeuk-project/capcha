@@ -15,7 +15,18 @@ export class Game {
   constructor({ root, seedFor = (l) => l * 7919 + 13, mode = 'solo', onEvent = () => {}, startLevel = 1, onReplay, onMenu }) {
     Object.assign(this, { root, seedFor, mode, onEvent, level: startLevel, startLevel, onReplay, onMenu, strikes: 0, cur: null, phase: 'idle' });
     this.stats = { solves: 0, sumMs: 0, fastest: 0, streak: 0, maxStreak: 0, strikes: 0, reached: startLevel, totalMs: 0 };
-    this.timeouts = new Set(); this.idleN = 0; this.lastAct = performance.now(); this.lastTier = 0; this.sayTok = 0;
+    this.dossier = []; this.past = { fast: null, slow: null, strikes: [] }; this.timeouts = new Set(); this.idleN = 0; this.lastAct = performance.now(); this.lastTier = 0; this.sayTok = 0;
+  }
+  charge(t) { this.dossier.push(t); }
+  dossierLine() { const n = this.dossier.length; if (!n) return ''; return `Dossier : ${n} charge${n > 1 ? 's' : ''} · suspicion ${Math.round((this.susp || 0) * 100)} %`; }
+  callback() {
+    const q = this.past, sec = (ms) => fmtSec(ms), pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const opts = [];
+    if (q.strikes.length) { const t = pick(q.strikes); opts.push(`Je repense à « ${t} ». Une erreur pareille, ça se garde en mémoire. La mienne, pas la vôtre.`, `« ${t} » : c’est classé. Sous « Anecdotes pour la retraite ».`); }
+    if (q.fast) opts.push(`Votre « ${q.fast.t} » en ${sec(q.fast.ms)} ? J’ai demandé une expertise. Les experts rient encore.`);
+    if (q.slow) opts.push(`« ${q.slow.t} », ${sec(q.slow.ms)}. J’ai eu le temps de refaire mon CV.`);
+    if (this.dossier.length >= 3) opts.push(`Votre dossier compte ${this.dossier.length} charges. Je les relis le soir. C’est mon Netflix.`);
+    return opts.length ? pick(opts) : null;
   }
   get total() { return CAPTCHAS.length; }
   get progress() { return clamp01((this.level - 1) / Math.max(1, this.total)); }
@@ -58,15 +69,17 @@ export class Game {
     this.stamp = h('div', { class: 'stamp', 'aria-hidden': 'true' });
     this.cardHead = h('div', { class: 'card-head' }, this.levelN, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
     this.host = h('div', { class: 'cap-slot' });
-    this.card = h('section', { class: 'card', 'aria-label': 'Vérification en cours' }, this.cardHead, this.host, this.stamp, h('div', { class: 'card-foot', 'aria-hidden': 'true' }, 'Protégé par CAPCHA™ · Vos erreurs sont consignées · ', h('u', {}, 'Confidentialité (non)')));
+    this.footDefault = 'Protégé par CAPCHA™ · Vos erreurs sont consignées · Confidentialité (non)';
+    this.foot = h('div', { class: 'card-foot', 'aria-hidden': 'true' }, this.footDefault);
+    this.srEl = h('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
+    this.card = h('section', { class: 'card', 'aria-label': 'Vérification en cours' }, this.cardHead, this.host, this.stamp, this.foot);
     this.bar = h('div', { class: 'bar' }, h('i', {}));
     this.barFill = this.bar.firstChild;
     this.flashEl = h('div', { class: 'flash', 'aria-hidden': 'true' });
     this.banner = h('div', { class: 'banner', 'aria-hidden': 'true' });
     this.hud.append(this.bar);
     this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card);
-    this.toastEl = h('div', { class: 'rule-toast', 'aria-hidden': 'true' });
-    this.root.append(this.stage, this.ledger, this.flashEl, this.toastEl);
+    this.root.append(this.stage, this.ledger, this.flashEl, this.srEl);
     if (this.mode !== 'solo') this.root.classList.add('online');
     this.card.append(this.banner);
   }
@@ -95,16 +108,17 @@ export class Game {
     this.hudRefresh(); this.syncMood();
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0'); this.clock.textContent = '--';
     const tier = def.tier || 1;
-    if (!retry) this.card.classList.remove('struck', 'solved'); this.card.dataset.tier = tier;
+    if (!retry) { this.card.classList.remove('struck', 'solved'); this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
     const fast = this.mode !== 'solo';
     const delay = retry ? 0 : RM() ? 120 : fast ? 260 : 640;
-    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title)));
+    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1] + ' »')) : null));
     if (!retry) { this.banner.className = 'banner show'; this.card.classList.add('entering'); this.host.replaceChildren(); this.host.classList.remove('ready'); }
     if (!retry) { sfx('level'); bg.pulse('level'); }
     // narration
     if (!retry) {
       if (first && this.level === 1 && this.strikes === 0 && !this.stats.solves) this.narrate('begin');
       else if (tier > this.lastTier && this.lastTier && LINES_TIER(tier)) this.narrate('tier' + tier);
+      else if (!first && this.level >= 3 && Math.random() < 0.4 && this.callback()) this.speak(this.callback(), 'smug');
       else if (first || Math.random() < 0.33) this.narrate('level');
       this.lastTier = tier;
     }
@@ -182,6 +196,13 @@ export class Game {
     const r = this.card.getBoundingClientRect(); const fast = ms < c.limit * 0.3;
     sfx('confetti'); confetti(r.left, r.top + 40, fast ? 30 : 16); confetti(r.right, r.top + 40, fast ? 30 : 16);
     this.root.style.setProperty('--pressure', '0'); this.root.dataset.pressure = 'low'; setTension(this.susp * 0.5); bg.set({ pressure: 0 });
+    const pettyPool = ['Respiration jugée trop régulière', 'Sourcil gauche suspect', 'A souri pendant un test (prémédité ?)', 'Possède un pouce opposable', 'A cligné des yeux 4 fois en 10 secondes', 'Posture trop humaine pour être honnête', 'Soupçon de clavier mécanique'];
+    if (!this.past.fast || ms < this.past.fast.ms) this.past.fast = { t: c.def.title, ms };
+    if (!this.past.slow || ms > this.past.slow.ms) this.past.slow = { t: c.def.title, ms };
+    if (fast) this.charge(`Rapidité suspecte sur « ${c.def.title} » (${fmtSec(ms)})`);
+    else if (ms > c.limit * 0.78) this.charge(`Hésitation prolongée devant « ${c.def.title} »`);
+    else if (st.streak === 3) this.charge('Série de bonnes réponses : trop régulière');
+    else if (Math.random() < 0.45) this.charge(pettyPool[Math.floor(Math.random() * pettyPool.length)]);
     this.rule('ok', `Règle ${pad(this.level)} respectée`, c.def.title, fmtSec(ms));
     this.onEvent({ type: 'solve', level: this.level, ms });
     const key = st.streak === 5 ? 'streak5' : st.streak === 3 ? 'streak3' : fast && st.strikes === 0 ? 'solveFast' : ms > c.limit * 0.78 ? 'solveSlow' : 'solve';
@@ -198,7 +219,8 @@ export class Game {
     const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
       h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
     this.list.firstChild.after(li);
-    const t = li.cloneNode(true); this.toastEl.replaceChildren(t); this.toastEl.className = 'rule-toast show'; clearTimeout(this.toastT); this.toastT = setTimeout(() => { this.toastEl.className = 'rule-toast'; }, 3400);
+    const msg = kind === 'ok' ? `✓ ${title.split(' ').slice(0, 2).join(' ')} · ${text} · ${meta}` : `✕ ${text}`;
+    this.foot.className = 'card-foot v-' + kind; this.foot.textContent = msg; this.srEl.textContent = (kind === 'ok' ? '' : title + ' : ') + msg;
     const cap = this.mode === 'solo' ? 9 : 3;
     while (this.list.childElementCount > cap) this.list.lastChild.remove();
     return li;
@@ -214,6 +236,7 @@ export class Game {
     this.card.classList.add('struck');
     this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'));
     const over = this.strikes >= 3;
+    const tt = CAPTCHAS[this.level - 1]?.title || 'une vérification'; this.past.strikes.push(tt); this.charge(timeout ? `A laissé expirer « ${tt} »` : `Échec à « ${tt} » (pièce à conviction n° ${pad(this.level)})`);
     const why = timeout ? 'Le chronomètre a expiré avant votre réponse.' : (msg && msg !== 'cheat' ? msg : 'Réponse incorrecte : elle ne respecte pas la règle affichée.');
     this.rule('bad', `Règle ${pad(this.level)} enfreinte · ${this.strikes}/3`, why);
     if (!over) {
@@ -243,8 +266,8 @@ export class Game {
     if (this.mode === 'solo') { const b = loadBest(); if (!b || lvlDone > (b.level ?? 0) || (win && !b.win)) saveBest({ level: lvlDone, total: this.total, rank, win }); }
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
     const sp = new Speaker(); const key = win ? 'win' : 'over';
-    const el = endScreen({ kind, stats: st, rank, total: this.total, speaker: sp, onReplay: this.onReplay, onMenu: this.onMenu });
-    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say(say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true, instant: true }); }, win ? 500 : 100);
+    const el = endScreen({ kind, dossier: this.dossier, stats: st, rank, total: this.total, speaker: sp, onReplay: this.onReplay, onMenu: this.onMenu });
+    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say((!win && this.callback()) || say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true, instant: true }); }, win ? 500 : 100);
     this.endEl = el; this.endSp = sp;
     this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } });
   }

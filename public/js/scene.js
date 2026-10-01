@@ -2,7 +2,7 @@
 // et un Grand Œil au fond. Réagit à la suspicion (erreurs / progression) et à la pression (chrono).
 import * as THREE from 'three';
 
-const st = { suspicion: 0, pressure: 0, mood: 'neutral', eyeNy: 0.04, eyeScale: 1, flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
+const st = { suspicion: 0, pressure: 0, mood: 'neutral', eyeNy: 0.04, eyeNx: 0, eyeScale: 1, flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const C_CALM = new THREE.Color(0x2de2c0), C_WARN = new THREE.Color(0xffb02e), C_BAD = new THREE.Color(0xff3b4e);
 const BG = 0x070b0f;
@@ -19,7 +19,7 @@ export const bg = {
   },
   beat() { st.beat = 1; },
   // place le Grand Œil dans un rectangle d'écran (écran titre) ; null = position par défaut derrière la carte
-  eyeTo(rect) { if (!rect) { st.eyeNy = 0.04; st.eyeScale = 1; return; } const hh = Math.tan(35 * Math.PI / 180) * 42; st.eyeNy = 1 - (rect.top + rect.height / 2) / innerHeight * 2; st.eyeScale = Math.max(0.25, rect.height / innerHeight * hh / 9); },
+  eyeTo(rect) { if (!rect) { st.eyeNy = 0.04; st.eyeNx = 0; st.eyeScale = 1; return; } st.eyeNx = (rect.left + rect.width / 2) / innerWidth * 2 - 1; const hh = Math.tan(35 * Math.PI / 180) * 42; st.eyeNy = 1 - (rect.top + rect.height / 2) / innerHeight * 2; st.eyeScale = Math.max(0.25, rect.height / innerHeight * hh / 9); },
   shake(v = 1) { st.shake = Math.max(st.shake, v); }
 };
 
@@ -160,7 +160,7 @@ export function startScene(canvas) {
     iris.position.x = ptr.sx * 6 + (st.suspicion > 0.6 && !reduced ? Math.sin(tAcc * 23) * 0.15 : 0); iris.position.y = ptr.sy * 2.6;
     const pt = st.mood === 'impressed' ? 1.5 : 1.1 - st.pressure * 0.5 + st.beat * 0.2;
     pup = lerp(pup, pt, dt * 6); pupil.scale.setScalar(pup);
-    { const ez = -42, hh = Math.tan(cam.fov * Math.PI / 360) * -ez; eye.position.y = lerp(eye.position.y, st.eyeNy * hh, dt * 5); eye.position.x = 0; const k2 = lerp(eye.scale.x, st.eyeScale, dt * 5); eye.scale.setScalar(k2); }
+    { const ez = -42, hh = Math.tan(cam.fov * Math.PI / 360) * -ez; eye.position.y = lerp(eye.position.y, st.eyeNy * hh, dt * 5); eye.position.x = lerp(eye.position.x, st.eyeNx * hh * cam.aspect, dt * 5); const k2 = lerp(eye.scale.x, st.eyeScale, dt * 5); eye.scale.setScalar(k2); }
     rays.rotation.z += dt * (0.2 + m);
     // caméra
     const sh = st.shake * 0.35 * k;

@@ -125,7 +125,7 @@ export class Speaker {
   say(text, mood = 'neutral', { instant = false, force = false } = {}) {
     if (this.typing && !force) { this.pending = [text, mood]; return; }
     this.pending = null; clearTimeout(this.timer); this.tok++;
-    this.full = text; this.w.mood(mood); this.el.dataset.mood = mood; this.live.textContent = text;
+    this.full = text; this.text.classList.remove('fit'); this.text.textContent = text; if (this.text.scrollHeight > this.text.clientHeight + 2) this.text.classList.add('fit'); this.w.mood(mood); this.el.dataset.mood = mood; this.live.textContent = text;
     this.bubble.classList.remove('pop'); void this.bubble.offsetWidth; this.bubble.classList.add('pop');
     if (instant || reducedMotion()) { this.finish(); return; }
     this.typing = true; this.el.classList.add('talking'); this.bubble.classList.add('typing'); this.w.talk(true);
@@ -179,7 +179,7 @@ export function installMuteKey() { if (mKey) return; mKey = true; addEventListen
 export function titleScreen({ best, speaker, onSolo, onOnline, onlineReady }) {
   const online = h('button', { class: 'btn ghost', type: 'button' }, 'Mode en ligne', h('small', {}, ''));
   const sub = online.querySelector('small');
-  const refresh = () => { const ok = !!onlineReady(); online.classList.toggle('disabled', !ok); online.setAttribute('aria-disabled', String(!ok)); sub.textContent = ok ? 'défiez d’autres humains (présumés)' : 'bientôt — un stagiaire y travaille'; };
+  const refresh = () => { const ok = !!onlineReady(); online.classList.toggle('disabled', !ok); online.setAttribute('aria-disabled', String(!ok)); sub.textContent = ok ? 'défiez d’autres humains (présumés)' : (location.protocol === 'file:' || !/(^|; )capcha_srv=1/.test(document.cookie) && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) ? 'hors ligne ici : serveur requis' : 'bientôt — un stagiaire y travaille'; };
   refresh();
   online.addEventListener('click', () => { if (online.getAttribute('aria-disabled') === 'true') { sfx('bad'); onOnline(false); } else { sfx('click'); onOnline(true); } });
   const poll = setInterval(() => { if (!online.isConnected) return clearInterval(poll); refresh(); }, 600);
@@ -200,7 +200,7 @@ export function titleScreen({ best, speaker, onSolo, onOnline, onlineReady }) {
 }
 
 // ---------- écran de fin ----------
-export function endScreen({ kind, stats, rank, total, onReplay, onMenu, speaker }) {
+export function endScreen({ kind, dossier = [], stats, rank, total, onReplay, onMenu, speaker }) {
   const win = kind === 'win';
   const stat = (k, v) => h('div', { class: 'stat' }, h('dt', {}, k), h('dd', {}, v));
   const lvl = win ? total : Math.max(0, stats.reached - 1);
@@ -216,6 +216,7 @@ export function endScreen({ kind, stats, rank, total, onReplay, onMenu, speaker 
       h('dl', { class: 'stats' },
         stat('Vérifications', `${lvl} / ${total}`), stat('Temps total', fmtTime(stats.totalMs)), stat('Erreurs', `${stats.strikes} / 3`),
         stat('Plus rapide', stats.fastest ? fmtSec(stats.fastest) : '—'), stat('Meilleure série', String(stats.maxStreak)), stat('Temps moyen', stats.solves ? fmtSec(stats.sumMs / stats.solves) : '—')),
+      dossier.length ? h('div', { class: 'dossier' }, h('h3', {}, 'Casier de la partie'), h('ul', {}, dossier.slice(-5).reverse().map((d) => h('li', {}, d)))) : null,
       speaker ? speaker.el : null,
       h('div', { class: 'actions' }, again, onMenu ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { sfx('click'); onMenu(); } }, 'Menu principal') : null, copy)
     ));

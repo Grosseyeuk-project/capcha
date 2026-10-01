@@ -14,7 +14,9 @@ let game = null, titleSpeaker = null, plays = 0;
 const baseSeed = q.get('seed') ? +q.get('seed') : Math.floor(Math.random() * 1e6);
 const seedFor = q.get('seed') ? () => +q.get('seed') : (l) => baseSeed + l * 7919 + 13;
 
-const onlineReady = () => typeof window.CAPCHA_ONLINE?.open === 'function';
+// Le serveur pose un cookie sur la page ; un hébergement statique n'en pose pas : mode en ligne indisponible, sans aucune requête (zéro erreur console).
+const hasServer = /(?:^|; )capcha_srv=1/.test(document.cookie) || /^(localhost|127\.|\[::1\])/.test(location.hostname);
+const onlineReady = () => hasServer && typeof window.CAPCHA_ONLINE?.open === 'function';
 
 function showTitle() {
   game?.destroy(); game = null; titleSpeaker?.destroy();
@@ -25,13 +27,9 @@ function showTitle() {
     onSolo: () => startSolo(),
     onOnline: (ok) => {
       if (ok) {
-        // Sans serveur (hébergement statique), on prévient poliment au lieu d'ouvrir une salle morte.
-        fetch('healthz', { cache: 'no-store' }).then((r) => r.ok ? r.text() : '', () => '').then((t) => {
-          if (t !== 'ok') { titleSpeaker.say('Le mode en ligne exige un serveur, et ici il n’y en a pas. Gérard est seul. Gérard a l’habitude.', 'worried'); return; }
-          try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); } catch (e) { console.error(e); }
-        });
+        try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); } catch (e) { console.error(e); }
       }
-      else titleSpeaker.say(say('online', Math.random), 'worried');
+      else sfx('bad');
     }
   });
   root.className = 'title-root'; root.replaceChildren(el, h_sound());

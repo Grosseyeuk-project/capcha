@@ -91,8 +91,8 @@ async function run(id) {
     await p.locator('.ar-bt button').nth(3).click({ force: true }); await sleep(400); await click('.ak-btn'); await waitStrike(); await remount();
     const path = (await ans()).split(',').filter(Boolean).map(Number);
     console.log('  path', path.join(','));
-    for (const m of path.slice(0, 1)) { const sb = await box('.ar-st'); const [x, y] = ctr(sb); const d = { 0: [0, -60], 1: [0, 60], 2: [-60, 0], 3: [60, 0] }[m]; if (d) { await p.mouse.move(x + 40, y); await p.mouse.down(); await p.mouse.move(x + 40 + d[0], y + d[1], { steps: 6 }); await p.mouse.up(); } else await p.locator('.ar-bt button').nth(m).click({ force: true }); await sleep(300); }
-    for (const m of path.slice(1)) { await p.locator('.ar-bt button').nth(m).click({ force: true }); await sleep(260); }
+    for (const m of path.slice(0, 0)) { const sb = await box('.ar-st'); const [x, y] = ctr(sb); const d = { 0: [0, -60], 1: [0, 60], 2: [-60, 0], 3: [60, 0] }[m]; if (d) { await p.mouse.move(x + 40, y); await p.mouse.down(); await p.mouse.move(x + 40 + d[0], y + d[1], { steps: 6 }); await p.mouse.up(); } else await p.locator('.ar-bt button').nth(m).click({ force: true }); await sleep(300); }
+    for (const m of path) { await p.locator('.ar-bt button').nth(m).click({ force: true }); await sleep(260); }
     await sleep(400); await shot('solved'); await click('.ak-btn'); await waitSolve();
   }
   if (errs.length) console.log('  ERRORS', errs);

@@ -16,7 +16,9 @@ const server = http.createServer((req, res) => {
   if (!file.startsWith(root)) { res.writeHead(403).end(); return; }
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404).end('404'); return; }
-    res.writeHead(200, { 'content-type': types[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    const hdr = { 'content-type': types[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' };
+    if (path.extname(file) === '.html') hdr['set-cookie'] = 'capcha_srv=1; Path=/; SameSite=Lax';
+    res.writeHead(200, hdr);
     res.end(buf);
   });
 });

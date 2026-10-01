@@ -270,6 +270,12 @@ const CSS = `
 .ol-tbl td{padding:11px 8px}.ol-tbl th{padding:6px 8px}
 .ol-end .ol-card{padding:20px}
 @media (max-width:820px){.ol-gap{display:block}.ol-rail{display:none}.ol-rtop .ol-rank{display:none}.ol-rtop{flex-wrap:nowrap}.ol-rtop .sp{flex:1}.ol-root:has(.ol-race) .ol-toasts{top:150px}.ol-end .ol-card{padding:14px}.ol-tbl td{padding:9px 5px}}
+
+/* r5 */
+.ol-root:has(.ol-race) .ol-toasts{top:auto;bottom:10px}
+.ol-lanes{max-height:260px;overflow-y:auto;-webkit-mask-image:linear-gradient(#000 85%,transparent);mask-image:linear-gradient(#000 85%,transparent);padding-bottom:18px}
+@media (max-height:900px){.ol-pod.p1 .blk{height:80px}.ol-pod.p2 .blk{height:58px}.ol-pod.p3 .blk{height:40px}.ol-podium{min-height:150px}.ol-bigstamp{font-size:clamp(1.4rem,5vw,2.4rem)}.ol-end .ol-wrap{gap:8px}}
+@media (max-width:820px){.ol-root:has(.ol-race) .ol-toasts{top:150px;bottom:auto}}
 `;
 let done = false;
 export function injectCss() {

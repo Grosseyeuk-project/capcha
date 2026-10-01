@@ -166,7 +166,7 @@ function end(room) {
   const sorted = [...room.players].sort((a, b) => a.rank - b.rank);
   const mp = me(); const win = mp && mp.rank === 1;
   const fastest = Math.min(...room.players.map((p) => p.best ?? Infinity));
-  const sec = (ms) => ms == null || ms === Infinity ? '–' : (ms / 1000).toFixed(1) + ' s';
+  const sec = (ms) => ms == null || ms === Infinity ? '–' : (ms / 1000).toFixed(1).replace('.', ',') + ' s';
   const head = !mp ? 'Partie terminée' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
   const sub = win ? 'Le comité est (très) légèrement impressionné.' : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
   const slot = (p, n, d) => p ? h('div', { class: `ol-pod p${n}`, style: `--c:${col(p)};--d:${d}ms` }, h('div', { class: 'av' }, ini(p)), h('div', { class: 'nm' }, p.nick), h('div', { class: 'sub' }, p.status === 'done' ? sec(p.finishMs) : `${p.solved}/${room.total}`), h('div', { class: 'blk' }, n)) : h('div', {});
@@ -254,7 +254,7 @@ function close() {
 }
 function teardown() {
   S.race?.destroy(); S.race = null; clearInterval(S.ti); document.removeEventListener('keydown', S.onKey);
-  S.net?.close(); S.net = null; S.gerard?.destroy(); S.gerard = null; S.gerardKey = null; S.cdSp?.destroy(); S.cdSp = null; bg.set({ suspicion: 0, pressure: 0 }); S.root?.remove(); S.root = null; S.room = null; S.me = null; S.view = null;
+  S.net?.close(); S.net = null; S.gerard?.destroy(); S.gerard = null; S.gerardKey = null; S.cdSp?.destroy(); S.cdSp = null; bg.set({ suspicion: 0, pressure: 0 }); S.root?.remove(); S.root = null; bg.eyeTo(null); S.room = null; S.me = null; S.view = null;
   delete window.CAPCHA_ONLINE.game;
   window.dispatchEvent(new CustomEvent('capcha-online-close'));
   window.CAPCHA_ONLINE.onclose?.();
@@ -262,7 +262,7 @@ function teardown() {
 
 function open(opts = {}) {
   if (S.root) return;
-  injectCss(); S.opts = opts; S.up = false; S.online = null;
+  injectCss(); bg.eyeTo({ left: innerWidth - 120, top: 84, width: 200, height: 96 }); S.opts = opts; S.up = false; S.online = null;
   S.root = h('div', { class: 'ol-root', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Course en ligne' });
   S.main = h('div', {}); S.toasts = h('div', { class: 'ol-toasts', 'aria-live': 'polite' });
   S.root.append(S.main, S.toasts); document.body.append(S.root);
