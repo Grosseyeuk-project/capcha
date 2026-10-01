@@ -51,7 +51,8 @@ export class Game {
       h('div', { class: 'hud-r' }, h('div', { class: 'strikes', role: 'img', 'aria-label': 'Erreurs : 0 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Erreurs'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
     this.strikesBox = this.hud.querySelector('.strikes');
     this.speaker = new Speaker();
-    this.verdict = h('div', { class: 'verdict', role: 'presentation' });
+    this.ledger = h('ol', { class: 'ledger', 'aria-label': 'Registre des vérifications' }, h('li', { class: 'rule-head', 'aria-hidden': 'true' }, 'Registre de conformité'));
+    this.ruleN = 0;
     this.stamp = h('div', { class: 'stamp', 'aria-hidden': 'true' });
     this.cardHead = h('div', { class: 'card-head' }, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
     this.host = h('div', { class: 'cap-slot' });
@@ -60,7 +61,8 @@ export class Game {
     this.barFill = this.bar.firstChild;
     this.flashEl = h('div', { class: 'flash', 'aria-hidden': 'true' });
     this.banner = h('div', { class: 'banner', 'aria-hidden': 'true' });
-    this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card, this.bar, this.verdict);
+    this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card, this.bar);
+    this.root.append(this.ledger);
     this.root.append(this.stage, this.flashEl);
     this.card.append(this.banner);
   }
@@ -82,8 +84,7 @@ export class Game {
   }
 
   beginLevel({ retry = false, seed, first = false } = {}) {
-    this.destroyCur(); this.phase = 'intro'; this.stamp.className = 'stamp'; this.verdict.className = 'verdict';
-    if (!retry) this.verdict.textContent = '';
+    this.destroyCur(); this.phase = 'intro'; this.stamp.className = 'stamp';
     const def = CAPTCHAS[this.level - 1];
     if (!def) { this.finish('win'); return; }
     this.stats.reached = Math.max(this.stats.reached, this.level);
@@ -100,7 +101,7 @@ export class Game {
     if (!retry) {
       if (first && this.level === this.startLevel && this.startLevel === 1) this.narrate('begin');
       else if (tier > this.lastTier && this.lastTier && LINES_TIER(tier)) this.narrate('tier' + tier);
-      else if (!first && Math.random() < 0.33) this.narrate('level');
+      else if (first || Math.random() < 0.33) this.narrate('level');
       this.lastTier = tier;
     }
     this.later(() => this.mount(def, seed ?? this.seedFor(this.level)), delay);
@@ -177,6 +178,7 @@ export class Game {
     const r = this.card.getBoundingClientRect(); const fast = ms < c.limit * 0.3;
     sfx('confetti'); confetti(r.left + r.width / 2, r.top + r.height / 3, fast ? 110 : 55);
     this.root.style.setProperty('--pressure', '0'); this.root.dataset.pressure = 'low'; setTension(this.susp * 0.5); bg.set({ pressure: 0 });
+    this.rule('ok', `Règle ${pad(this.level)} respectée`, c.def.title, fmtSec(ms));
     this.onEvent({ type: 'solve', level: this.level, ms });
     const key = st.streak === 5 ? 'streak5' : st.streak === 3 ? 'streak3' : fast ? 'solveFast' : ms > c.limit * 0.78 ? 'solveSlow' : 'solve';
     this.narrate(key);
@@ -184,6 +186,13 @@ export class Game {
     this.later(() => { if (this.level > this.total) { this.finish('win'); return; } this.load({ leave: true }); }, RM() ? 400 : 1000);
   }
 
+  rule(kind, title, text, meta) {
+    const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
+      h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
+    const head = this.ledger.firstChild; head.after(li);
+    while (this.ledger.childElementCount > 9) this.ledger.lastChild.remove();
+    return li;
+  }
   flash(kind) { const f = this.flashEl; f.className = 'flash'; void f.offsetWidth; f.className = 'flash ' + kind; }
 
   strike(msg, { timeout = false, retry = false } = {}) {
@@ -195,8 +204,9 @@ export class Game {
     this.card.classList.add('struck');
     this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'), h('i', {}, `erreur ${this.strikes}/3`));
     const over = this.strikes >= 3;
-    const line = timeout ? say('timeout', Math.random, this.ctx()) : msg || say(this.strikes === 1 ? 'strike1' : 'strike2', Math.random, this.ctx());
-    this.verdict.className = 'verdict show'; this.verdict.textContent = (timeout ? 'Temps écoulé' : 'Réponse refusée') + ` — erreur ${this.strikes} sur 3` + (over ? '. Fin de partie.' : '. Il vous en reste ' + (3 - this.strikes) + '.');
+    const line = timeout ? say('timeout', Math.random, this.ctx()) : (msg && msg !== 'cheat') ? msg : say(this.strikes === 1 ? 'strike1' : 'strike2', Math.random, this.ctx());
+    const why = timeout ? 'Le chronomètre a expiré avant votre réponse.' : (msg && msg !== 'cheat' ? msg : 'Réponse incorrecte : elle ne respecte pas la règle affichée.');
+    this.rule('bad', `Règle ${pad(this.level)} enfreinte`, why, `erreur ${this.strikes}/3`);
     this.speak(line, timeout ? moodFor('timeout', this.ctx()) : this.strikes >= 2 ? 'angry' : 'smug');
     // petite réplique de Gérard en plus quand le captcha a donné sa propre explication
     const tok = this.sayTok;

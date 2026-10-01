@@ -60,7 +60,7 @@ export default {
     }
     function hit(i) {
       if (busy) return; const t = tiles[i]; if (t.on || t.lock) return;
-      if (mode === 'cat' && t.e !== '🐱') { shake(root); return api.fail(`Ceci est ${t.e === '🐶' ? 'un chien' : 'un animal'}. Vous avez cliqué sur ${t.e}. Le chat, lui, a des moustaches et du mépris.`); }
+      if (mode === 'cat' && t.e !== '🐱') { if (flipped) { shake(root); return api.fail(t.e === '🐶' ? 'Un chien. Je viens de dire « les CHATS ». Oui, j’ai changé d’avis. Non, vous n’aviez pas le droit de ne pas suivre.' : 'Ni chat ni chien. Un figurant. Il fallait suivre l’erratum, pas improviser.'); } shake(root); return api.fail(`Ceci est ${t.e === '🐶' ? 'un chien' : 'un animal'}. Vous avez cliqué sur ${t.e}. Le chat, lui, a des moustaches et du mépris.`); }
       if (mode === 'notcat' && t.e === '🐱') { shake(root); return api.fail('C’est un chat. Il était écrit « NE SONT PAS ». En majuscules. Pour vous.'); }
       if (mode === 'dog' && t.e !== '🐶') { shake(root); return api.fail(flipped ? 'Un chien. Mais enfin, je venais de corriger : « les CHATS ». Suivez le dossier.' : `Pas un chien (${t.e}). Les chiens sont ceux qui vous aiment, vous.`); }
       if (mode === 'cat' && flipped) {}

@@ -2,7 +2,7 @@
 // et un Grand Œil au fond. Réagit à la suspicion (erreurs / progression) et à la pression (chrono).
 import * as THREE from 'three';
 
-const st = { suspicion: 0, pressure: 0, mood: 'neutral', flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
+const st = { suspicion: 0, pressure: 0, mood: 'neutral', eyeNy: 0.04, eyeScale: 1, flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const C_CALM = new THREE.Color(0x2de2c0), C_WARN = new THREE.Color(0xffb02e), C_BAD = new THREE.Color(0xff3b4e);
 const BG = 0x070b0f;
@@ -18,6 +18,8 @@ export const bg = {
     else if (kind === 'level') { st.boost = 0.7; st.flashCol.set(0xffd23f); st.flash = 0.5; }
   },
   beat() { st.beat = 1; },
+  // place le Grand Œil dans un rectangle d'écran (écran titre) ; null = position par défaut derrière la carte
+  eyeTo(rect) { if (!rect) { st.eyeNy = 0.04; st.eyeScale = 1; return; } const hh = Math.tan(35 * Math.PI / 180) * 42; st.eyeNy = 1 - (rect.top + rect.height / 2) / innerHeight * 2; st.eyeScale = Math.max(0.25, rect.height / innerHeight * hh / 9); },
   shake(v = 1) { st.shake = Math.max(st.shake, v); }
 };
 
@@ -46,10 +48,10 @@ export function startScene(canvas) {
 
   // portiques
   const GATES = 24, GAP = 3.6, DEPTH = GATES * GAP;
-  const frameMat = new THREE.LineBasicMaterial({ color: tint, transparent: true, opacity: 0.55 });
-  const hazMat = new THREE.LineBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.5 });
+  const frameMat = new THREE.LineBasicMaterial({ color: tint, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+  const hazMat = new THREE.LineBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending });
   const rect = (w, h) => new THREE.BufferGeometry().setFromPoints([[-w, -h], [w, -h], [w, h], [-w, h]].map(([x, y]) => new THREE.Vector3(x, y, 0)));
-  const gGeo = rect(8.5, 5.2), gGeo2 = rect(8.9, 5.55);
+  const gGeo = rect(7, 4.2), gGeo2 = rect(7.5, 4.6);
   const gates = [];
   for (let i = 0; i < GATES; i++) {
     const g = new THREE.Group();
@@ -65,13 +67,13 @@ export function startScene(canvas) {
   // tuiles CAPTCHA
   const words = ['7KX2', 'mQ9z', 'R4NB', 'hum4', 'B0T?', 'W8fE', 'ok??', '3Gd5'];
   const texs = words.map((w, i) => glyphTexture(w, i + 1));
-  const tileGeo = new THREE.PlaneGeometry(2.4, 1.05);
-  const tileMat = texs.map((t) => new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.5, depthWrite: false, color: tint, side: THREE.DoubleSide }));
+  const tileGeo = new THREE.PlaneGeometry(3.4, 1.5);
+  const tileMat = texs.map((t) => new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.8, depthWrite: false, color: tint, side: THREE.DoubleSide }));
   const tiles = [];
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 22; i++) {
     const m = new THREE.Mesh(tileGeo, tileMat[i % tileMat.length]);
     const side = i % 2 ? 1 : -1;
-    m.userData = { x: side * (4 + Math.random() * 6), y: (Math.random() - 0.5) * 8, z: -Math.random() * DEPTH, rz: (Math.random() - 0.5) * 0.6, sp: 0.6 + Math.random() * 0.8, ph: Math.random() * 9 };
+    m.userData = { nx: side * (0.68 + Math.random() * 0.3), y: (Math.random() - 0.5) * 1.6, z: -10 - Math.random() * 34, rz: (Math.random() - 0.5) * 0.6, sp: 0.6 + Math.random() * 0.8, ph: Math.random() * 9 };
     scene.add(m); tiles.push(m);
   }
 
@@ -79,7 +81,7 @@ export function startScene(canvas) {
   const NP = 520, pp = new Float32Array(NP * 3);
   for (let i = 0; i < NP; i++) { pp[i * 3] = (Math.random() - 0.5) * 24; pp[i * 3 + 1] = (Math.random() - 0.5) * 14; pp[i * 3 + 2] = -Math.random() * DEPTH; }
   const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-  const pMat = new THREE.PointsMaterial({ color: tint, size: 0.07, transparent: true, opacity: 0.7, depthWrite: false });
+  const pMat = new THREE.PointsMaterial({ color: tint, size: 0.11, transparent: true, opacity: 0.9, depthWrite: false });
   scene.add(new THREE.Points(pGeo, pMat));
 
   // faisceau de scan
@@ -128,17 +130,18 @@ export function startScene(canvas) {
       const s = 1 + st.beat * 0.03 * (1 - (g.position.z + DEPTH) / DEPTH);
       g.scale.set(s, s, 1);
     });
-    frameMat.opacity = 0.45 + m * 0.2 + st.flash * 0.3;
+    frameMat.opacity = 0.75 + m * 0.2 + st.flash * 0.3;
     grid.position.z = -40 + ((tAcc * speed) % 2); grid2.position.z = grid.position.z;
     tiles.forEach((t, i) => {
-      const u = t.userData; u.z += speed * u.sp * 0.8 * dt; if (u.z > 2) { u.z -= DEPTH; u.y = (Math.random() - 0.5) * 8; }
-      t.position.set(u.x, u.y + Math.sin(tAcc * 0.5 + u.ph) * 0.4, u.z); t.rotation.set(Math.sin(tAcc * 0.3 + u.ph) * 0.2, Math.sin(tAcc * 0.2 + u.ph) * 0.5, u.rz + Math.sin(tAcc * 0.4 + u.ph) * 0.1);
+      const u = t.userData; u.z += speed * u.sp * 0.5 * dt; if (u.z > -7) { u.z -= 38; u.y = (Math.random() - 0.5) * 1.6; }
+      const hh = Math.tan(cam.fov * Math.PI / 360) * -u.z;
+      t.position.set(u.nx * hh * cam.aspect, u.y * hh * 0.8 + Math.sin(tAcc * 0.5 + u.ph) * 0.4, u.z); t.rotation.set(Math.sin(tAcc * 0.3 + u.ph) * 0.2, Math.sin(tAcc * 0.2 + u.ph) * 0.5, u.rz + Math.sin(tAcc * 0.4 + u.ph) * 0.1);
     });
-    tileMat.forEach((mt) => { mt.opacity = 0.42 + st.flash * 0.3; });
+    tileMat.forEach((mt) => { mt.opacity = 0.75 + st.flash * 0.25; });
     const pa = pGeo.attributes.position;
     for (let i = 0; i < NP; i++) { let z = pa.array[i * 3 + 2] + speed * 1.3 * dt; if (z > 3) z -= DEPTH; pa.array[i * 3 + 2] = z; }
     pa.needsUpdate = true;
-    pMat.size = 0.07 + st.boost * 0.05;
+    pMat.size = 0.11 + st.boost * 0.05;
     beam.position.y = Math.sin(tAcc * (0.5 + m * 1.6)) * 4.6; beamGlow.position.y = beam.position.y;
     // œil
     const targetLid = st.mood === 'impressed' ? 0 : clamp01(0.08 + st.suspicion * 0.55 + (st.mood === 'angry' ? 0.2 : 0));
@@ -150,11 +153,12 @@ export function startScene(canvas) {
     iris.position.x = ptr.sx * 6 + (st.suspicion > 0.6 && !reduced ? Math.sin(tAcc * 23) * 0.15 : 0); iris.position.y = ptr.sy * 2.6;
     const pt = st.mood === 'impressed' ? 1.5 : 1.1 - st.pressure * 0.5 + st.beat * 0.2;
     pup = lerp(pup, pt, dt * 6); pupil.scale.setScalar(pup);
+    { const ez = -42, hh = Math.tan(cam.fov * Math.PI / 360) * -ez; eye.position.y = lerp(eye.position.y, st.eyeNy * hh, dt * 5); eye.position.x = 0; const k2 = lerp(eye.scale.x, st.eyeScale, dt * 5); eye.scale.setScalar(k2); }
     rays.rotation.z += dt * (0.2 + m);
     // caméra
     const sh = st.shake * 0.35 * k;
     sx = (Math.random() - 0.5) * sh; sy = (Math.random() - 0.5) * sh;
-    cam.position.set(ptr.sx * 0.5 * k + sx, ptr.sy * 0.3 * k + sy, 0);
+    cam.position.set(ptr.sx * 1.4 * k + sx, ptr.sy * 0.8 * k + sy, 0);
     cam.rotation.z = Math.sin(tAcc * 0.3) * 0.02 * k + st.suspicion * 0.04 * Math.sin(tAcc * 0.9) * k;
     cam.lookAt(ptr.sx * -0.8 * k, ptr.sy * -0.4 * k, -20);
     r.render(scene, cam);

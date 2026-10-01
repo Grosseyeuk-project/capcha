@@ -112,7 +112,7 @@ function installTrack() {
 export class Speaker {
   constructor({ big = false } = {}) {
     this.w = makeWarden(); wardens.add(this.w); installTrack();
-    this.text = h('p', { class: 'bubble-text', 'aria-hidden': 'true' });
+    this.text = h('p', { class: 'bubble-text', 'aria-hidden': 'true' }, '…');
     this.live = h('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
     this.bubble = h('div', { class: 'bubble', title: 'Cliquer pour accélérer', onclick: () => this.skip() },
       h('span', { class: 'nameplate', 'aria-hidden': 'true' }, 'GÉRARD', h('i', {}, ' · Agent de Vérification n° 4471')), this.text);
@@ -187,6 +187,7 @@ export function titleScreen({ best, speaker, onSolo, onOnline, onlineReady }) {
     h('h1', { id: 'logo', class: 'logo' }, h('span', { class: 'lg' }, 'CAP'), h('span', { class: 'lg y' }, 'CHA'), h('sup', {}, '™')),
     h('p', { class: 'tag' }, 'Prouvez que vous êtes humain.'),
     h('p', { class: 'typo' }, '(Oui, il manque un T. Ne le dites pas à Gérard.)'),
+    h('div', { class: 'eye-slot', 'aria-hidden': 'true' }),
     speaker.el,
     h('div', { class: 'actions' }, start, online),
     best ? h('p', { class: 'best' }, h('span', {}, 'Dossier précédent'), ` niveau ${best.level}${best.total ? '/' + best.total : ''} · ${best.rank}`) : null,
