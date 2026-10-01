@@ -9,26 +9,31 @@ css('hunt', `
 .bh-d:focus-visible{outline:3px solid #1a73e8;border-radius:50%}
 .bh-d.hit s{animation:bh-hit .4s forwards}
 @keyframes bh-hit{50%{transform:scale(1.7) rotate(20deg)}100%{transform:scale(0);opacity:0}}
-.bh-help{font:600 12px var(--mono);}
+.bk-rule b.no{background:var(--red);color:#fff;padding:0 5px;box-shadow:2px 2px 0 var(--ink)}
 `);
 const HATS = ['🎩', '🎓', '🧢', '👒'];
 export default {
   id: 'b_hunt', tier: 3, title: 'Le canard royal', time: 30000,
   mount(host, api) {
-    const { h } = api; let round = 0, alive = true, busy = false;
+    const { h } = api; let round = 0, alive = true, busy = false, step2 = false, bare = -1;
     const arena = h('div', { class: 'bh-arena', 'aria-label': 'Arène' });
     const pips = h('div', { class: 'bk-pips' }, [0, 1, 2].map(() => h('i', {})));
     const info = h('span', {}, 'Rois neutralisés');
-    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Consigne'), 'Cliquez sur le canard qui porte la ', h('b', {}, 'couronne 👑'), '. Un seul. Il bouge, c’est son droit.'));
+    const rule = h('div', { class: 'bk-rule' });
+    const setRule = (small, ...k) => { rule.className = 'bk-rule flip'; rule.replaceChildren(h('div', {}, h('small', {}, small), ...k)); };
+    const ruleKing = () => setRule('Consigne', 'Cliquez sur le canard qui porte la ', h('b', {}, 'couronne 👑'), '. Un seul. Il bouge, c’est son droit.');
+    ruleKing();
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, info, pips)); host.append(root);
     const N = 13; let ducks = [], king = 0, W = 0, H = 0;
     const measure = () => { W = arena.clientWidth; H = arena.clientHeight; };
     const speed = () => (api.reducedMotion ? 0.6 : 1) * (70 + round * 45);
     function spawn() {
       measure(); arena.replaceChildren(); ducks = [];
-      king = api.int(0, N - 1);
-      const nHat = [0, 4, 8][round];
-      const hatted = api.shuffle([...Array(N).keys()].filter((i) => i !== king)).slice(0, nHat);
+      king = api.int(0, N - 1); step2 = false; bare = -1; if (round < 2) ruleKing(); else setRule('Consigne', 'Cliquez sur le canard qui porte la ', h('b', {}, 'couronne 👑'), '. (Dernier roi. Probablement.)');
+      const nHat = [0, 4, N - 2][round];
+      const others = api.shuffle([...Array(N).keys()].filter((i) => i !== king));
+      if (round === 2) bare = others[0];
+      const hatted = others.filter((i) => i !== bare).slice(0, nHat);
       for (let i = 0; i < N; i++) {
         const a = api.rng() * 6.283, sp = speed() * (0.7 + api.rng() * 0.6);
         const el = h('button', { class: 'bh-d', type: 'button', 'aria-label': i === king ? 'canard à couronne' : 'canard', onclick: () => hit(i) }, h('s', {}, '🦆'));
@@ -37,13 +42,21 @@ export default {
         arena.append(el);
         ducks.push({ el, x: 10 + api.rng() * (W - 66), y: 10 + api.rng() * (H - 66), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 });
       }
-      if (/cheat=1/.test(location.search)) host.dataset.answer = String(king);
+      if (/cheat=1/.test(location.search)) host.dataset.answer = String(king) + ',' + bare;
       api.timer(round === 0 ? 24000 : 20000);
     }
     function hit(i) {
       if (busy) return;
       const d = ducks[i];
-      if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return api.fail(hat ? `Ce canard porte un ${hat.textContent}, pas une 👑. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
+      if (step2) {
+        if (i === king) { shake(root); return api.fail('Ce canard a abdiqué. Il porte encore la couronne, par nostalgie. Cherchez celui SANS chapeau.'); }
+        if (i !== bare) { shake(root); return api.fail('Un chapeau ! L’erratum disait SANS chapeau. Vous avez arrêté un canard bien habillé, par réflexe.'); }
+      } else if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return api.fail(hat ? `Ce canard porte un ${hat.textContent}, pas une 👑. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
+      if (round === 2 && !step2) { // abdication : nouvelle consigne
+        step2 = true; d.el.classList.add('hit'); api.sfx('whoosh'); king = -1;
+        setRule('Erratum n° 3', 'Le roi vient d’abdiquer. Cliquez plutôt sur le canard ', h('b', { class: 'no' }, 'SANS chapeau'), '. Un seul.');
+        api.say('Abdication ! Le trône est vacant. Je cherche un canard nu.', 'smug'); api.timer(14000); return;
+      }
       busy = true; d.el.classList.add('hit'); api.sfx('pop'); round++;
       [...pips.children].forEach((p, k) => p.classList.toggle('on', k < round));
       if (round >= 3) { api.say('Le roi est mort. Vive le roi. Non, plus de roi. Bravo.', 'impressed'); setTimeout(() => alive && api.solve(), 350); return; }

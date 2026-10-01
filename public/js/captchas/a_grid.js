@@ -41,8 +41,8 @@ export default {
       const sky = api.pick(SKY), t = h('button', { class: 'ag-t', type: 'button', 'aria-pressed': 'false', 'aria-label': 'Image ' + (i + 1), onclick: () => { const on = !sel.has(i); on ? sel.add(i) : sel.delete(i); t.setAttribute('aria-pressed', on); api.sfx('click'); } });
       t.innerHTML = S(ART[k](api.rng), sky, api.pick(GR)).replace('id="sk"', `id="sk${i}"`).replace('url(#sk)', `url(#sk${i})`); return t;
     });
-    const fr = frame(h, { small: 'Sélectionnez toutes les images avec des', title: M.target, note: M.note + ' S’il n’y en a plus, cliquez sur Vérifier. (Il y en a toujours.)', body: h('div', { class: 'ag-g' }, tiles), onVerify: check });
-    host.append(fr.el);
+    const fr = frame(h, { small: 'Sélectionnez toutes les images avec des', title: M.target, note: M.note, body: h('div', { class: 'ag-g' }, tiles), onVerify: check });
+    fr.el.style.width = 'min(100%,340px)'; host.append(fr.el);
     if (/cheat=1/.test(location.search)) host.dataset.answer = order.map((k, i) => M.yes.includes(k) ? i : -1).filter((i) => i >= 0).join(',');
     function check() {
       const bad = [...sel].filter((i) => !M.yes.includes(order[i])), miss = order.map((k, i) => M.yes.includes(k) && !sel.has(i) ? i : -1).filter((i) => i >= 0);

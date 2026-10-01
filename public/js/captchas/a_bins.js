@@ -13,7 +13,7 @@ css('bins', `
 .ab-c.dim{opacity:.35}
 `);
 const HUM = ['Soupirer devant une imprimante', 'Oublier pourquoi on est entré dans la pièce', 'Dire « ça va » en allant très mal', 'Chercher ses lunettes sur son front', 'Cliquer sur « Plus tard » 14 fois', 'Pleurer devant un dessin animé', 'Avoir peur d’un pigeon', 'Faire semblant de connaître la chanson', 'Regarder son frigo en espérant mieux'];
-const ROB = ['Calculer π à mille décimales en 0,2 s', 'Ne jamais dormir', 'Répondre « 01001000 »', 'Fonctionner sur batterie 5 V', 'Avoir un numéro de série gravé', 'Ne jamais se tromper de mot de passe', 'Compter les feux tricolores sans s’ennuyer', 'Rouiller à la pluie', 'Obéir à la première instruction reçue'];
+const ROB = ['Calculer π à mille décimales en 0,2 s', 'Ne jamais dormir', 'Répondre « 01001000 »', 'Fonctionner sur batterie 5 V', 'Avoir un numéro de série gravé', 'Ne jamais se tromper de mot de passe', 'Compter 4 000 feux tricolores sans jamais s’ennuyer', 'Rouiller à la pluie', 'Exécuter la première instruction sans poser de question'];
 export default {
   id: 'a_bins', tier: 2, title: 'Tri sélectif', time: 45000,
   mount(host, api) {

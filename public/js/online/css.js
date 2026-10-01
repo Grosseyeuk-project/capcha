@@ -235,7 +235,7 @@ const CSS = `
  .ol-rail{padding:6px;border-width:2px;box-shadow:0 3px 0 #000}
  .ol-rail h3{display:none}
  .ol-rows{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none;gap:6px;padding-bottom:2px;scrollbar-width:none}
- .ol-prow{flex:1 1 0;min-width:0;grid-template-columns:12px 16px minmax(0,1fr);grid-template-areas:'rk av nm' 'bar bar lv';padding:4px 5px;column-gap:4px;row-gap:3px}.ol-prow.hide-m{display:none}.ol-prow .st{display:none}
+ .ol-prow{flex:1 1 0;min-width:0;grid-template-columns:16px minmax(0,1fr);grid-template-areas:'av nm' 'bar lv';padding:4px 5px;column-gap:4px;row-gap:3px}.ol-prow.hide-m{display:none}.ol-prow .rk{display:none}.ol-prow .st{display:none}
  .ol-emotes{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px}.ol-emotes button{flex:none;white-space:nowrap}
  .ol-prow .nm{font-size:10.5px}.ol-prow .lv{font-size:9.5px;text-align:right}.ol-prow .bar{height:5px}.ol-prow .st u{width:6px;height:6px}
  .ol-prow .av{width:18px;height:18px}

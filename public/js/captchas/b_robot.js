@@ -20,7 +20,7 @@ export default {
     const arena = h('div', { class: 'br-arena', 'aria-label': 'Zone de test de robotitude' });
     const hud = h('div', { class: 'br-hud' }, 'CIBLE 00/' + N), start = h('div', { class: 'br-start' }, h('button', { class: 'bk-btn', type: 'button', onclick: go, autofocus: true }, 'Je suis prêt (robot)'));
     arena.append(hud, start);
-    const pips = h('div', { class: 'bk-pips', style: { flexWrap: 'wrap' } }, keys.map(() => h('i', { style: { width: '10px', height: '10px' } })));
+    const pips = h('b', {}, '0/' + N);
     const avg = h('span', {}, 'Temps de réaction moyen : —');
     const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en moins de ', h('b', {}, '1,2 s'), '. Clic ou touche indiquée. Aucun raté.'));
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, avg, pips)); host.append(root);
@@ -45,7 +45,7 @@ export default {
     function hit() {
       if (!running || !cur) return; const ms = performance.now() - tStart; sumMs += ms; api.sfx('click');
       const pop = h('div', { class: 'br-pop', style: { left: cur.style.left, top: cur.style.top } }, Math.round(ms) + ' ms'); arena.append(pop); setTimeout(() => pop.remove(), 650);
-      cur.remove(); cur = null; pips.children[idx].classList.add('on'); avg.textContent = `Temps de réaction moyen : ${Math.round(sumMs / (idx + 1))} ms`;
+      cur.remove(); cur = null; pips.textContent = (idx + 1) + '/' + N; avg.textContent = `Temps de réaction moyen : ${Math.round(sumMs / (idx + 1))} ms`;
       if (idx + 1 >= N) { running = false; if (nextEl) nextEl.remove(); api.say('Aucun raté. Soit vous êtes un robot, soit vous êtes un humain très entraîné, soit votre souris vous aide.', 'impressed'); setTimeout(() => alive && api.solve(), 250); return; }
       show(idx + 1);
     }

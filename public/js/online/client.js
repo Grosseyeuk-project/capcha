@@ -29,6 +29,7 @@ const GL = {
   bots: ['Des adversaires arrivent. Certains ont un pouls. Les autres, un firmware.', 'Je recrute des figurants. Ils ne se plaignent jamais, contrairement à vous.'],
   ready: ['Tout le monde est prêt ? Impressionnant. Je ne l’étais pas, moi, à votre âge.', 'Les candidats se sont déclarés prêts. Je note qu’aucun n’a l’air rassuré.'],
   host: ['Le chef de salle décide. Je tiens à préciser que ce n’est pas moi. J’ai demandé.'],
+  place: ['Deuxième ou presque. Premier des perdants : c’est une catégorie, je viens de l’inventer.', 'Vous avez terminé, mais pas premier. Le podium ne se souviendra pas de vous. Moi, si.'],
   win: ['Premier. Je veux un second avis. Et un troisième.', 'Vous avez gagné. Je n’en dormirai pas de la nuit. Ni du reste.'],
   lose: ['Vous avez perdu. Ne le prenez pas mal. Prenez-le comme une information.', 'Éliminé. Le règlement est clair. Il est aussi cruel, mais il est clair.', 'Robot confirmé. Les bons jours, ça arrive aux meilleurs. Pas à vous, cela dit.']
 };
@@ -179,7 +180,7 @@ function end(room) {
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter')),
     h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
     h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub)),
-    gerard('end' + (win ? 'w' : 'l'), win ? GL.win : GL.lose, win ? 'impressed' : 'smug'),
+    gerard('end' + (win ? 'w' : mp?.status === 'done' ? 'p' : 'l'), win ? GL.win : mp?.status === 'done' ? GL.place : GL.lose, win ? 'impressed' : 'smug'),
     h('div', { class: 'ol-card' }, pod),
     h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl),
     h('div', { class: 'ol-row2' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));

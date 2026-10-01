@@ -9,7 +9,7 @@ css('cube', `
 .bc-wrap.ok .bc-ring::before{color:var(--green);content:'▲ VERROUILLÉ'}
 .bc-ctl{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .bc-roll{display:flex;gap:6px}.bc-roll .bk-btn{padding:6px 12px;min-height:40px;font-size:18px}
-.bc-read{font:600 11px var(--mono);min-height:16px;text-transform:uppercase;letter-spacing:.06em}
+.bc-read{font:600 11px var(--mono);min-height:16px;text-align:center;text-transform:uppercase;letter-spacing:.06em}
 .bc-fallback{padding:30px 14px;font:700 14px var(--display);text-align:center;color:#fff}
 `);
 const LET = ['F', 'R', 'G', 'J', 'P', 'Q', 'L', 'K'];
@@ -29,8 +29,8 @@ export default {
     const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Vérification volumétrique'), 'Placez la face « ', h('b', {}, target), ' » ', h('b', {}, 'à l’endroit'), ', face à vous, dans le cadre. Pas la version miroir.'));
     const btn = h('button', { class: 'bk-btn', type: 'button', onclick: check }, 'Valider');
     const rl = h('button', { class: 'bk-btn', type: 'button', 'aria-label': 'Pivoter à gauche', onclick: () => roll(1) }, '↺'), rr = h('button', { class: 'bk-btn', type: 'button', 'aria-label': 'Pivoter à droite', onclick: () => roll(-1) }, '↻');
-    const ctl = h('div', { class: 'bc-ctl' }, h('div', { class: 'bc-roll' }, rl, rr), read, btn);
-    const root = h('div', { class: 'bk' }, rule, wrap, ctl); host.append(root);
+    const ctl = h('div', { class: 'bc-ctl' }, h('div', { class: 'bc-roll' }, rl, rr), btn);
+    const root = h('div', { class: 'bk' }, rule, wrap, ctl, read); host.append(root);
     let renderer, scene, cam, cube, geo, mats = [], texs = [], alive = true, dirty = true, raf;
     const q = new THREE.Quaternion();
     try {

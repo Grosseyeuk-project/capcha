@@ -83,12 +83,13 @@ async function run(id) {
     await p.evaluate(() => document.querySelector('.cap-host').__solve()); await sleep(300); await shot('solved'); await p.click('.bk-btn:has-text("Valider")'); await waitSolve();
   } else if (id === 'b_pwd') {
     const rules = () => p.$$eval('.bp-r', (e) => e.length);
-    const answer = await ans();
-    await p.click('.bp-field input'); await p.keyboard.type('janvier', { delay: 10 }); await sleep(200);
-    console.log('  rules after "janvier":', await rules());
-    await p.fill('.bp-field input', ''); await p.keyboard.type(answer, { delay: 8 }); await sleep(300); console.log('  rules after answer:', await rules(), 'btn disabled', await p.$eval('.bk-btn', (b) => b.disabled)); await shot('rules');
-    const pw = await p.inputValue('.bp-field input'); await p.fill('.bp-field:nth-of-type(2) input', pw + 'x'); await sleep(200); console.log('  btn disabled w/ bad confirm', await p.$eval('.bk-btn', (b) => b.disabled));
-    await p.fill('.bp-field:nth-of-type(2) input', pw); await sleep(300); await shot('ok'); await p.click('.bk-btn'); await waitSolve();
+    await p.click('.bp-field input'); await p.keyboard.type('janvier', { delay: 10 }); await sleep(200); console.log('  rules after "janvier":', await rules());
+    await p.fill('.bp-field input', ''); const answer = await ans(); await p.keyboard.type(answer, { delay: 5 });
+    await sleep(300); console.log('  rules typed:', await rules()); await shot('mid');
+    await p.click('.bp-cp'); await sleep(300); console.log('  rules after copy:', await rules(), 'minute roll?', await ans() === answer);
+    await p.click('.bp-field input'); await p.fill('.bp-field input', await ans()); await p.click('.bp-cp'); await sleep(400); console.log('  rules:', await rules(), 'btn disabled', await p.$eval('.bk-btn:last-child, .bk > div:last-child .bk-btn', (b) => b.disabled)); await shot('ok');
+    await p.waitForFunction(() => !document.querySelector('.bk > div:last-child .bk-btn').disabled, null, { timeout: 5000 });
+    await p.click('.bk > div:last-child .bk-btn'); await waitSolve();
   } else if (id === 'b_boss') {
     await p.waitForSelector('.bb-orb', { timeout: 5000 });
     const orbHit = async (sel) => { await sleep(150); const bb = await p.locator(sel).first().boundingBox(); await p.mouse.click(bb.x + 27, bb.y + 27); };
