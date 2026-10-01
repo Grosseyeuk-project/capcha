@@ -246,7 +246,6 @@ const CSS = `
 /* r3 */
 .ol-code{gap:10px 14px}.ol-code>div{min-width:0}.ol-code h3{margin-bottom:12px!important}
 .ol-code b{display:inline-block;transform:rotate(-1deg);font-size:clamp(30px,8vw,46px)}
-.ol-toasts{bottom:110px}
 .ol-root:has(.ol-end) .ol-toasts{display:none}
 .ol-pod .av{animation-delay:calc(var(--d)*.4)!important}
 .ol-pod .blk{animation-duration:.4s!important;animation-delay:calc(var(--d)*.35)!important}
@@ -258,7 +257,19 @@ const CSS = `
 .ol-verd li.me{background:#fff3c4;border-color:var(--ink)}
 .ol-tag{font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:4px;padding:1px 4px;margin-left:6px;color:#6b6a5c}
 .ol-tag.bot{color:#7a4b00}.ol-tag.ok{color:#0b6a52}.ol-tag.no{color:#a50f26}
-@media (max-width:820px){.ol-rtop .pill{white-space:nowrap}.ol-rtop .ol-live{display:none}.ol-toasts{bottom:100px}.ol-rtop .ol-racing{padding:4px 8px}}
+@media (max-width:820px){.ol-rtop .pill{white-space:nowrap}.ol-rtop .ol-live{display:none}.ol-rtop .ol-racing{padding:4px 8px}}
+
+/* r4 */
+.ol-gap{display:none;font:600 12px/1.3 var(--mono);background:rgba(7,11,15,.82);border:2px solid rgba(246,241,228,.4);color:#eaf2f0;border-radius:10px;padding:8px 12px}
+.ol-gap b{color:var(--yel)}
+.ol-toasts{top:64px;bottom:auto}
+.ol-row2{align-items:stretch}
+.ol-btn{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:56px}
+.ol-podium{border-bottom:4px solid var(--ink);padding:0 6px;margin:6px 0 14px;gap:12px}
+.ol-pod .blk{border-bottom:0}
+.ol-tbl td{padding:11px 8px}.ol-tbl th{padding:6px 8px}
+.ol-end .ol-card{padding:20px}
+@media (max-width:820px){.ol-gap{display:block}.ol-rail{display:none}.ol-rtop .ol-rank{display:none}.ol-rtop{flex-wrap:nowrap}.ol-rtop .sp{flex:1}.ol-root:has(.ol-race) .ol-toasts{top:150px}.ol-end .ol-card{padding:14px}.ol-tbl td{padding:9px 5px}}
 `;
 let done = false;
 export function injectCss() {

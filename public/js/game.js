@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CAPTCHAS } from './captchas/index.js';
-import { h, Speaker, confetti, soundButton, endScreen, fmtSec, reducedMotion, loadBest, saveBest } from './ui.js';
+import { h, Speaker, confetti, clearConfetti, soundButton, endScreen, fmtSec, reducedMotion, loadBest, saveBest } from './ui.js';
 import { sfx, setTension, startMusic } from './audio.js';
 import { say, moodFor, rankFor } from './narrator.js';
 import { bg } from './scene.js';
@@ -63,7 +63,8 @@ export class Game {
     this.barFill = this.bar.firstChild;
     this.flashEl = h('div', { class: 'flash', 'aria-hidden': 'true' });
     this.banner = h('div', { class: 'banner', 'aria-hidden': 'true' });
-    this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card, this.bar);
+    this.hud.append(this.bar);
+    this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card);
     this.toastEl = h('div', { class: 'rule-toast', 'aria-hidden': 'true' });
     this.root.append(this.stage, this.ledger, this.flashEl, this.toastEl);
     if (this.mode !== 'solo') this.root.classList.add('online');
@@ -111,7 +112,7 @@ export class Game {
   }
 
   mount(def, seed) {
-    this.card.classList.remove('entering', 'struck', 'solved'); this.banner.className = 'banner'; this.stamp.className = 'stamp';
+    clearConfetti(); this.card.classList.remove('entering', 'struck', 'solved'); this.banner.className = 'banner'; this.stamp.className = 'stamp';
     const rng = mulberry32(seed);
     this.host.classList.add('ready');
     const host = h('div', { class: 'cap-host' }); this.host.replaceChildren(host);

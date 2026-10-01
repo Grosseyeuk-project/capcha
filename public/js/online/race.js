@@ -30,6 +30,7 @@ export class RaceView {
     this.lvlEl = h_('span', { class: 'pill' }, 'Niveau ', h_('b', {}, '–'));
     this.pingEl = h_('span', { class: 'ol-live' }, h_('i'), h_('span', {}, '…'));
     this.lastEl = h_('div', { class: 'ol-last', hidden: '' });
+    this.gapEl = h_('div', { class: 'ol-gap'}, 'Rang – ');
     this.gameEl = h_('div', { class: 'ol-game' });
     this.stage = h_('div', { class: 'ol-stage' }, this.gameEl);
     this.rowsEl = h_('div', { class: 'ol-rows' });
@@ -37,7 +38,7 @@ export class RaceView {
     this.rail = h_('aside', { class: 'ol-rail', 'aria-label': 'Classement en direct' }, h_('h3', {}, h_('span', {}, 'Classement en direct'), this.countEl = h_('span', {}, '')), this.rowsEl, this.railEmotes);
     this.mount.replaceChildren(h_('div', { class: 'ol-wrap ol-wide' },
       h_('div', { class: 'ol-rtop' }, h_('span', { class: 'pill ol-racing' }, '● Course'), this.rankEl, this.lvlEl, h_('span', { class: 'sp' }), this.pingEl, h_('button', { class: 'ol-ghostbtn', onclick: () => this.leave() }, 'Quitter')),
-      this.lastEl,
+      this.lastEl, this.gapEl,
       h_('div', { class: 'ol-race' }, this.stage, this.rail)));
   }
   setEmotes(list) {
@@ -194,7 +195,7 @@ export class RaceView {
     const room = this.room; if (!room) return;
     const me = room.players.find((p) => p.id === this.me); if (!me) return;
     const e = this.eff(me);
-    this.lvlEl.lastChild.textContent = me.status === 'done' ? 'Terminé' : me.status === 'out' ? `Éliminé (${me.solved}/${room.total})` : `${Math.min(room.total, e.solved + 1)}/${room.total}`;
+    this.lvlEl.lastChild.textContent = me.status === 'done' ? 'Terminé' : me.status === 'out' ? 'Éliminé' : `${Math.min(room.total, e.solved + 1)}/${room.total}`;
     const prev = this.prevRank;
     this.rankEl.lastChild.textContent = `#${me.rank}/${room.players.length}`;
     if (prev && me.rank !== prev) {
@@ -207,6 +208,10 @@ export class RaceView {
         else { const o = sorted[me.rank - 2]; if (o) this.overtake('down', `${o.nick} vous double`); }
       }
     }
+    { const sorted = [...room.players].sort((a, b) => a.rank - b.rank), lead = sorted[0], sc = (p) => this.eff(p).solved;
+      const d = me.rank === 1 ? sc(me) - (sorted[1] ? sc(sorted[1]) : 0) : sc(lead) - sc(me);
+      const pl = (n) => `${n} niveau${n > 1 ? 'x' : ''}`;
+      this.gapEl.replaceChildren(h('b', {}, `Rang #${me.rank}/${room.players.length}`), me.status !== 'racing' ? ' · course terminée pour vous' : me.rank === 1 ? ` · vous menez${d > 0 ? ' de ' + pl(d) : ' (égalité)'}` : ` · à ${d > 0 ? pl(d) : 'un souffle'} de ${lead.nick}${lead.bot ? ' (un script)' : ''}`); }
     this.prevRank = me.rank;
   }
 }

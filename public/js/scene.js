@@ -107,16 +107,23 @@ export function startScene(canvas) {
 
   const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
   addEventListener('pointermove', (e) => { ptr.x = e.clientX / innerWidth * 2 - 1; ptr.y = -(e.clientY / innerHeight * 2 - 1); }, { passive: true });
+  let lowPower = (navigator.hardwareConcurrency || 8) <= 4 || innerWidth < 700, degrade = lowPower ? 1 : 0;
   const rs = () => {
-    r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)); r.setSize(innerWidth, innerHeight, false);
+    r.setPixelRatio(degrade ? 1 : Math.min(devicePixelRatio || 1, 1.5)); r.setSize(innerWidth, innerHeight, false);
     cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 85 : 70; cam.updateProjectionMatrix();
   };
   addEventListener('resize', rs); rs();
 
   const rootStyle = document.documentElement.style;
+  let slowT = 0, slowN = 0, skip = 0;
+  const applyDegrade = () => { rs(); pGeo.setDrawRange(0, degrade >= 2 ? 120 : degrade ? 260 : NP); tiles.forEach((t, i) => { t.visible = degrade >= 2 ? i < 6 : degrade ? i < 12 : true; }); if (degrade >= 2) { grid2.visible = false; } };
+  applyDegrade();
   let last = performance.now(), tAcc = 0, frame = 0, sx = 0, sy = 0, pup = 1, lid = 0;
   r.setAnimationLoop((now) => {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now; tAcc += dt; frame++;
+    const raw = (now - last) / 1000;
+    if (degrade < 2 && !document.hidden) { slowT += Math.min(raw, 0.5); slowN++; if (slowN >= 90) { const fps = slowN / slowT; if (fps < 22) { degrade++; applyDegrade(); } slowT = 0; slowN = 0; } }
+    if (degrade >= 2 && (skip ^= 1)) return;
+    const dt = Math.min(0.05, raw); last = now; tAcc += dt; frame++;
     const m = clamp01(Math.max(st.suspicion * 0.9, st.pressure));
     // couleur
     const base = new THREE.Color().copy(C_CALM).lerp(C_WARN, clamp01(m * 2)).lerp(C_BAD, clamp01(m * 2 - 1));

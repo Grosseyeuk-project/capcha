@@ -24,12 +24,19 @@ function showTitle() {
     best: loadBest(), speaker: titleSpeaker, onlineReady,
     onSolo: () => startSolo(),
     onOnline: (ok) => {
-      if (ok) { try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); } catch (e) { console.error(e); } }
+      if (ok) {
+        // Sans serveur (hébergement statique), on prévient poliment au lieu d'ouvrir une salle morte.
+        fetch('healthz', { cache: 'no-store' }).then((r) => r.ok ? r.text() : '', () => '').then((t) => {
+          if (t !== 'ok') { titleSpeaker.say('Le mode en ligne exige un serveur, et ici il n’y en a pas. Gérard est seul. Gérard a l’habitude.', 'worried'); return; }
+          try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); } catch (e) { console.error(e); }
+        });
+      }
       else titleSpeaker.say(say('online', Math.random), 'worried');
     }
   });
   root.className = 'title-root'; root.replaceChildren(el, h_sound());
-  requestAnimationFrame(eyeSlot); setTimeout(eyeSlot, 400);
+  requestAnimationFrame(eyeSlot); setTimeout(eyeSlot, 400); setTimeout(eyeSlot, 1200);
+  eyeRO?.disconnect(); if (window.ResizeObserver) { eyeRO = new ResizeObserver(eyeSlot); eyeRO.observe(el); }
   setTimeout(() => titleSpeaker.say(say(plays ? 'again' : 'start', Math.random), plays ? 'smug' : 'neutral'), 350);
 }
 const h_sound = () => { const d = document.createElement('div'); d.className = 'corner'; d.append(soundButton()); return d; };
@@ -49,6 +56,7 @@ await Promise.race([import('./online/boot.js').catch(() => {}), new Promise((r) 
 const setHidden = (v) => { root.style.visibility = v ? 'hidden' : ''; root.inert = v; };
 if (window.CAPCHA_ONLINE?.open) { const o = window.CAPCHA_ONLINE.open; window.CAPCHA_ONLINE.open = (...a) => { const r = o.apply(window.CAPCHA_ONLINE, a); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); return r; }; }
 addEventListener('capcha-online-close', () => { setHidden(false); eyeSlot(); });
+let eyeRO = null;
 const eyeSlot = () => { const el = root.querySelector('.eye-slot'); bg.eyeTo(el && el.offsetHeight ? el.getBoundingClientRect() : null); };
 addEventListener('resize', eyeSlot);
 

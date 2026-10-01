@@ -114,7 +114,7 @@ export class Speaker {
     this.w = makeWarden(); wardens.add(this.w); installTrack();
     this.text = h('p', { class: 'bubble-text', 'aria-hidden': 'true' }, '…');
     this.live = h('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
-    this.bubble = h('div', { class: 'bubble', title: 'Cliquer pour accélérer', onclick: () => this.skip() },
+    this.bubble = h('div', { class: 'bubble', 'aria-hidden': 'true', onclick: () => this.skip() },
       h('span', { class: 'nameplate', 'aria-hidden': 'true' }, 'GÉRARD', h('i', {}, ' · Agent de Vérification n° 4471')), this.text);
     this.el = h('div', { class: 'speaker' + (big ? ' big' : ''), 'data-mood': 'neutral' }, h('div', { class: 'avatar' }, this.w.svg), this.bubble, this.live);
     this.tok = 0; this.full = ''; this.timer = 0;
@@ -145,6 +145,7 @@ export class Speaker {
 
 // ---------- confettis ----------
 let cv, cx, parts = [], raf = 0;
+export function clearConfetti() { parts = []; if (cx) cx.clearRect(0, 0, innerWidth, innerHeight); }
 export function confetti(x, y, n = 60, colors = ['#ffd23f', '#2de2c0', '#ff4757', '#fff', '#7aa8ff']) {
   if (reducedMotion()) return;
   if (!cv) { cv = h('canvas', { class: 'confetti', 'aria-hidden': 'true' }); document.body.append(cv); cx = cv.getContext('2d'); }

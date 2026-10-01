@@ -20,7 +20,7 @@ await solve(A); await sleep(1500); await fail(B); await sleep(900); await solve(
 await shot(A, '4-race-desktop'); await shot(B, '4-race-mobile');
 for (let i = 0; i < 4; i++) { await fail(B); await sleep(1300); } await sleep(1500); await shot(B, '5-ghost-mobile');
 await fail(A); await sleep(1000); await shot(A, '5-race-fail-desktop');
-for (let i = 0; i < 14; i++) { await sleep(1000); await solve(A); }
+for (let i = 0; i < 160; i++) { await sleep(800); await solve(A); if (await A.$('.ol-podium')) break; } // solve until the match ends (any length)
 await sleep(3000); await shot(A, '6-after-finish');
 await A.waitForSelector('.ol-podium', { timeout: 40000 }); await sleep(4000);
 await shot(A, '7-end-desktop'); await shot(B, '7-end-mobile');

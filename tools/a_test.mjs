@@ -81,7 +81,7 @@ async function run(id) {
     for (let i = 0; i < truth.length; i++) {
       let c = await cur(); const j = c.indexOf(truth[i]); if (j === i) continue;
       const row = p.locator('.ao-r', { hasText: new RegExp('^\\s*⋮⋮\\s*\\d+\\s*' + truth[i].slice(0, 6), 'i') }).first(); const rb = await row.boundingBox();
-      if (first) { first = false; const [x, y] = ctr(rb); await p.mouse.move(x - 60, y); await p.mouse.down(); await p.mouse.move(x - 60, y - 20, { steps: 5 }); await shot('drag'); await p.mouse.move(x - 60, y - (j - i) * 46, { steps: 10 }); await p.mouse.up(); }
+      if (first) { first = false; const y = rb.y + rb.height / 2, x = rb.x + 22 + 60; await p.mouse.move(x - 60, y); await p.mouse.down(); await p.mouse.move(x - 60, y - 20, { steps: 5 }); await shot('drag'); await p.mouse.move(x - 60, y - (j - i) * 46, { steps: 10 }); await p.mouse.up(); }
       else { await row.focus(); for (let k = 0; k < j - i; k++) await p.keyboard.press('ArrowUp'); }
       await sleep(300);
     }
