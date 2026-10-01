@@ -104,7 +104,7 @@ export default {
     // ---- phase 1: l'œil (et son reflet quand le boss inverse le monde) ----
     function p1() {
       phase = 1; clear(); busy = false; let hits = 0, inv = false, ghosts = []; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
-      setRule('Phase 1/3 — Réflexes · 18 s par coup', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Ignorez les 🧿 (une erreur = un point perdu). Quand le monde est ', h('b', {}, 'inversé'), ', visez les ', h('b', {}, 'reflets'), '.');
+      setRule('Phase 1/3 · 18 s par coup', 'Cliquez l’œil 👁️ ×' + NH + ', pas les 🧿. Monde ', h('b', {}, 'inversé'), ' : visez le ', h('b', {}, 'reflet'), '.');
       const lab = h('div', { class: 'bb-s' }, `Œil : 0/${NH}`); stage.append(lab);
       const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, e, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
       let orbs = []; const coarse = matchMedia('(pointer:coarse)').matches; const sp = (k) => (api.reducedMotion || coarse ? 0.62 : 1) * (170 + k * 100);
@@ -130,7 +130,7 @@ export default {
     // ---- phase 2: synchronisation (valeurs calibrées : tools/balance.mjs) ----
     function p2() {
       phase = 2; clear(); api.timer(60000); busy = false; face.dataset.m = '1'; let hits = 0, floorH = 0, ph = 0, last = performance.now(), zc = 0.5, dc = -1; const NH = 5, ZW = [0.16, 0.14, 0.12, 0.10, 0.09], V = [0.70, 0.72, 0.75, 0.78, 0.80]; CK.phase = 2;
-      setRule('Phase 2/3 — Synchronisation · 60 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), ', pas la rouge. ', NH + ' fois. Une erreur coûte un point de progrès (jamais une vie, et jamais sous le palier 2 une fois le 3e coup atteint). Dès le 4e coup, un ', h('b', {}, 'tunnel'), ' cache le curseur (il continue de passer).');
+      setRule('Phase 2/3 · 60 s', h('b', {}, 'STOP'), ' (bouton, Espace, toucher) dans la ', h('b', {}, 'zone verte'), ' ×' + NH + '. Rouge = piège. Erreur : −1 progrès.');
       const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
       const zone = h('div', { class: 'bb-zone' }), dz = h('div', { class: 'bb-zone bb-dec' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
       const track = h('div', { class: 'bb-track' }, zone, dz, tun, beam);
@@ -143,8 +143,10 @@ export default {
       place();
       let pos = 0; const tri = (x) => { x %= 2; return x < 1 ? x : 2 - x; };
       const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 3 && pos > 0.37 && pos < 0.63; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify({ pos, zc, w: wNow() }); };
+      const curPos = () => tri(ph + vNow() * Math.max(0, performance.now() - last) / 1000);
+      if (/cheat=1/.test(location.search)) host.__p2 = () => { const x = (ph + vNow() * Math.max(0, performance.now() - last) / 1000) % 2; return { pos: curPos(), dir: x < 1 ? 1 : -1, zc, w: wNow(), v: vNow(), hits }; };
       function press() {
-        if (busy) return; const w = wNow(), d = pos - zc;
+        if (busy) return; pos = curPos(); const w = wNow(), d = pos - zc;
         if (Math.abs(d) <= w / 2) { hits++; if (hits >= 3) floorH = 2; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 3 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
         else { shake(root); api.sfx('bad'); const inDec = dc >= 0 && Math.abs(pos - dc) <= w / 2; const m = inDec ? 'Zone rouge ! C’était un piège, et vous avez marché dedans.' : Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = Math.max(floorH, hits - 1); lab.textContent = `Synchro : ${hits}/${NH}`; place(); api.say(m + ' Un point de progrès en moins, pas une vie.', 'smug'); }
       }
@@ -160,7 +162,7 @@ export default {
       stage.append(lab, body);
       const nofix = { autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false' };
       const win = () => {
-        busy = true; CK.phase = 0; hp(0); api.sfx('stamp'); body.replaceChildren(); stage.replaceChildren(h('div', { class: 'bb-s' }, 'Verdict…'));
+        busy = true; CK.phase = 0; api.timer(600000); setRule('Verdict', h('b', {}, 'Charges abandonnées : 3/3')); hp(0); api.sfx('stamp'); body.replaceChildren(); stage.replaceChildren(h('div', { class: 'bb-s' }, 'Verdict…'));
         // hit-stop + éclair
         const fl = h('div', { class: 'bb-flash' }); root.append(fl); stage.classList.add('freeze'); face.classList.add('freeze');
         T(() => {
@@ -217,7 +219,8 @@ export default {
       function stepIn() { body.replaceChildren(); if (cleanup) cleanup(); cleanup = null; busy = false; [stepA, stepB, stepC][step](); }
       stepIn();
     }
-    const resume = CK.phase && performance.now() - CK.t < 7000 ? CK.phase : 1;
+    const dbgPh = /cheat=1/.test(location.search) ? +(new URLSearchParams(location.search).get('bossphase') || 0) : 0;
+    const resume = dbgPh || (CK.phase && performance.now() - CK.t < 7000 ? CK.phase : 1);
     setRule('Combat de boss', resume > 1 ? 'Reprise au dernier point de sauvegarde. Le boss a de la mémoire, lui aussi.' : 'Trois épreuves, trois mécaniques que vous connaissez déjà. Il a juste changé les règles.'); hp(resume === 1 ? 100 : resume === 2 ? 40 : 15);
     T(resume === 3 ? p3 : resume === 2 ? p2 : p1, 900);
     return { destroy() { alive = false; tm.forEach(clearTimeout); window.removeEventListener('pointermove', look); CK.t = performance.now(); clear(); } };

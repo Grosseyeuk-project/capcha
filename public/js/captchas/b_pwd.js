@@ -123,7 +123,7 @@ export default {
       rows.push({ row, was: false }); list.prepend(row); list.scrollTop = 0; revealed++; api.sfx('pop'); api.timer(rules[n].id === 'fire' ? 75000 : n > 11 ? 55000 : 40000);
       if (n === CONF) { confWrap.style.display = ''; confirm.disabled = false; }
       if (n === WORM) { wormOn = true; tickN = 0; view.classList.add('on'); }
-      if (rules[n].id === 'fire') { fireOn = true; foyers = 0; setPw('🔥' + input.value); api.sfx('alarm'); }
+      if (rules[n].id === 'fire') { fireOn = true; foyers = 0; { const c0 = [...input.value]; c0.splice(Math.floor(c0.length * 0.35), 0, '🔥'); setPw(c0.join('')); } api.sfx('alarm'); }
       if (rules[n].s) api.say(rules[n].s, n >= 12 ? 'smug' : 'neutral');
     }
     function renderView() {
@@ -149,6 +149,7 @@ export default {
       if (all && !btn.dataset.rdy) { btn.dataset.rdy = 1; api.sfx('good'); api.say('Tout est conforme. Cliquez vite : la lune bouge, Albert mange.', 'impressed'); } else if (!all) delete btn.dataset.rdy;
       renderView();
     }
+    let ext = 0; api.onTick((ms) => { if (ms < 1500 && revealed >= 20 && ext < 2 && !solved) { ext++; api.timer(60000); api.say('Prolongation accordée par Gérard. Une seule. Enfin, deux. Ne le répétez pas.', 'impressed'); } });
     let lastMoon = moonNow();
     const iv = setInterval(() => {
       if (!alive || solved) return; clockEl.textContent = hhmm(); const m = moonNow(); moonEl.textContent = m; ateEl.textContent = String(ate);

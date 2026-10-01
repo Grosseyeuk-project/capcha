@@ -57,8 +57,8 @@ export default {
     }
     const S = solveQuat();
     do { q.set(api.rng() - .5, api.rng() - .5, api.rng() - .5, api.rng() - .5).normalize(); } while (q.angleTo(S) < 1.6);
-    function metrics() {
-      const { n, u } = faceAxes(); const nw = n.clone().applyQuaternion(q), uw = u.clone().applyQuaternion(q);
+    function metrics(idx = tIdx) {
+      const n = new THREE.Vector3(...FN[idx]), u = new THREE.Vector3(...FU[idx]); const nw = n.clone().applyQuaternion(q), uw = u.clone().applyQuaternion(q);
       const face = Math.acos(Math.max(-1, Math.min(1, nw.z))) * 57.2958;
       const up = Math.abs(Math.atan2(uw.x, uw.y)) * 57.2958;
       return { face, up, okFace: face < 14, okUp: up < 14 };
@@ -67,9 +67,9 @@ export default {
       let best = -2, bi = 0; FN.forEach((f, i) => { const z = new THREE.Vector3(...f).applyQuaternion(q).z; if (z > best) { best = z; bi = i; } }); return bi;
     }
     function apply() {
-      cube.quaternion.copy(q); dirty = true; const m = metrics(); wrap.classList.toggle('ok', m.okFace && m.okUp);
+      cube.quaternion.copy(q); dirty = true; const m = metrics(), m2 = metrics(dIdx); const locked = (m.okFace && m.okUp) || (m2.okFace && m2.okUp); wrap.classList.toggle('ok', locked);
       const vi = visible(), lab = assign[vi];
-      read.textContent = (m.okFace && m.okUp) ? 'Cadre verrouillé — validez.' : `Face visible : ${lab[0]}${lab.endsWith('!') ? ' (miroir)' : ''}`;
+      read.textContent = locked ? 'Cadre verrouillé — validez ?' : `Face visible : ${lab[0]}`;
     }
     const rot = (ax, ay, az, ang) => { const d = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(ax, ay, az).normalize(), ang); q.premultiply(d); q.normalize(); apply(); };
     const roll = (s) => { rot(0, 0, 1, s * 0.2618); api.sfx('tick'); };

@@ -15,7 +15,7 @@ const HATS = ['🎩', '🎓', '🧢', '👒'], FAKES = ['🔱', '🏆', '🎀'];
 export default {
   id: 'b_hunt', tier: 3, title: 'Le canard royal', time: 30000,
   mount(host, api) {
-    const { h } = api; let round = 0, alive = true, busy = false, step2 = false, bare = -1;
+    const { h } = api; let round = 0, alive = true, busy = false, step2 = false, bare = -1, wrongs = 0;
     const arena = h('div', { class: 'bh-arena', 'aria-label': 'Arène' });
     const pips = h('div', { class: 'bk-pips' }, [0, 1, 2].map(() => h('i', {})));
     const info = h('span', {}, 'Rois neutralisés');
@@ -45,13 +45,14 @@ export default {
       if (/cheat=1/.test(location.search)) host.dataset.answer = String(king) + ',' + bare;
       api.timer(round === 0 ? 24000 : 20000);
     }
+    function wrong(msg) { wrongs++; api.sfx('bad'); if (wrongs >= 3) { wrongs = 0; return api.fail(msg + ' (3e erreur : une vie.)', { retry: true }); } api.say(msg + ` (Erreur ${wrongs}/3 : tolérée.)`, 'smug'); }
     function hit(i) {
       if (busy) return;
       const d = ducks[i];
       if (step2) {
-        if (i === king) { shake(root); return api.fail('Ce canard a abdiqué. Il porte encore la couronne, par nostalgie. Cherchez celui SANS chapeau.'); }
-        if (i !== bare) { shake(root); return api.fail('Un chapeau ! L’erratum disait SANS chapeau. Vous avez arrêté un canard bien habillé, par réflexe.'); }
-      } else if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return api.fail(hat ? `Ce canard porte un ${hat.textContent}, pas la vraie 👑. Les faux insignes, ça existe. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
+        if (i === king) { shake(root); return wrong('Ce canard a abdiqué. Il porte encore la couronne, par nostalgie. Cherchez celui SANS chapeau.'); }
+        if (i !== bare) { shake(root); return wrong('Un chapeau ! L’erratum disait SANS chapeau. Vous avez arrêté un canard bien habillé, par réflexe.'); }
+      } else if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return wrong(hat ? `Ce canard porte un ${hat.textContent}, pas la vraie 👑. Les faux insignes, ça existe. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
       if (round === 2 && !step2) { // abdication : nouvelle consigne
         step2 = true; d.el.classList.add('hit'); api.sfx('whoosh'); king = -1;
         setRule('Erratum n° 3', 'Le roi vient d’abdiquer. Cliquez plutôt sur le canard ', h('b', { class: 'no' }, 'SANS chapeau'), '. Un seul.');

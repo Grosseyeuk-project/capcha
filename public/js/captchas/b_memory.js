@@ -47,7 +47,7 @@ export default {
       if (i !== want) {
         accept = false; shake(root); const nth = pos + 1; pads[i].classList.remove('lit');
         const m = pos === 0 ? `Dès le premier signal : ${PADS[i].n} au lieu de ${PADS[want].n}. Ça commence fort.` : stage ? `Signal n° ${nth} (à l’envers) : vous avez tapé ${PADS[i].n}, il fallait ${PADS[want].n}. L’envers, c’est dur, hein ?` : `Au signal n° ${nth}, c’était ${PADS[want].n}, pas ${PADS[i].n}. Votre mémoire a la durée de vie d’un poisson rouge.`;
-        return api.fail(m);
+        api.fail(m + ' (On reprend cette phase.)', { retry: true }); T(() => begin(stage), 1500); return;
       }
       api.sfx('click'); dots.children[pos].classList.add('ok'); pos++;
       if (pos >= seq.length) {

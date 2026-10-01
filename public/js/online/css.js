@@ -300,7 +300,7 @@ const CSS = `
 
 /* r7 */
 .ol-end .ol-actions{position:sticky;bottom:0;z-index:6;padding:10px 0 12px;background:linear-gradient(transparent,rgba(4,7,10,.92) 40%)}
-@media (max-width:820px){.online .card{min-height:calc(100dvh - 218px)}.ol-root:has(.ol-race){display:block}}
+@media (max-width:820px){.online .card{min-height:calc(100dvh - 192px)}.ol-root:has(.ol-race){display:block}}
 
 .ol-plist{min-height:214px}.ol-emotes{min-height:34px}.ol-gerard{min-height:92px}
 
