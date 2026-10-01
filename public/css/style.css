@@ -444,3 +444,19 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .game-root .bubble { overflow: visible; }
 .game-root:not(.online) .card { flex: 1 1 auto; }
 #app.game-root { overflow: clip; }
+.stage > .hud, .stage > .speaker { flex: none; }
+
+@media (max-width: 640px) and (max-height: 720px) {
+  .hud { padding-top: 4px; padding-bottom: 7px; }
+  .game-root .bubble { height: 40px; }
+  .card-head { padding: 2px 12px; } .card { border-width: 2px; }
+  .cap-host { padding: 4px 6px; }
+  #app { padding-top: 4px; padding-bottom: 6px !important; }
+  .game-root, .stage { gap: 5px; }
+}
+@media (max-width: 640px) and (max-height: 720px) {
+  .card-foot { height: 30px; padding: 3px 10px; font-size: .62rem; line-height: 1.15; }
+  .game-root .bubble { height: 37px; padding: 3px 8px; }
+  .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .72rem; line-height: 1.12; }
+  .game-root .avatar { width: 30px; height: 30px; }
+}

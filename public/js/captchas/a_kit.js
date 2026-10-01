@@ -57,7 +57,8 @@ css('esc', `
 .ak-inc{display:block;background:#fdecea;color:#8c1d18;border-bottom:1px solid #f4b8b3;padding:6px 12px;font-size:11.5px;line-height:1.3;animation:ak-pop .25s both;max-height:60px;overflow:hidden;transition:max-height .4s,padding .4s,opacity .4s}
 .ak-inc.old{background:#fff4d6;color:#664d03;border-color:#ecd48a}.ak-inc.gone{max-height:0;padding-top:0;padding-bottom:0;opacity:0}
 .ak-inc.rule{background:#e8f0fe;color:#174ea6;border-color:#aecbfa}
-.ak-st{display:flex;align-items:center;gap:6px;padding:6px 10px 0;min-height:26px}
+.ak-w{position:relative}.ak-inc{position:absolute;left:0;right:0;z-index:6;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.ak-st{display:flex;align-items:center;gap:6px;padding:6px 10px 0;min-height:46px}
 .ak-rb{appearance:none;border:1px solid #ecd48a;background:#fff3cd;color:#664d03;border-radius:10px;font:700 10px/1 system-ui;letter-spacing:.04em;text-transform:uppercase;padding:5px 8px;cursor:pointer;flex:none}
 .ak-rb:hover{background:#ffe8a1}
 .ak-pen{font:700 10px/1 system-ui;color:#b3261e;flex:none}

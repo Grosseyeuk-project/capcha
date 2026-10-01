@@ -180,9 +180,9 @@ export class Game {
     });
     host.querySelectorAll(tsel).forEach((e) => {
       const r = e.getBoundingClientRect(); if (!r.width || !r.height) return;
-      if (r.height < 40) { e.style.setProperty('min-height', '40px', 'important'); }
-      if (r.width < 40) { e.style.setProperty('min-width', '40px', 'important'); }
-      if ((r.height < 40 || r.width < 40) && getComputedStyle(e).display === 'inline') { e.style.setProperty('display', 'inline-flex', 'important'); e.style.setProperty('align-items', 'center', 'important'); e.style.setProperty('justify-content', 'center', 'important'); }
+      if (r.height < 42) { e.style.setProperty('min-height', '42px', 'important'); }
+      if (r.width < 42) { e.style.setProperty('min-width', '42px', 'important'); }
+      if ((r.height < 42 || r.width < 42) && getComputedStyle(e).display === 'inline') { e.style.setProperty('display', 'inline-flex', 'important'); e.style.setProperty('align-items', 'center', 'important'); e.style.setProperty('justify-content', 'center', 'important'); }
     });
   }
   fit() {
