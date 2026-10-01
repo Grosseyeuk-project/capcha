@@ -55,8 +55,8 @@ export default {
       if (bad < 0) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();
       // find an adjacent inversion to report
-      let m; const inv = ord.findIndex((x, i) => i && (desc ? ord[i - 1][1] < x[1] : ord[i - 1][1] > x[1]));
-      if (inv > 0) { const a = ord[inv - 1], b = ord[inv]; const heavy = a[1] > b[1] ? a : b, light = a[1] > b[1] ? b : a; m = `Vous avez placé ${a[0]} avant ${b[0]}. Or ${heavy[0]} pèse ${fmt(heavy[1])} et ${light[0]} ${fmt(light[1])}. Ça se sent à la main.${WORDS ? ' (Je m’autorise les chiffres, moi. Pas vous.)' : ''}${flipped ? ' Et le sens a été inversé en cours de route, c’était écrit en bleu.' : ''}`; }
+      let m; const invIdx = ord.findIndex((x, i) => i && (desc ? ord[i - 1][1] < x[1] : ord[i - 1][1] > x[1]));
+      if (invIdx > 0) { const a = ord[invIdx - 1], b = ord[invIdx]; const heavy = a[1] > b[1] ? a : b, light = a[1] > b[1] ? b : a; m = `Vous avez placé ${a[0]} avant ${b[0]}. Or ${heavy[0]} pèse ${fmt(heavy[1])} et ${light[0]} ${fmt(light[1])}. Ça se sent à la main.${WORDS ? ' (Je m’autorise les chiffres, moi. Pas vous.)' : ''}${flipped ? ' Et le sens a été inversé en cours de route, c’était écrit en bleu.' : ''}`; }
       else m = 'Le classement est bancal. Vérifiez : même une balance de cuisine y arriverait.';
       api.fail(m);
     }

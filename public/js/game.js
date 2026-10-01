@@ -35,7 +35,7 @@ export class Game {
 
   start() {
     this.root.replaceChildren(); this.root.classList.add('game-root');
-    document.body.classList.remove('end-open'); bg.reset(); this.runT0 = performance.now(); this.ui();
+    document.body.classList.remove('end-open'); delete document.body.dataset.slam; bg.reset(); this.runT0 = performance.now(); this.ui();
     startMusic();
     this.act = () => { this.lastAct = performance.now(); };
     ['pointerdown', 'keydown'].forEach((e) => this.card.addEventListener(e, this.act, true));
@@ -320,6 +320,7 @@ export class Game {
     const idx = this.strikes - 1; this.strikeEls[idx]?.classList.add('hit');
     this.stage.classList.remove('shake'); void this.stage.offsetWidth; if (!RM()) this.stage.classList.add('shake');
     this.card.classList.add('struck');
+    if (retry) this.later(() => { this.card.classList.remove('struck'); if (this.stamp.classList.contains('bad')) this.stamp.className = 'stamp'; }, 900); // retry:true garde l'interface : le gris/pointer-events:none ne dure que le temps du tampon
     this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'));
     const over = this.strikes >= 3;
     const tt = CAPTCHAS[this.level - 1]?.title || 'une vérification'; this.past.strikes.push(tt); this.charge(timeout ? `A laissé expirer « ${tt} »` : `Échec à « ${tt} » (pièce à conviction n° ${pad(this.level)})`);
@@ -361,7 +362,7 @@ export class Game {
     if (cine) {
       this.stage.classList.add('dim');
       // Cinéma : le portail 3D s'ouvre (victoire) ou l'Œil vous verrouille puis le portail claque (défaite) ; le tampon s'abat ; puis la fiche.
-      this.later(() => { slam = h('div', { class: 'slam ' + (win ? 'win' : 'over'), 'aria-hidden': 'true' }, h('b', {}, win ? 'HUMAIN' : 'ROBOT'), h('i', {}, win ? 'accès accordé' : 'accès refusé')); document.body.append(slam); sfx('stamp'); bg.shake(1); bg.pulse(win ? 'level' : 'bad'); this.flash(win ? 'win' : 'bad'); confettiBurst(); }, win ? 1300 : 1250);
+      this.later(() => { slam = h('div', { class: 'slam ' + (win ? 'win' : 'over'), 'aria-hidden': 'true' }, h('b', {}, win ? 'HUMAIN' : 'ROBOT'), h('i', {}, win ? 'accès accordé' : 'accès refusé')); document.body.append(slam); document.body.dataset.slam = win ? 'win' : 'over'; sfx('stamp'); bg.shake(1); bg.pulse(win ? 'level' : 'bad'); this.flash(win ? 'win' : 'bad'); confettiBurst(); }, win ? 1300 : 1250);
       this.later(show, win ? 3600 : 3000);
       setTimeout(() => { addEventListener('pointerdown', skip, true); addEventListener('keydown', skip, true); }, 400);
     } else this.later(show, win ? 500 : 100);

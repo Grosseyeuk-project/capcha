@@ -411,7 +411,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .online .hud { grid-template-columns: 1fr auto; padding: 4px 8px 9px; }
   .online .hud .pips { max-width: none; } .online .hud-c { display: block; }
   .online .hud-r .sound { display: none; }
-  .online .card { max-height: calc(100dvh - 192px); }
+  .online .card { max-height: calc(100dvh - 197px); }
 }
 .cap-host { animation: none !important; }
 .speaker.big .bubble-text { min-height: 2.8em; }

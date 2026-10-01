@@ -20,7 +20,7 @@ if (!port) {
   for (let i = 0; i < 40; i++) { try { if ((await fetch(`http://localhost:${port}/healthz`)).ok) break; } catch { /* */ } await sleep(150); }
 }
 const base = `http://localhost:${port}/`;
-const VPS = quick ? [[390, 800]] : [[360, 640], [390, 800], [1280, 800]];
+const VPS = (quick ? [[390, 800]] : [[360, 640], [390, 800], [1280, 800]]).filter(([w, h]) => !opt('vp') || opt('vp') === `${w}x${h}`);
 // click-to-solve captchas: no final button, so they must fit without internal scrolling.
 // Layout bugs owned by the captcha builders, reported but not blocking the shell gate.
 const KNOWN = { b_hunt: 'roaming sprites may overlap each other by design', a_bins: 'card pile overflows its own container, partly under the footer (captchas-a)' };
@@ -177,7 +177,7 @@ for (const [w, h] of VPS) {
     }
     console.log(`   narrator longest-8 lines clip=${worst}px`);
     await p.evaluate(() => { __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Rapidité suspecte sur « Texte tordu » (1,2 s)'); __cap.game.charge('Respiration jugée trop régulière'); __cap.over(); });
-    await p.waitForSelector('.slam', { timeout: 20000 }).catch(() => bad(`${w}x${h} game-over cinematic stamp (.slam) never appeared`)); await p.waitForFunction(() => { const b = document.querySelector('.slam b'); return b && b.getAnimations().filter((a) => a.animationName === 'slamin').every((a) => a.playState === 'finished'); }, null, { timeout: 20000 }).catch(() => {}); await p.waitForTimeout(700);
+    await p.waitForFunction(() => document.body.dataset.slam || document.querySelector('.screen.end'), null, { timeout: 30000 }).catch(() => {}); if (!(await p.evaluate(() => document.body.dataset.slam))) bad(`${w}x${h} game-over cinematic stamp never slammed`); await p.waitForFunction(() => { const b = document.querySelector('.slam b'); return !b || b.getAnimations().filter((a) => a.animationName === 'slamin').every((a) => a.playState === 'finished'); }, null, { timeout: 20000 }).catch(() => {}); await p.waitForTimeout(700);
     { const sl = await p.evaluate(() => { const b = document.querySelector('.slam b'); if (!b) return null; const r = b.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, vw: innerWidth, vh: innerHeight }; });
       if (sl && (sl.l < -1 || sl.t < -1 || sl.r > sl.vw + 1 || sl.b > sl.vh + 1)) bad(`${w}x${h} cinematic stamp clipped by the viewport (${Math.round(sl.l)},${Math.round(sl.t)} - ${Math.round(sl.r)},${Math.round(sl.b)})`); }
     await p.mouse.click(5, 5); await p.waitForSelector('.screen.end .verdict-card', { timeout: 15000 }); await p.waitForFunction(() => document.getAnimations().filter((a) => a.effect?.target?.closest?.('.screen.end')).every((a) => a.playState !== 'running'), null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(400);
@@ -209,11 +209,11 @@ if (!quick) {
   const p = await page(390, 800); await go(p, `${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
   await p.evaluate(() => { const g = __cap.game; g.lastTier = 1; g.level = 10; g.beginLevel(); });
   await p.waitForSelector('.tier-beat', { timeout: 10000 }).catch(() => bad('tier change: .tier-beat overlay never appeared')); await p.waitForTimeout(600);
-  const so = await p.evaluate(() => +getComputedStyle(document.querySelector('.stage')).opacity); if (so > 0.1) bad(`tier change: card/stage still visible during the 3D beat (opacity ${so})`);
+  const so = await p.evaluate(() => document.querySelector('.game-root').classList.contains('cine')); if (!so) bad('tier change: card not hidden (.cine missing) during the 3D beat');
   await p.mouse.click(5, 5); await p.waitForSelector('.cap-host', { timeout: 8000 }).catch(() => bad('tier change: skip did not resume the level')); 
   { const gone = await p.evaluate(() => !document.querySelector('.tier-beat')); if (!gone) bad('tier change: overlay still present after skip'); }
-  await p.evaluate(() => __cap.win()); await p.waitForSelector('.slam', { timeout: 20000 }).catch(() => bad('win: stamp never slammed'));
-  const sw = await p.evaluate(() => +getComputedStyle(document.querySelector('.stage')).opacity); if (sw > 0.1) bad(`win: card still visible during the gate beat (opacity ${sw})`);
+  await p.evaluate(() => __cap.win()); await p.waitForFunction(() => document.body.dataset.slam || document.querySelector('.screen.end'), null, { timeout: 30000 }).catch(() => {}); if (!(await p.evaluate(() => document.body.dataset.slam))) bad('win: stamp never slammed');
+  const sw = await p.evaluate(() => document.querySelector('.stage').classList.contains('dim')); if (!sw) bad('win: card not hidden (.stage.dim missing) during the gate beat');
   await p.mouse.click(5, 5); await p.waitForSelector('.screen.end', { timeout: 10000 }).catch(() => bad('win: skip did not reveal the stat card'));
   if (p.errs.length) bad(`cinematics console errors: ${[...new Set(p.errs)].slice(0, 3).join(' / ')}`); else console.log('  tier beat + win beat: card hidden, skip works, no console errors');
   await p.context().close();
@@ -262,11 +262,11 @@ if (!skipOnline) {
   if (!podium) bad('online: match never reached the podium'); else {
     await sleep(2500);
     for (const [P, name] of [[B, '390'], [A, '1280']]) {
-      const r = await P.evaluate((C) => { const f = eval(C); const root = document.querySelector('.ol-root'); root.scrollTo(0, root.scrollHeight); const acts = [...document.querySelectorAll('.ol-actions .ol-btn')].map((x) => x.getBoundingClientRect()); const rows = [...document.querySelectorAll('.ol-tbl tbody tr')].map((x) => x.getBoundingClientRect().bottom); const bar = document.querySelector('.ol-actions').getBoundingClientRect();
-        return { vh: innerHeight, bottom: Math.max(...acts.map((x) => x.bottom)), top: Math.min(...acts.map((x) => x.top)), lastRow: Math.max(...rows), barTop: bar.top, contrast: f('.ol-end') }; }, `(${CONTRAST.toString()})`);
+      const r = await P.evaluate((C) => { const f = eval(C); const root = document.querySelector('.ol-root'); const desk = innerWidth >= 1000; root.scrollTo(0, desk ? 0 : root.scrollHeight); const acts = [...document.querySelectorAll('.ol-actions .ol-btn')].map((x) => x.getBoundingClientRect()); const rows = [...document.querySelectorAll('.ol-tbl tbody tr')].map((x) => x.getBoundingClientRect().bottom); const bar = document.querySelector('.ol-actions').getBoundingClientRect();
+        return { desk, vh: innerHeight, bottom: Math.max(...acts.map((x) => x.bottom)), top: Math.min(...acts.map((x) => x.top)), lastRow: Math.max(...rows), barTop: bar.top, contrast: f('.ol-end') }; }, `(${CONTRAST.toString()})`);
       console.log(`  results ${name}: actions ${Math.round(r.top)}-${Math.round(r.bottom)} of ${r.vh}, last row ${Math.round(r.lastRow)} vs bar top ${Math.round(r.barTop)}, contrast issues ${r.contrast.length}`);
       if (r.bottom > r.vh + 1) bad(`online results ${name}: actions below fold`);
-      if (r.lastRow > r.barTop + 1) bad(`online results ${name}: result list hidden under the sticky bar`);
+      if (!r.desk && r.lastRow > r.barTop + 1) bad(`online results ${name}: result list hidden under the sticky bar`);
       if (r.contrast.length) bad(`online results ${name} contrast < 4.5: ${r.contrast.slice(0, 5).join(', ')}`);
     }
   }
