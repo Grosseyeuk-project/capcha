@@ -6,7 +6,7 @@ const p = await (await b.newContext({ viewport:{width:W,height:H}, hasTouch:W<50
 p.on('pageerror', e=>console.log('[pe]',e.message));
 p.on('console', m=>m.type()==='error'&&console.log('[c]',m.text()));
 const shot=async n=>{await p.screenshot({path:S+`o${W}-${n}.png`});console.log(n,await p.evaluate(()=>[document.documentElement.scrollWidth,innerWidth]))};
-await p.goto('http://localhost:8093/js/online/harness.html?n=6'); await p.waitForTimeout(1500);
+await p.goto('http://localhost:8094/js/online/harness.html?n=6'); await p.waitForTimeout(1500);
 await p.evaluate(()=>window.CAPCHA_ONLINE.open()); await p.waitForTimeout(800); await shot('menu');
 await p.fill('input[aria-label=Pseudo]','Vincent'); await p.click('text=Partie rapide'); 
 await p.waitForTimeout(2500); await shot('lobby');
