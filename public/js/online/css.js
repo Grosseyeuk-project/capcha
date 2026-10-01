@@ -291,7 +291,7 @@ const CSS = `
  .ol-toast:not(:last-child){display:none}
  .ol-toast{font-size:12px;padding:6px 10px}
  .ol-race{margin-top:-2px}
- .ol-gap{display:block;font-size:12px;padding:5px 10px}
+ .ol-gap{display:block;font-size:12px;padding:3px 10px}
  .ol-rtop .pill:not(.ol-racing):not(.ol-rank){display:none}
  .ol-rtop{gap:6px}
  .ol-rtop .ol-rank{display:inline-flex}
@@ -300,7 +300,7 @@ const CSS = `
 
 /* r7 */
 .ol-end .ol-actions{position:sticky;bottom:0;z-index:6;padding:10px 0 12px;background:linear-gradient(transparent,rgba(4,7,10,.92) 40%)}
-@media (max-width:820px){.online .card{min-height:calc(100dvh - 206px)}.ol-root:has(.ol-race){display:block}}
+@media (max-width:820px){.online .card{min-height:calc(100dvh - 218px)}.ol-root:has(.ol-race){display:block}}
 
 .ol-plist{min-height:214px}.ol-emotes{min-height:34px}.ol-gerard{min-height:92px}
 
