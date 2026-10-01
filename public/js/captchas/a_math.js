@@ -33,7 +33,7 @@ export default {
     if (/cheat=1/.test(location.search)) host.dataset.answer = WORDS ? numWords(v3) : v3;
     function checkWords() {
       const raw = inp.value.trim(), n = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-\s]+/g, ' ').trim();
-      if (/\d/.test(raw)) { fr.shake(); infraction(); return api.fail('Un chiffre ! Règle 2 : les nombres s’écrivent désormais en toutes lettres. Vous l’aviez vue, elle clignotait. En jaune.'); }
+      if (/\d/.test(raw)) { fr.shake(); infraction(); return api.fail('Un chiffre ! Règle 2 : les nombres s’écrivent désormais en toutes lettres. Elle figure sous « règles », dans la carte. Dépliable. Mais bon.'); }
       if (raw !== raw.toLowerCase()) { fr.shake(); infraction('upper'); return api.fail('Règle 1 : minuscules. Vous criez vos réponses, comme un robot en colère.'); }
       if (n(raw) === n(numWords(v3))) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();
