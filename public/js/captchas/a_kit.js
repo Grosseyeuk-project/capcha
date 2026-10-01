@@ -120,7 +120,7 @@ css('live2', `
 .ak-btn:disabled{font-size:12px}
 .ak-lc{padding:4px 7px;gap:4px}
 .ak-st{gap:4px;padding:6px 10px 0;min-height:0}
-.ak-inc{top:auto;pointer-events:none}
+.ak-inc{pointer-events:none;font-size:12.5px;line-height:1.3}
 @media (min-width:900px){.ak-w{width:min(100%,520px)}.ak-note{font-size:13px}}
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
@@ -152,10 +152,9 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     head, st, list, noteEl, h('div', { class: 'ak-body' }, body), foot);
   let inc = null;
   const drain = () => { if (dt || !api) return; dt = setInterval(() => { if (!el.isConnected || !bad.size) { clearInterval(dt); dt = 0; return; } drained++; S.pen += 0; api.timer(Math.max(3000, S.left - 1000)); if (drainEl) { drainEl.hidden = false; drainEl.textContent = '−' + drained + ' s'; } api.sfx('tick'); }, 1000); };
-  const banner = (m, kind, ms = 6000) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = 'auto'; me.style.bottom = foot.offsetHeight + 'px'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
-  if (S.last && S.lastId === id && Date.now() - S.lastT < 15000) banner('Essai précédent : ' + S.last, 'old', 5000);
+  const banner = (m, kind, ms = 6000) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = '0'; me.style.bottom = 'auto'; me.style.minHeight = head.offsetHeight + 'px'; me.style.display = 'flex'; me.style.alignItems = 'center'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
   if (api) {
-    const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; if (m) banner(m, '', 0); return f(m, o); };
+    const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; return f(m, o); };
     const so = api.solve; api.solve = () => { S.last = ''; return so(); };
     api.onTick((l) => { S.left = l; });
     const T = TIMES[id]; if (S.pen && T) api.timer(Math.max(12000, T - S.pen * 5000));
@@ -171,6 +170,7 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     addChip: (text, state) => { const c = h('span', { class: 'ak-lc ' + (state || 'bad') }, h('i'), text); (drainEl ? st.insertBefore(c, drainEl) : (st || el).append(c)); return c; }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
 }
 export const numWords = (n) => {
+  if (!Number.isFinite(n) || n < 0 || n > 999) return String(n);
   const u = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
   const t = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante'];
   if (n < 20) return u[n];

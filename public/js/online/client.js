@@ -74,8 +74,10 @@ function menu() {
     topbar(),
     h('h1', { class: 'ol-title' }, 'Course en ligne', h('small', {}, 'Mêmes CAPTCHAs, même graine, même panique. Trois erreurs et vous êtes officiellement un robot.')),
     h('div', { class: 'ol-menugrid' },
-      h('div', {}, h('div', { class: 'ol-card' }, h('h3', {}, 'Identité'), nick, err), h('div', { class: 'ol-card' }, h('h3', {}, 'Jouer'), h('div', { class: 'ol-row2' }, btnQ, btnC))),
-      h('div', {}, gerard('menu', GL.menu), h('div', { class: 'ol-card' }, h('h3', {}, 'Un code d’ami ?'), h('div', { class: 'ol-row2' }, code, btnJ))))));
+      gerard('menu', GL.menu),
+      h('div', { class: 'ol-card' }, h('h3', {}, 'Identité'), nick, err),
+      h('div', { class: 'ol-card' }, h('h3', {}, 'Jouer'), h('div', { class: 'ol-row2' }, btnQ, btnC)),
+      h('div', { class: 'ol-card ol-span2' }, h('h3', {}, 'Un code d’ami ?'), h('div', { class: 'ol-row2' }, code, btnJ)))));
   if (!S.nick) setTimeout(() => nick.focus(), 50);
 }
 function paintMenuState() { (S.menuBtns || []).forEach((b) => { b.disabled = !S.up; }); }
@@ -91,7 +93,7 @@ function lobby(room) {
       : h('span', { class: 'ol-chip ' + (p.ready ? 'ok' : '') }, p.ready ? 'Prêt' : 'En attente'))));
   const link = location.origin + location.pathname + '?room=' + room.code;
   const copy = h('button', { class: 'ol-ghostbtn', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Lien copié. Envoyez-le à un humain présumé.', 'good'); } catch { toast(link); } } }, 'Copier le lien');
-  const ready = h('button', { class: 'ol-btn ' + (mp?.ready ? '' : 'good'), onclick: () => { S.net.send({ t: 'ready', v: !mp.ready }); sfx('click'); } }, mp?.ready ? 'Pas prêt…' : 'Je suis prêt');
+  const ready = h('button', { class: 'ol-btn ' + (mp?.ready ? 'is-ready' : 'good'), 'aria-pressed': String(!!mp?.ready), disabled: room.state === 'countdown' ? '' : null, onclick: () => { S.net.send({ t: 'ready', v: !mp.ready }); sfx('click'); } }, mp?.ready ? '✓ Vous êtes prêt' : 'Je suis prêt', h('small', {}, mp?.ready ? 'toucher pour annuler' : 'toucher pour confirmer'));
   const kids = [
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter la salle')),
     h('div', { class: 'ol-card' }, h('div', { class: 'ol-code' },
@@ -134,14 +136,14 @@ function countdown(room) {
     const left = room.startAt - S.net.now(); const n = Math.max(1, Math.ceil(left / 1000));
     const b = el.querySelector('b');
     if (S.lastCd !== n) {
-      S.lastCd = n; b.textContent = n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+      S.lastCd = n; b.textContent = n > 3 ? '…' : n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
       el.className = 'ol-count n' + n; sfx('tick'); sfx('stamp'); bg.pulse('level'); bg.set({ suspicion: 0.2 + (4 - Math.min(3, n)) * 0.2 });
-      if (CD[n]) S.cdSp.say(CD[n][0], CD[n][1]);
+      if (CD[n]) S.cdSp.say(CD[n][0], CD[n][1], { force: true, instant: true });
     }
   };
   S.cdTick();
 }
-function dropCountdown() { S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
+function dropCountdown() { if (S.main) S.main.inert = false; S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
 
 // ---------------- race
 function race(room) {
@@ -207,7 +209,7 @@ function render() {
   if (!S.root) return;
   if (!room) { if (S.view !== 'menu') menu(); return; }
   if (room.state === 'lobby') { dropCountdown(); S.fillTotal = room.fillAt ? S.fillTotal : 0; lobby(room); }
-  else if (room.state === 'countdown') { if (S.view !== 'lobby') lobby(room); countdown(room); }
+  else if (room.state === 'countdown') { lobby(room); countdown(room); if (S.main) S.main.inert = true; }
   else if (room.state === 'race') race(room);
   else if (room.state === 'done') {
     if (S.view === 'race' && S.race) {

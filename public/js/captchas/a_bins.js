@@ -12,7 +12,7 @@ css('bins', `
 .ab-c.in{font-size:10.5px;padding:3px 6px;width:100%;box-shadow:none;flex:none;overflow:hidden}
 .ab-c.gh{position:fixed;z-index:99999;pointer-events:none;transform:rotate(-3deg) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:grabbing;animation:none}
 .ab-c.dim{opacity:.35}
-@media (max-width:480px){.ab-pool{height:178px;padding:5px;gap:4px}.ab-bin{height:116px;overflow-y:auto;padding-top:27px}.ab-c{padding:5px 7px}.ab-c.in{white-space:normal;font-size:10px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
+@media (max-width:480px){.ab-pool{height:150px;padding:5px;gap:4px;overflow-y:auto}.ab-bin{height:128px;overflow-y:auto;padding-top:27px}.ab-c{padding:5px 7px;font-size:12px}.ab-c.in{white-space:normal;font-size:12px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
 `);
 const HUM = ['Éternuer', 'Avoir un anniversaire', 'Rougir de honte', 'Manger une baguette', 'Avoir une belle-mère', 'Bâiller en réunion', 'Tomber amoureux·se', 'Se tromper de bus', 'Avoir des empreintes digitales'];
 const ROB = ['Fonctionner sur batterie', 'Avoir un numéro de série gravé', 'Rouiller sous la pluie', 'Se brancher sur une prise secteur', 'Parler en code binaire', 'Être garanti deux ans', 'Avoir une prise de terre', 'Avoir un câble USB', 'Être monté en usine'];

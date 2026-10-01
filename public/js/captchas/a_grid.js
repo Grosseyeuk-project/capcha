@@ -9,7 +9,7 @@ css('grid', `
 @media (prefers-reduced-motion:reduce){.ag-t,.ag-t *{animation:none!important}}
 @media (max-width:480px){.ag-t{aspect-ratio:1.3}}
 .ag-t{aspect-ratio:1.25!important}
-@media (min-width:900px){.ag-w2{width:min(100%,440px)!important}}
+@media (min-width:900px){.ag-w2{width:min(100%,440px)!important}.ag-t{aspect-ratio:1.6!important}}
 .ag-g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .ag-t{position:relative;aspect-ratio:1;padding:0;border:0;background:#ddd;cursor:pointer;overflow:hidden;border-radius:2px}
 .ag-t svg{display:block;width:100%;height:100%;transition:transform .18s cubic-bezier(.3,1.5,.5,1)}

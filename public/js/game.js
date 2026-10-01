@@ -45,6 +45,8 @@ export class Game {
     this.onResize = () => this.fitSoon();
     addEventListener('keydown', this.onKey); addEventListener('pointerdown', this.onDown, true); addEventListener('resize', this.onResize);
     this.host.addEventListener('scroll', () => this.slotMore(), { passive: true });
+    this.host.addEventListener('focusin', (e) => { const t = e.target; if (t?.scrollIntoView) setTimeout(() => t.scrollIntoView({ block: 'nearest' }), 60); });
+    if (window.visualViewport) { this.onVV = () => { this.host.style.setProperty('--kb', Math.max(0, innerHeight - visualViewport.height) + 'px'); this.fitSoon(); }; visualViewport.addEventListener('resize', this.onVV); }
     this.raf = requestAnimationFrame((n) => this.frame(n));
     this.syncMood();
     this.load({ first: true });
@@ -148,6 +150,7 @@ export class Game {
       onTick: (fn) => tickers.push(fn),
       solve: () => { if (c.done || this.cur !== c || this.phase !== 'play') return; c.done = true; this.onSolved(c); },
       fail: (msg, o = {}) => {
+        msg = typeof msg === 'string' ? msg : (msg == null ? '' : String(msg)); o = o || {};
         if (c.done || this.cur !== c || this.phase !== 'play') return;
         this.strike(msg, { retry: !!o.retry });
         if (this.strikes < 3 && !o.retry) { c.done = true; this.phase = 'struck'; this.later(() => this.load({ retry: true, seed: seed + 1000 * this.strikes + 1 }), RM() ? 700 : 1300); }
@@ -195,14 +198,14 @@ export class Game {
   fit() {
     const c = this.cur, slot = this.host; if (!c || !c.host || !slot) return;
     const host = c.host; this.legible(host);
-    host.querySelectorAll('.pin-action').forEach((e) => e.classList.remove('pin-action'));
+    host.querySelectorAll('.pin-action').forEach((e) => e.classList.remove('pin-action')); slot.style.setProperty('--pin-h', '0px');
     if (slot.scrollHeight > slot.clientHeight + 2) {
       const prim = this.findPrimary(host);
       if (prim) {
         let A = null;
         for (let e = prim; e && e !== host; e = e.parentElement) { const par = e.parentElement; if (par && par.getBoundingClientRect().height > slot.clientHeight - 30 && e.offsetHeight < slot.clientHeight * 0.45) { A = e; break; } }
         if (A) {
-          A.classList.add('pin-action');
+          A.classList.add('pin-action'); slot.style.setProperty('--pin-h', A.offsetHeight + 'px');
           if (getComputedStyle(A).backgroundColor === 'rgba(0, 0, 0, 0)') A.style.background = '#fff';
           for (let e = A.parentElement; e && e !== slot; e = e.parentElement) { const o = getComputedStyle(e).overflow; if (o === 'hidden' || o === 'auto' || o === 'scroll') e.style.overflow = 'clip'; }
         }
@@ -352,7 +355,7 @@ export class Game {
   debugEnd(kind) { if (kind === 'win' && !this.stats.solves) { const st = this.stats; this.level = this.total + 1; st.solves = this.total; st.sumMs = this.total * 6200; st.fastest = 2400; st.maxStreak = this.total; } this.finish(kind); }
 
   destroy() {
-    removeEventListener('keydown', this.onKey); removeEventListener('pointerdown', this.onDown, true); removeEventListener('resize', this.onResize); clearTimeout(this.fitT);
+    removeEventListener('keydown', this.onKey); removeEventListener('pointerdown', this.onDown, true); removeEventListener('resize', this.onResize); if (this.onVV) visualViewport.removeEventListener('resize', this.onVV); clearTimeout(this.fitT);
     document.body.classList.remove('end-open');
     cancelAnimationFrame(this.raf); clearInterval(this.idleIv); this.timeouts.forEach(clearTimeout); this.timeouts.clear();
     this.destroyCur(); this.speaker?.destroy(); this.endSp?.destroy(); this.over = true;

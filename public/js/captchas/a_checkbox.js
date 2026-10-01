@@ -12,9 +12,10 @@ css('chk', `
 .ac-spin{width:20px;height:20px;border:3px solid #dadce0;border-top-color:#1a73e8;border-radius:50%;animation:ac-sp .7s linear infinite}
 @keyframes ac-sp{to{transform:rotate(360deg)}}
 .ac-tick{width:22px;height:22px;animation:ak-pop .35s both}
-.ac-strip{height:64px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+.ac-strip{min-height:76px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
 .ac-st{flex:1;min-width:0}
-.ac-st span{display:block;font-size:12px;line-height:1.25;color:#5f6368;height:30px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ac-w .ak-brand span{font-size:0}.ac-w .ak-brand b{font-size:12px}
+.ac-st span{display:block;font-size:12px;line-height:1.3;color:#5f6368;min-height:46px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ac-pb{height:5px;background:#e8eaed;border-radius:3px;margin-top:4px;overflow:hidden}
 .ac-pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:3px}
 .ac-w.bad .ac-pb i{background:#d93025}
@@ -32,7 +33,7 @@ export default {
     const box = h('button', { class: 'ac-box', type: 'button', 'aria-label': 'Je ne suis pas un robot' });
     const lab = h('div', { class: 'ac-lab' }, 'Je ne suis pas un robot');
     const row = h('div', { class: 'ac-row' }, box, lab);
-    const bar = h('i'); const isTouch = coarse(); const msg = h('span', {}, isTouch ? 'Maintenez la case enfoncée : les robots lâchent vite.' : 'Analyse : en attente de preuves.');
+    const bar = h('i'); const isTouch = coarse(); const msg = h('span', {}, isTouch ? 'Maintenez la case : les robots lâchent vite.' : 'Analyse : en attente de preuves.');
     const w = h('div', { class: 'ak-w ac-w' }, row, h('div', { class: 'ac-strip' }, h('div', { class: 'ac-st' }, msg, h('div', { class: 'ac-pb' }, bar)), brand(h)));
     host.append(w); if (isTouch) { box.classList.add('hint'); }
     const onMove = (e) => {
@@ -67,7 +68,7 @@ export default {
       const HOLD = ['Mesure du tremblement du pouce…', 'Pouce détecté : 87 % humain, 13 % saucisse.', 'Analyse de la moiteur…']; const step = () => { const k = Math.min(1, (performance.now() - t0) / 1100); ring.style.setProperty('--p', k); msg.textContent = HOLD[Math.min(2, Math.floor(k * 3))]; if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
       hold = { ring, raf: requestAnimationFrame(step) };
     });
-    const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Relâché trop tôt. Un robot, lui, aurait tenu. Réessayez, plus longtemps.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };
+    const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Trop tôt ! Un robot aurait tenu. Réessayez.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };
     box.addEventListener('pointerup', rel); box.addEventListener('pointercancel', rel); box.addEventListener('pointerleave', (e) => touchy(e) && rel());
     box.addEventListener('contextmenu', (e) => e.preventDefault());
     let touchAt = -9999; box.addEventListener('pointerdown', (e) => { if (touchy(e)) touchAt = performance.now(); }, true); box.addEventListener('pointerup', (e) => { if (touchy(e)) touchAt = performance.now(); }, true);
