@@ -1,0 +1,15 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('ERR', e.message));
+await p.goto('http://localhost:8084/?cap=b_cube&cheat=1'); await p.waitForFunction(() => document.querySelector('.bc-wrap') && window.__game.phase === 'play'); await p.waitForTimeout(800);
+const cdp = await ctx.newCDPSession(p);
+const bb = await p.locator('.bc-wrap').boundingBox(); const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+const q = () => p.evaluate(() => document.querySelector('.cap-host').__qget().join(','));
+const before = await q();
+await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cx, y: cy }] });
+for (let i = 1; i <= 8; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: cx + i * 12, y: cy + i * 5 }] });
+await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+await p.waitForTimeout(200); const after = await q();
+console.log('touch drag rotates:', before !== after, 'scrollY', await p.evaluate(() => scrollY));
+await b.close();

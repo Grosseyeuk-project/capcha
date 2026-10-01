@@ -39,7 +39,7 @@ export default {
       const items = seq.map((v) => ({ v })); if (n === 1) { items.splice(2, 0, { v: api.int(0, 3), d: 1 }); items.splice(5, 0, { v: api.int(0, 3), d: 1 }); }
       items.forEach((it) => { T(() => { pads[it.v].classList.toggle('dec', !!it.d); lit(it.v, true); api.sfx(it.d ? 'tick' : 'pop'); }, t); T(() => { lit(it.v, false); pads[it.v].classList.remove('dec'); }, t + step * 0.62); t += step; });
       T(() => { accept = true; pads.forEach((p) => (p.disabled = false)); state.className = 'bm-state go'; state.textContent = n ? 'À l’envers !' : 'À vous !'; api.timer(n ? 16000 : 13000); api.sfx('whoosh'); if (n) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((p, i) => (p.style.order = o[i])); api.say('Les pads ont changé de place. Fiez-vous à la couleur, pas à la position.', 'smug'); } }, t + 100);
-      api.timer(5000 + seq.length * step + 14000);
+      api.timer(5000 + (seq.length + 2) * step + 14000);
     }
     function press(i) {
       if (!accept) return; lit(i, true); T(() => lit(i, false), 140);
