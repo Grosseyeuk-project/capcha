@@ -19,7 +19,8 @@ export default {
     const { h } = api; let alive = true, stage = 0, seq = [], pos = 0, accept = false; const tm = [];
     const state = h('span', { class: 'bm-state', role: 'status', 'aria-live': 'polite' }, '');
     const rule = h('div', { class: 'bk-rule' }); const dots = h('div', { class: 'bm-seq', 'aria-hidden': 'true' });
-    const pads = PADS.map((p, i) => h('button', { class: 'bm-p', type: 'button', style: { '--c': p.c }, 'aria-label': p.n, disabled: true, onclick: () => press(i) }, h('span', {}, p.s), p.n, h('kbd', {}, String(i + 1))));
+    const pads = PADS.map((p, i) => h('button', { class: 'bm-p', type: 'button', 'aria-label': p.n, disabled: true, onclick: () => press(i) }, h('span', {}, p.s), p.n, h('kbd', {}, String(i + 1))));
+    pads.forEach((el, i) => el.style.setProperty('--c', PADS[i].c));
     const pips = h('div', { class: 'bk-pips' }, [0, 1].map(() => h('i', {})));
     const root = h('div', { class: 'bk' }, rule, h('div', { class: 'bm-pads' }, pads), dots, h('div', { class: 'bk-meta' }, state, pips)); host.append(root);
     const T = (fn, ms) => tm.push(setTimeout(() => alive && fn(), ms));

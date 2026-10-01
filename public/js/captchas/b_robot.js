@@ -37,8 +37,8 @@ export default {
     function show(i) {
       idx = i; if (nextEl) nextEl.remove(); nextEl = null;
       life = Math.max(750, 1250 - i * 55);
-      const el = h('button', { class: 'br-t', type: 'button', style: { '--life': life + 'ms' }, 'aria-label': 'Cible ' + keys[i], onpointerdown: (e) => { e.stopPropagation(); e.preventDefault(); hit(); } }, keys[i]);
-      place(el, i); arena.append(el); cur = el; tStart = performance.now(); expiry = tStart + life; hud.textContent = `CIBLE ${String(i + 1).padStart(2, '0')}/${N}`;
+      const el = h('button', { class: 'br-t', type: 'button', 'aria-label': 'Cible ' + keys[i], onpointerdown: (e) => { e.stopPropagation(); e.preventDefault(); hit(); } }, keys[i]);
+      el.style.setProperty('--life', life + 'ms'); place(el, i); arena.append(el); cur = el; tStart = performance.now(); expiry = tStart + life; hud.textContent = `CIBLE ${String(i + 1).padStart(2, '0')}/${N}`;
       if (i + 1 < N) { nextEl = h('div', { class: 'br-n' }, keys[i + 1]); place(nextEl, i + 1); arena.append(nextEl); }
       if (/cheat=1/.test(location.search)) host.dataset.answer = keys[i];
     }

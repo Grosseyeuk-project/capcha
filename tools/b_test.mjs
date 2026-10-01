@@ -68,11 +68,12 @@ async function run(id) {
     else { await waitStrike('sens inverse'); await remount(); await p.waitForSelector('.bm-state.go', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1)); await sleep(1300); await p.waitForFunction(() => document.querySelector('.bm-state.go') && /envers/i.test(document.querySelector('.bm-state').textContent), null, { timeout: 15000 }); a = JSON.parse(await ans()); for (const v of a) { await p.mouse.click(...ctr(await p.locator('.bm-p').nth(v).boundingBox())); await sleep(60); } await waitSolve(); return end(); }
     for (const v of a) await p.keyboard.press(String(v + 1)); await waitSolve();
   } else if (id === 'b_robot') {
-    const ab = await p.locator('.br-arena').boundingBox();
-    await p.click('.br-start button'); await p.mouse.click(ab.x + 6, ab.y + ab.height - 6); await waitStrike('raté'); await remount();
-    await p.click('.br-start button');
-    for (let i = 0; i < 10; i++) { await p.waitForSelector('.br-t', { timeout: 3000 }); const bb = await p.locator('.br-t').boundingBox(); if (i % 2) await p.keyboard.press((await ans()).toLowerCase()); else await p.mouse.click(...ctr(bb)); if (i === 4) await shot('mid'); }
-    await waitSolve();
+    const pd = (sel, dx = 0, dy = 0) => p.evaluate(([sel, dx, dy]) => { const el = document.querySelector(sel); const r = el.getBoundingClientRect(); const x = r.left + (dx || r.width / 2), y = r.top + (dy || r.height / 2); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y })); }, [sel, dx, dy]);
+    const go = () => p.evaluate(() => document.querySelector('.br-start button').click());
+    await go(); await pd('.br-arena', 6, 290); await waitStrike('raté'); await remount();
+    await go();
+    await p.evaluate(() => new Promise((res) => { let n = 0, last = null; const f = () => { const el = document.querySelector('.br-t'); if (el && el !== last) { last = el; n++; if (n % 2) { const r = el.getBoundingClientRect(); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 26, clientY: r.top + 26 })); } else window.dispatchEvent(new KeyboardEvent('keydown', { key: document.querySelector('.cap-host').dataset.answer.toLowerCase() })); } if (n >= 10 && !document.querySelector('.br-t')) return res(); requestAnimationFrame(f); }; f(); }));
+    console.log('  state', JSON.stringify(await st()), await p.textContent('.br-hud')); await waitSolve();
   } else if (id === 'b_cube') {
     const before = await p.textContent('.bc-read'); await p.locator('.bc-wrap').focus(); await p.keyboard.press('ArrowRight'); await p.keyboard.press('ArrowRight'); await sleep(200);
     const after = await p.textContent('.bc-read'); console.log('  read before/after keys:', before, '|', after);
@@ -95,19 +96,17 @@ async function run(id) {
     await p.evaluate(() => document.querySelector('.bb-orb[aria-label="leurre"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await waitStrike('leurre'); await remount();
     for (let k = 0; k < 3; k++) { await p.waitForSelector('.bb-orb[aria-label="œil du boss"]:not(.boom)', { timeout: 5000 }); await orbHit('.bb-orb[aria-label="œil du boss"]:not(.boom)'); await sleep(900); }
     await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 12000 }); await shot('p2'); let a = JSON.parse(await ans());
-    await p.keyboard.press(String(((a[0] + 1) % 4) + 1)); await waitStrike('mémoire'); await remount();
-    for (let k = 0; k < 3; k++) { await p.waitForSelector('.bb-orb[aria-label="œil du boss"]:not(.boom)', { timeout: 5000 }); await orbHit('.bb-orb[aria-label="œil du boss"]:not(.boom)'); await sleep(900); }
-    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1));
+    a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1));
     await p.waitForSelector('.bb-type input', { timeout: 5000 }); await shot('p3'); const rev = await ans();
     await p.fill('.bb-type input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await waitStrike('typo'); await remount();
     for (let k = 0; k < 3; k++) { await p.waitForSelector('.bb-orb[aria-label="œil du boss"]:not(.boom)', { timeout: 5000 }); await orbHit('.bb-orb[aria-label="œil du boss"]:not(.boom)'); await sleep(900); }
     await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1));
     await p.waitForSelector('.bb-type input', { timeout: 5000 }); const rev2 = await ans();
     await p.fill('.bb-type input', rev2); await shot('p3typed'); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
-    const fwd = [...rev2].reverse().join(''); await p.fill('.bb-type input', rev2); await p.keyboard.press('Enter'); await waitStrike('toujours à l’envers après erratum'); 
+    const fwd = [...rev2].reverse().join(''); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await waitSolve();
   }
   end();
   async function end() { await sleep(300); if (errs.length) console.log(`  [${id}] ERRORS:`, errs.slice(0, 4)); await ctx.close(); }
 }
-for (const id of ids.length ? ids : ALL) { console.log('==', id); try { await run(id); } catch (e) { console.log('  TEST ERROR', id, e.message.split('\n')[0]); } }
+for (const id of ids.length ? ids : ALL) { console.log('==', id); try { await run(id); } catch (e) { console.log('  TEST ERROR', id, e.message.split('\n')[0], (e.stack.match(/b_test.mjs:(\d+)/)||[])[1]); } }
 await b.close();

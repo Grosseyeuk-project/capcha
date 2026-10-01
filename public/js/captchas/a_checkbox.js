@@ -31,7 +31,7 @@ export default {
     host.append(w);
     const onMove = (e) => {
       if (e.pointerType !== 'mouse') return;
-      pts.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (pts.length > 400) pts.shift();
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; for (const c of (evs.length ? evs : [e])) pts.push({ x: c.clientX, y: c.clientY, t: performance.now() }); while (pts.length > 400) pts.shift();
       if (!hopped && !busy) {
         const r = box.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
         if (d < 70) { hopped = true; box.classList.add('hop'); msg.textContent = 'La case a détecté votre approche. Elle a eu peur.'; api.sfx('whoosh'); }
@@ -43,7 +43,7 @@ export default {
       const mouse = e && e.pointerType === 'mouse' && e.detail > 0;
       if (!mouse) return { ok: true, why: 'Pas de souris : on vous croit sur parole (sans enthousiasme).' };
       const now = performance.now(), p = pts.filter((q) => now - q.t < 2500);
-      if (p.length < 4) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
+      if (p.length < 3) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
       const a = p[0], b = p[p.length - 1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       let dev = 0, path = 0;
       p.forEach((q, i) => { dev = Math.max(dev, Math.abs((b.x - a.x) * (a.y - q.y) - (a.x - q.x) * (b.y - a.y)) / L); if (i) path += Math.hypot(q.x - p[i - 1].x, q.y - p[i - 1].y); });

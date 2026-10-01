@@ -47,7 +47,7 @@ export default {
       phase = 1; clear(); api.timer(18000); busy = false; let hits = 0; const W = () => stage.clientWidth, H = () => stage.clientHeight;
       setRule('Phase 1/3 — Réflexes', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, '3 fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿.');
       stage.append(h('div', { class: 'bb-s' }, 'Œil : 0/3'));
-      const mkOrb = (e, real, i) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); hit(real, el); } }, h('s', {}, e)); stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
+      const mkOrb = (e, real, i) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); hit(real, el); } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
       let orbs = []; const sp = (k) => (api.reducedMotion ? 0.6 : 1) * (140 + k * 90);
       const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < hits * 1; k++) orbs.push(mkOrb('🧿', false)); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
       function hit(real, el) {
@@ -69,8 +69,8 @@ export default {
       setRule('Phase 2/3 — Mémoire', 'Observez 4 signaux, puis rejouez-les ', h('b', {}, 'à l’envers'), '. (Clic ou touches 1-4.)');
       const status = h('div', { class: 'bb-s' }, 'Observez…'); stage.append(status);
       const grid = h('div', { class: 'bb-pads' }); stage.append(grid);
-      const pads = PADS.map((p, i) => h('button', { class: 'bb-pad', type: 'button', style: { '--c': p.c }, disabled: true, 'aria-label': 'Pad ' + (i + 1), onclick: () => press(i) }, p.s, h('kbd', {}, i + 1)));
-      pads.forEach((p) => grid.append(p)); let pos = 0, acc = false;
+      const pads = PADS.map((p, i) => h('button', { class: 'bb-pad', type: 'button', disabled: true, 'aria-label': 'Pad ' + (i + 1), onclick: () => press(i) }, p.s, h('kbd', {}, i + 1)));
+      pads.forEach((p, i) => { p.style.setProperty('--c', PADS[i].c); grid.append(p); }); let pos = 0, acc = false;
       const lit = (i, on) => pads[i].classList.toggle('lit', on);
       let t = 600; const step = api.reducedMotion ? 750 : 560; seq.forEach((v) => { T(() => { lit(v, true); api.sfx('pop'); }, t); T(() => lit(v, false), t + step * 0.62); t += step; });
       T(() => { acc = true; pads.forEach((p) => (p.disabled = false)); status.textContent = 'À l’envers !'; api.timer(14000); api.sfx('whoosh'); }, t + 80);
