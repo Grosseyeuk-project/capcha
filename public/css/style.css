@@ -246,3 +246,5 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
   .screen.end { padding: 10px 10px 24px; align-items: start; }
 }
 .screen.end { background: rgba(4, 7, 10, .55); }
+
+.end-open .confetti { z-index: 1; }

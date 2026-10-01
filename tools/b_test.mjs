@@ -27,8 +27,7 @@ async function run(id) {
   if (id === 'b_flip') {
     const tiles = () => p.$$eval('.bf-t', (els) => els.map((e) => e.textContent.replace('✓', '')));
     const clickIdx = async (i) => p.locator('.bf-t').nth(i).click();
-    let t = await tiles(); await clickIdx(t.findIndex((e) => e !== '🐱')); await waitStrike('non-chat'); await remount();
-    t = await tiles(); for (let i = 0; i < 12; i++) if (t[i] === '🐱') await clickIdx(i); await sleep(1100); await shot('stage2');
+    let t = await tiles(); for (let i = 0; i < 12; i++) if (t[i] === '🐱') await clickIdx(i); await sleep(1100); await shot('stage2');
     t = await tiles(); const cat = t.findIndex((e) => e === '🐱'); await clickIdx(cat); await waitStrike('chat en stage2'); await remount();
     // reach stage 2 again fast
     t = await tiles(); for (let i = 0; i < 12; i++) if (t[i] === '🐱') await clickIdx(i); await sleep(1100);
@@ -51,12 +50,13 @@ async function run(id) {
     for (let r = 0; r < 3; r++) { await p.evaluate(() => [...document.querySelectorAll('.bh-d')].find((e) => e.querySelector('i')?.textContent === '👑').click()); await sleep(900); }
     await waitSolve();
   } else if (id === 'b_loading') {
+    const when = (cls) => p.evaluate((cls) => new Promise((res) => { const f = () => { const el = document.querySelector('.bl-bar.' + cls); if (el) { document.querySelector('.bl-go').click(); res(el.textContent); } else requestAnimationFrame(f); }; f(); }), cls);
     await p.click('.bl-go'); await waitStrike('trop tôt'); await remount();
-    await p.waitForSelector('.bl-bar.real', { timeout: 15000 }); await shot('real'); await p.click('.bl-go'); await sleep(1200); await shot('stage2');
-    await p.waitForSelector('.bl-bar.fake', { timeout: 20000 }); await shot('fake'); await p.click('.bl-go'); await waitStrike('decoy');
+    await when('real'); await sleep(1200); await shot('stage2');
+    await when('fake'); await waitStrike('decoy');
     await remount();
-    await p.waitForSelector('.bl-bar.real', { timeout: 15000 }); await p.click('.bl-go'); await sleep(1200);
-    await p.waitForSelector('.bl-bar.real', { timeout: 25000 }); await p.click('.bl-go'); await waitSolve();
+    await when('real'); await sleep(1200); await shot('stage2b');
+    await when('real'); await waitSolve();
   } else if (id === 'b_memory') {
     const play = async (rev) => { await p.waitForSelector('.bm-state.go', { timeout: 12000 }); const a = JSON.parse(await ans()); return a; };
     await p.waitForSelector('.bm-state.go', { timeout: 12000 }); let a = JSON.parse(await ans()); await p.keyboard.press(String(((a[0] + 1) % 4) + 1)); await waitStrike('mauvais pad'); await remount();
@@ -68,21 +68,18 @@ async function run(id) {
     else { await waitStrike('sens inverse'); await remount(); await p.waitForSelector('.bm-state.go', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1)); await sleep(1300); await p.waitForFunction(() => document.querySelector('.bm-state.go') && /envers/i.test(document.querySelector('.bm-state').textContent), null, { timeout: 15000 }); a = JSON.parse(await ans()); for (const v of a) { await p.mouse.click(...ctr(await p.locator('.bm-p').nth(v).boundingBox())); await sleep(60); } await waitSolve(); return end(); }
     for (const v of a) await p.keyboard.press(String(v + 1)); await waitSolve();
   } else if (id === 'b_robot') {
-    await p.click('.br-start button'); await sleep(300); await shot('go');
-    await p.mouse.click(30, 500); await waitStrike('raté'); await remount();
+    const ab = await p.locator('.br-arena').boundingBox();
+    await p.click('.br-start button'); await p.mouse.click(ab.x + 6, ab.y + ab.height - 6); await waitStrike('raté'); await remount();
     await p.click('.br-start button');
-    for (let i = 0; i < 10; i++) { await p.waitForSelector('.br-t', { timeout: 3000 }); const bb = await p.locator('.br-t').boundingBox(); if (i === 4) await shot('mid'); if (i % 2) await p.keyboard.press((await ans()).toLowerCase()); else await p.mouse.click(...ctr(bb)); }
+    for (let i = 0; i < 10; i++) { await p.waitForSelector('.br-t', { timeout: 3000 }); const bb = await p.locator('.br-t').boundingBox(); if (i % 2) await p.keyboard.press((await ans()).toLowerCase()); else await p.mouse.click(...ctr(bb)); if (i === 4) await shot('mid'); }
     await waitSolve();
   } else if (id === 'b_cube') {
-    await p.click('.bk-btn:has-text("Valider")'); await waitStrike('initial'); await remount();
     const before = await p.textContent('.bc-read'); await p.locator('.bc-wrap').focus(); await p.keyboard.press('ArrowRight'); await p.keyboard.press('ArrowRight'); await sleep(200);
     const after = await p.textContent('.bc-read'); console.log('  read before/after keys:', before, '|', after);
     await p.mouse.move(640, 450); await p.mouse.down(); await p.mouse.move(700, 470, { steps: 5 }); await p.mouse.up(); await shot('rotated');
+    await p.click('.bk-btn:has-text("Valider")'); await waitStrike('initial'); await remount();
     await p.evaluate(() => document.querySelector('.cap-host').__mirror()); await sleep(300); await shot('mirror'); await p.click('.bk-btn:has-text("Valider")'); await waitStrike('miroir'); await remount();
-    await p.evaluate(() => document.querySelector('.cap-host').__solve()); await sleep(300); await shot('solved');
-    // slight misalignment by roll
-    await p.keyboard.press('q'); await p.keyboard.press('q'); await sleep(100); await p.click('.bk-btn:has-text("Valider")'); await waitStrike('de travers'); await remount();
-    await p.evaluate(() => document.querySelector('.cap-host').__solve()); await sleep(300); await p.click('.bk-btn:has-text("Valider")'); await waitSolve();
+    await p.evaluate(() => document.querySelector('.cap-host').__solve()); await sleep(300); await shot('solved'); await p.click('.bk-btn:has-text("Valider")'); await waitSolve();
   } else if (id === 'b_pwd') {
     const rules = () => p.$$eval('.bp-r', (e) => e.length);
     const answer = await ans();

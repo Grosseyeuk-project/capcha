@@ -1,4 +1,5 @@
 // Race view: live game + side rail (FLIP-sorted), ghost/spectator panel.
+import { bg } from '../scene.js';
 export const COLORS = ['#5b8cff', '#ff6b6b', '#ffd166', '#4ee39b', '#c792ff', '#ff9f43', '#2ee6e6', '#ff7eb6'];
 export const col = (p) => COLORS[p.c % COLORS.length];
 export const ini = (p) => (p.bot ? '⚙' : (p.nick[0] || '?').toUpperCase());
@@ -180,6 +181,14 @@ export class RaceView {
       }
     }
   }
+  overtake(dir, text) {
+    this.ovt?.remove();
+    const b = h('div', { class: 'ol-ovt ' + dir, role: 'status' }, h('i', {}, dir === 'up' ? '▲' : '▼'), h('span', {}, text));
+    this.ovt = b; this.mount.append(b); setTimeout(() => b.remove(), 2200);
+    this.sfx(dir === 'up' ? 'good' : 'bad'); bg.pulse(dir === 'up' ? 'good' : 'bad');
+    const race = this.mount.querySelector('.ol-race');
+    if (dir === 'down' && race) { race.classList.remove('shake'); void race.offsetWidth; race.classList.add('shake'); }
+  }
   paint() {
     const room = this.room; if (!room) return;
     const me = room.players.find((p) => p.id === this.me); if (!me) return;
@@ -191,10 +200,10 @@ export class RaceView {
       this.rankEl.classList.remove('up', 'down', 'pop'); void this.rankEl.offsetWidth;
       this.rankEl.classList.add(me.rank < prev ? 'up' : 'down', 'pop');
       const sorted = [...room.players].sort((a, b) => a.rank - b.rank);
-      if (me.status === 'racing' && performance.now() - (this.lastOvt || 0) > 3000) {
+      if (me.status === 'racing' && performance.now() - (this.lastOvt || 0) > 1200) {
         this.lastOvt = performance.now();
-        if (me.rank < prev) { const o = sorted[me.rank]; if (o) { this.toast(`Vous doublez ${o.nick} !`, 'good'); this.sfx('good'); } }
-        else { const o = sorted[me.rank - 2]; if (o) { this.toast(`${o.nick} vous double.`, 'bad'); this.sfx('pop'); } }
+        if (me.rank < prev) { const o = sorted[me.rank]; if (o) this.overtake('up', `Vous doublez ${o.nick}`); }
+        else { const o = sorted[me.rank - 2]; if (o) this.overtake('down', `${o.nick} vous double`); }
       }
     }
     this.prevRank = me.rank;

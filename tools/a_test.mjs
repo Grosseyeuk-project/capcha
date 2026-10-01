@@ -12,7 +12,7 @@ async function run(id) {
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && !/404/.test(m.text()) && errs.push(m.text()));
   await p.goto(`http://localhost:${port}/?cap=${id}&cheat=1`, { waitUntil: "domcontentloaded", timeout: 60000 });
-  const slow = () => p.evaluate(() => { const c = window.__game.cur; if (c) { c.limit = 1e9; } }).catch(() => {});
+  const slow = () => p.evaluate(() => { if (!window.__slow) window.__slow = setInterval(() => { const c = window.__game.cur; if (c && !c.done) c.limit = 1e9; }, 40); }).catch(() => {});
   const ready = async () => { await p.waitForFunction((id) => window.__game && window.__game.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 45000 }); await sleep(300); await slow(); };
   await ready();
   await p.evaluate(() => { const g = window.__game; window.__msgs = []; g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m ?? (new Error().stack.split("\n").slice(1,4).join("|") + JSON.stringify(r))); return o(m, ...r); }; });
@@ -33,7 +33,7 @@ async function run(id) {
     const bb = await box('.ac-box'); console.log('  box hopped to x', Math.round(bb.x));
     const [cx, cy] = ctr(bb); await p.mouse.move(60, cy + 3); await sleep(3000); await p.mouse.move(60, cy, { steps: 2 }); await sleep(2600);
     await p.mouse.move(cx - 120, cy); await p.mouse.move(cx, cy, { steps: 25 }); await p.mouse.click(cx, cy); await waitStrike().catch((e) => console.log('  straight test did not fail?', e.message.slice(0, 50)));
-    await remount(); const bb2 = await box('.ac-box'); let [x, y] = ctr(bb2); await curve(300, 600, x - 100, y); await shot('approach'); const bb3 = await box('.ac-box'); [x, y] = ctr(bb3); await curve(x - 120, y + 60, x, y); await shot('mid'); await p.mouse.click(x, y); await sleep(900); await shot('analyse'); await waitSolve();
+    await remount(); const bb2 = await box('.ac-box'); let [x, y] = ctr(bb2); await curve(300, 600, x - 100, y); await shot('approach'); await curve(x - 100, y, x - 30, y + 10); await sleep(700); const bb3 = await box('.ac-box'); console.log('  hop x', Math.round(bb3.x)); const [px, py] = ctr(bb3); await curve(x - 30, y + 10, px - 90, py + 50); await curve(px - 90, py + 50, px, py); x = px; y = py; await shot('mid'); await p.mouse.click(x, y); await sleep(900); await shot('analyse'); await waitSolve();
   } else if (id === 'a_wavy') {
     await p.fill('.aw-in', 'ZZZZZZZ'); await click('.ak-btn'); await waitStrike(); await remount();
     const a = await ans(); await p.fill('.aw-in', a.slice(0, -1)); await p.keyboard.press('Enter'); await sleep(500); await shot('almost'); // one letter short -> fail (strike 2)

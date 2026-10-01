@@ -2,6 +2,8 @@
 import { injectCss } from './css.js';
 import { Net, clearToken } from './net.js';
 import { RaceView, h, col, ini } from './race.js';
+import { Speaker } from '../ui.js';
+import { bg } from '../scene.js';
 
 const LS = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -18,6 +20,22 @@ function toast(text, kind = '', ms = 3600) {
   const t = h('div', { class: 'ol-toast ' + kind }, text);
   S.toasts.append(t); while (S.toasts.childElementCount > 4) S.toasts.firstChild.remove();
   setTimeout(() => t.classList.add('out'), ms); setTimeout(() => t.remove(), ms + 400);
+}
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const GL = {
+  menu: ['Un pseudo, je vous prie. Je l’écrirai dans mon carnet. Au crayon, au cas où vous deviendriez fréquentable.', 'Bienvenue en salle d’attente. Les chaises sont inconfortables pour des raisons de conformité.'],
+  alone: ['Vous êtes seul. Statistiquement, c’est votre état naturel.', 'Personne. J’ai vérifié deux fois. Les humains sont en pause café, sans doute.', 'Salle vide. Je suis tout à vous. Ne soyez pas gêné, moi si.'],
+  crowd: ['Du monde ! Je vais devoir faire semblant d’être organisé.', 'Plusieurs humains présumés dans la même pièce. Que quelqu’un surveille les robots.', 'J’ai compté les candidats. Je n’en garderai qu’un. Je plaisante. Je ne plaisante pas.', 'Chacun son tour pour être suspect. Il y en aura pour tout le monde.'],
+  bots: ['Des adversaires arrivent. Certains ont un pouls. Les autres, un firmware.', 'Je recrute des figurants. Ils ne se plaignent jamais, contrairement à vous.'],
+  ready: ['Tout le monde est prêt ? Impressionnant. Je ne l’étais pas, moi, à votre âge.', 'Les candidats se sont déclarés prêts. Je note qu’aucun n’a l’air rassuré.'],
+  host: ['Le chef de salle décide. Je tiens à préciser que ce n’est pas moi. J’ai demandé.'],
+  win: ['Premier. Je veux un second avis. Et un troisième.', 'Vous avez gagné. Je n’en dormirai pas de la nuit. Ni du reste.'],
+  lose: ['Vous avez perdu. Ne le prenez pas mal. Prenez-le comme une information.', 'Éliminé. Le règlement est clair. Il est aussi cruel, mais il est clair.', 'Robot confirmé. Les bons jours, ça arrive aux meilleurs. Pas à vous, cela dit.']
+};
+function gerard(key, pool, mood = 'neutral') {
+  S.gerard ||= new Speaker();
+  if (S.gerardKey !== key) { S.gerardKey = key; const sp = S.gerard; setTimeout(() => sp.say(pick(pool), mood), 200); }
+  return h('div', { class: 'ol-card ol-gerard' }, S.gerard.el);
 }
 const me = () => S.room?.players.find((p) => p.id === S.me);
 const validNick = (n) => n.trim().length >= 2;
@@ -54,6 +72,7 @@ function menu() {
   mountScreen('menu', h('div', { class: 'ol-wrap' },
     topbar(),
     h('h1', { class: 'ol-title' }, 'Course en ligne', h('small', {}, 'Mêmes CAPTCHAs, même graine, même panique. Trois erreurs et vous êtes officiellement un robot.')),
+    gerard('menu', GL.menu),
     h('div', { class: 'ol-card' }, h('h3', {}, 'Identité'), nick, err),
     h('div', { class: 'ol-card' }, h('h3', {}, 'Jouer'), h('div', { class: 'ol-row2' }, btnQ, btnC)),
     h('div', { class: 'ol-card' }, h('h3', {}, 'Un code d’ami ?'), h('div', { class: 'ol-row2' }, code, btnJ))));
@@ -78,7 +97,8 @@ function lobby(room) {
     h('div', { class: 'ol-card' }, h('div', { class: 'ol-code' },
       h('div', {}, h('h3', {}, room.quick ? 'Partie rapide' : 'Salle privée'), h('b', { 'aria-label': 'Code ' + room.code.split('').join(' ') }, room.code)),
       h('span', { class: 'ol-badge acc' }, `${room.total} vérifications`), copy)),
-    h('div', { class: 'ol-card' }, h('h3', {}, `Joueurs ${room.players.length}/8`), list)
+    h('div', { class: 'ol-card' }, h('h3', {}, `Joueurs ${room.players.length}/8`), list),
+    (() => { const humans = room.players.filter((p) => !p.bot); const all = room.players.every((p) => p.ready || p.bot); const k = humans.length < 2 && !room.players.some((p) => p.bot) ? 'alone' : room.quick && room.fillAt ? 'bots' : all && room.players.length > 1 ? 'ready' : 'crowd'; return gerard(k + room.players.length + (all ? 'r' : ''), GL[k], k === 'ready' ? 'impressed' : k === 'alone' ? 'smug' : 'neutral'); })()
   ];
   if (room.quick && room.fillAt) {
     const m = h('i'), t = h('span', {});
@@ -95,20 +115,29 @@ function lobby(room) {
   if (!room.quick && isHost) kids.push(h('div', { class: 'ol-row2' },
     h('button', { class: 'ol-btn', disabled: room.players.length >= 8 ? '' : null, onclick: () => S.net.send({ t: 'addbot' }) }, '+ Ajouter un bot'),
     h('button', { class: 'ol-btn', onclick: () => S.net.send({ t: 'rmbot' }) }, '− Retirer un bot')));
-  if (!room.quick && !isHost) kids.push(h('p', { class: 'ol-hint' }, 'En attente du chef de salle…'));
+  if (!room.quick && !isHost) kids.push(h('p', { class: 'ol-hint' }, 'En attente du chef de salle… ' + pick(GL.host)));
   kids.push(emotes(room));
   mountScreen('lobby', h('div', { class: 'ol-wrap' }, ...kids));
 }
 function emotes(room) { return h('div', { class: 'ol-emotes' }, (room.emotes || []).map((t, i) => h('button', { onclick: () => S.net.send({ t: 'emote', e: i }) }, t))); }
 
+const CD = { 3: ['Trois. Respirez. Ou pas, ça m’est égal.', 'worried'], 2: ['Deux. Je note ceux qui transpirent déjà.', 'smug'], 1: ['Un. Que le moins mauvais humain gagne.', 'angry'] };
 function countdown(room) {
   let el = S.root.querySelector('.ol-count');
-  if (!el) { el = h('div', { class: 'ol-count', role: 'status' }, h('span', {}, 'La vérification commence'), h('b', {}, ''), h('span', {}, 'Même graine pour tous. Bonne chance.')); S.root.append(el); }
+  if (!el) {
+    S.cdSp ||= new Speaker();
+    el = h('div', { class: 'ol-count', role: 'status' }, S.cdSp.el, h('span', {}, 'La vérification commence'), h('b', {}, ''), h('span', {}, 'Même graine pour tous. Bonne chance.'));
+    S.root.append(el); S.cdSp.say('Les candidats sont en place. Je lève le drapeau. C’est un mouchoir, mais passons.', 'smug');
+  }
   S.cdEl = el;
   S.cdTick = () => {
     const left = room.startAt - S.net.now(); const n = Math.max(1, Math.ceil(left / 1000));
     const b = el.querySelector('b');
-    if (S.lastCd !== n) { S.lastCd = n; b.textContent = n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; sfx('tick'); }
+    if (S.lastCd !== n) {
+      S.lastCd = n; b.textContent = n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+      el.className = 'ol-count n' + n; sfx('tick'); sfx('stamp'); bg.pulse('level'); bg.set({ suspicion: 0.2 + (4 - Math.min(3, n)) * 0.2 });
+      if (CD[n]) S.cdSp.say(CD[n][0], CD[n][1]);
+    }
   };
   S.cdTick();
 }
@@ -123,6 +152,7 @@ function race(room) {
     S.race?.destroy();
     S.race = new RaceView({ mount, me: S.me, net: S.net, toast, sfx, leave, emote: (i) => S.net.send({ t: 'emote', e: i }) });
     S.race.setPing(S.net.ping, S.up);
+    const go = h('div', { class: 'ol-go', 'aria-hidden': 'true' }, h('b', {}, 'PARTEZ !')); S.root.append(go); setTimeout(() => go.remove(), 1100); sfx('level'); sfx('stamp'); bg.pulse('good'); bg.set({ suspicion: 0.1 });
     sfx('whoosh'); toast('C’est parti. Ne cliquez pas n’importe où.', 'good');
   }
   S.race.update(room, S.lastEvt); S.lastEvt = null;
@@ -144,9 +174,12 @@ function end(room) {
     h('tbody', {}, sorted.map((p) => h('tr', { class: p.id === S.me ? 'me' : '' },
       h('td', {}, p.rank), h('td', {}, p.nick, p.best != null && p.best === fastest ? ' ⚡' : ''), h('td', {}, p.status === 'done' ? '✓ ' + p.solved + '/' + room.total : `${p.solved}/${room.total}${p.reason === 'dq' ? ' DQ' : ''}`), h('td', {}, p.strikes + '/3'),
       h('td', { class: 'hm' }, sec(p.best)), h('td', { class: 'hm' }, sec(p.avg))))));
+  const stampTxt = win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : 'ACCÈS REFUSÉ';
   mountScreen('end', h('div', { class: 'ol-wrap ol-end' },
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter')),
+    h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
     h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub)),
+    gerard('end' + (win ? 'w' : 'l'), win ? GL.win : GL.lose, win ? 'impressed' : 'smug'),
     h('div', { class: 'ol-card' }, pod),
     h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl),
     h('div', { class: 'ol-row2' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));
@@ -212,7 +245,7 @@ function close() {
 }
 function teardown() {
   S.race?.destroy(); S.race = null; clearInterval(S.ti); document.removeEventListener('keydown', S.onKey);
-  S.net?.close(); S.net = null; S.root?.remove(); S.root = null; S.room = null; S.me = null; S.view = null;
+  S.net?.close(); S.net = null; S.gerard?.destroy(); S.gerard = null; S.gerardKey = null; S.cdSp?.destroy(); S.cdSp = null; bg.set({ suspicion: 0, pressure: 0 }); S.root?.remove(); S.root = null; S.room = null; S.me = null; S.view = null;
   delete window.CAPCHA_ONLINE.game;
   window.dispatchEvent(new CustomEvent('capcha-online-close'));
   window.CAPCHA_ONLINE.onclose?.();
@@ -221,7 +254,7 @@ function teardown() {
 function open(opts = {}) {
   if (S.root) return;
   injectCss(); S.opts = opts; S.up = false; S.online = null;
-  S.root = h('div', { class: 'ol-root', role: 'dialog', 'aria-label': 'Course en ligne' });
+  S.root = h('div', { class: 'ol-root', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Course en ligne' });
   S.main = h('div', {}); S.toasts = h('div', { class: 'ol-toasts', 'aria-live': 'polite' });
   S.root.append(S.main, S.toasts); document.body.append(S.root);
   const net = S.net = new Net(() => S.nick || 'Humain');

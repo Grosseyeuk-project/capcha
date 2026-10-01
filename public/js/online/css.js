@@ -212,7 +212,7 @@ const CSS = `
 .ol-gerard .avatar{width:76px;height:76px}
 .ol-gerard .bubble{min-height:3.4rem}
 /* compte à rebours dramatique */
-.ol-count{background:radial-gradient(circle at 50% 45%,rgba(4,7,10,.7),rgba(4,7,10,.94));gap:10px;padding:16px;justify-items:center}
+.ol-count{background:rgba(4,7,10,.99);gap:10px;padding:16px;justify-items:center}
 .ol-count .speaker{max-width:560px;margin:0 auto}
 .ol-count b{font-family:var(--disp);font-weight:800;color:var(--paper);text-shadow:0 8px 0 #000,0 0 80px rgba(255,210,63,.6);animation:ol-slam .6s cubic-bezier(.2,1.5,.4,1) both}
 .ol-count.n2 b{color:var(--yel)}.ol-count.n1 b{color:#ff5d6c;text-shadow:0 8px 0 #000,0 0 90px rgba(255,59,78,.8)}
@@ -227,11 +227,12 @@ const CSS = `
 .ol-ovt i{font-style:normal;font-size:1.5em}
 .ol-ovt span{overflow:hidden;text-overflow:ellipsis}
 @keyframes ol-ovt{0%{transform:translateX(-50%) translateY(-40px) scale(.7) rotate(-4deg);opacity:0}12%{transform:translateX(-50%) scale(1.12) rotate(-2deg);opacity:1}22%{transform:translateX(-50%) scale(1) rotate(-1deg)}80%{opacity:1}100%{transform:translateX(-50%) translateY(-20px);opacity:0}}
+.ol-root .ledger{position:static;width:auto;max-height:none;margin-top:10px}
 .ol-race.shake{animation:ol-shake .4s}
 @media (max-width:820px){
  .ol-rtop{flex-wrap:nowrap}.ol-rtop .pill{padding:4px 8px;font-size:11px}.ol-rtop .pill b{font-size:13px}
  .ol-rtop .ol-live span{display:none}
- .ol-race{gap:8px}
+ .ol-race{gap:8px;grid-template-columns:minmax(0,1fr)}.ol-rail,.ol-stage,.ol-wrap,.ol-game{min-width:0;max-width:100%}
  .ol-rail{padding:6px;border-width:2px;box-shadow:0 3px 0 #000}
  .ol-rail h3{display:none}
  .ol-rows{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none;gap:6px;padding-bottom:2px;scrollbar-width:none}

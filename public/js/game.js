@@ -24,7 +24,7 @@ export class Game {
 
   start() {
     this.root.replaceChildren(); this.root.classList.add('game-root');
-    this.runT0 = performance.now(); this.ui();
+    document.body.classList.remove('end-open'); this.runT0 = performance.now(); this.ui();
     startMusic();
     this.act = () => { this.lastAct = performance.now(); };
     ['pointerdown', 'keydown'].forEach((e) => this.card.addEventListener(e, this.act, true));
@@ -229,7 +229,8 @@ export class Game {
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0');
     this.hudRefresh();
     sfx(win ? 'win' : 'lose');
-    if (win) { const r = this.card.getBoundingClientRect(); confetti(innerWidth / 2, innerHeight / 3, 220); this.later(() => confetti(innerWidth * 0.2, innerHeight * 0.4, 100), 350); this.later(() => confetti(innerWidth * 0.8, innerHeight * 0.4, 100), 600); }
+    document.body.classList.add('end-open');
+    if (win) { confetti(innerWidth / 2, innerHeight / 3, 220); this.later(() => confetti(innerWidth * 0.2, innerHeight * 0.4, 100), 350); this.later(() => confetti(innerWidth * 0.8, innerHeight * 0.4, 100), 600); }
     if (this.mode === 'solo') { const b = loadBest(); if (!b || lvlDone > (b.level ?? 0) || (win && !b.win)) saveBest({ level: lvlDone, total: this.total, rank, win }); }
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
     const sp = new Speaker(); const key = win ? 'win' : 'over';
@@ -252,6 +253,7 @@ export class Game {
   debugEnd(kind) { if (kind === 'win') { this.level = this.total + 1; this.stats.solves = this.total; } this.finish(kind); }
 
   destroy() {
+    document.body.classList.remove('end-open');
     cancelAnimationFrame(this.raf); clearInterval(this.idleIv); this.timeouts.forEach(clearTimeout); this.timeouts.clear();
     this.destroyCur(); this.speaker?.destroy(); this.endSp?.destroy(); this.over = true;
     bg.set({ pressure: 0, suspicion: 0, mood: 'neutral' }); setTension(0);
