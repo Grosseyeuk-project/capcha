@@ -1,6 +1,7 @@
 import { css } from './b_kit.js';
 css('pwd', `
-.bp-cur{flex-direction:column;align-items:stretch!important;max-height:34vh;overflow:auto}.bp-cr{display:flex;gap:8px;align-items:baseline;font-size:12px;line-height:1.2;padding:2px 0}.bp-cur .bp-cr+.bp-cr{border-top:1px solid #345}.bp-cur>small+span{display:inline}
+.bp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;bottom:0;z-index:6;background:var(--paper);padding:6px 0;border-top:2px solid var(--ink)}
+.bp-cur{flex-direction:column;align-items:stretch!important;max-height:min(112px,20vh);overflow:auto}.bp-cr{display:flex;gap:8px;align-items:baseline;font-size:12px;line-height:1.2;padding:2px 0}.bp-cur .bp-cr+.bp-cr{border-top:1px solid #345}.bp-cur>small+span{display:inline}
 .bp-cur{position:sticky;top:0;z-index:6;background:var(--ink);color:var(--paper);padding:6px 10px;font:600 12.5px/1.25 var(--body);border-left:6px solid var(--red);min-height:34px;display:flex;align-items:center;gap:8px}.bp-cur.okk{border-left-color:var(--green)}.bp-cur b{color:var(--yellow)}.bp-cur small{font:700 10px var(--mono);opacity:.7;white-space:nowrap}
 .bp-moon{font-size:18px;vertical-align:middle;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif}
 .bp-in{display:flex;flex-direction:column;gap:6px}
@@ -114,7 +115,7 @@ export default {
     const list = h('div', { class: 'bp-list', role: 'list' });
     const btn = h('button', { class: 'bk-btn', type: 'button', disabled: true, onclick: submit }, 'Valider');
     const prog = h('span', { class: 'bk-meta' });
-    const root = h('div', { class: 'bk' }, cur, h('div', { class: 'bp-in' }, field, confWrap, chips, h('div', { class: 'bp-stat' }, worm, cnt), view), list, h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' } }, prog, btn));
+    const root = h('div', { class: 'bk' }, cur, h('div', { class: 'bp-in' }, field, confWrap, chips, h('div', { class: 'bp-stat' }, worm, cnt), view), list, h('div', { class: 'bp-foot' }, prog, btn));
     host.append(root);
     let revealed = 0; const rows = []; let lastJab = 0, wormOn = false, starve = 0, tickN = 0, revealTO = 0;
     function reveal() {
@@ -138,12 +139,12 @@ export default {
       let okN = 0, broke = -1, firstBad = -1;
       rows.forEach((r, i) => { const ok = rules[i].f(p, c); r.row.classList.toggle('ok', ok); r.row.classList.toggle('bad', !ok); r.row.firstChild.textContent = ok ? '✓' : '✗'; if (ok) { if (!r.was) { r.was = true; api.sfx('tick'); } okN++; } else { firstBad = i; if (r.was) { r.was = false; if (broke < 0) broke = i; r.row.classList.remove('was'); void r.row.offsetWidth; r.row.classList.add('was'); } } });
       if (broke >= 0) { root.classList.remove('bp-boom'); void root.offsetWidth; if (!api.reducedMotion) root.classList.add('bp-boom'); cur.classList.remove('hot'); void cur.offsetWidth; cur.classList.add('hot'); api.sfx('bad'); if (performance.now() - lastJab > 2500) { lastJab = performance.now(); const L2 = PANIC(broke + 1); api.say(L2[api.int(0, L2.length - 1)], 'angry'); } }
-      const all = revealed === rules.length && okN === rules.length; if (all) { graceUntil = performance.now() + 2000; setTimeout(() => alive && update(), 2100); } btn.disabled = !(all || performance.now() < graceUntil); prog.textContent = `${okN}/${rules.length} règles`;
+      const all = revealed === rules.length && okN === rules.length; if (all) { graceUntil = performance.now() + 5000; setTimeout(() => alive && update(), 5100); } btn.disabled = !(all || performance.now() < graceUntil); prog.textContent = `${okN}/${rules.length} règles`;
       cur.className = 'bp-cur' + (firstBad < 0 ? ' okk' : '') + (cur.classList.contains('hot') ? ' hot' : '');
       const live = revealed && rules[revealed - 1].live ? ' · ' + rules[revealed - 1].live(p) : '';
       const bad = []; rows.forEach((r, i) => { if (!rules[i].f(p, c)) bad.push(i); }); const show = bad.slice(-3).reverse();
       const clone = (i) => h('span', {}, ...rules[i].t.filter((x) => !(x.tagName === 'CANVAS' || x.tagName === 'BR')).map((x) => (x.cloneNode ? x.cloneNode(true) : x)));
-      if (show.length) cur.replaceChildren(...show.map((i) => h('div', { class: 'bp-cr' }, h('small', {}, 'RÈGLE ' + (i + 1)), clone(i)))); else cur.replaceChildren(h('small', {}, 'OK'), h('span', {}, revealed === rules.length ? 'Tout est conforme. Cliquez vite (2 s de grâce).' : nxt && nxt.when && !nxt.when() ? 'Gérard prépare quelque chose…' : 'Une règle arrive…'));
+      if (show.length) cur.replaceChildren(...show.map((i) => h('div', { class: 'bp-cr' }, h('small', {}, 'RÈGLE ' + (i + 1)), clone(i)))); else cur.replaceChildren(h('small', {}, 'OK'), h('span', {}, revealed === rules.length ? 'Tout est conforme. Cliquez vite (5 s de grâce).' : nxt && nxt.when && !nxt.when() ? 'Gérard prépare quelque chose…' : 'Une règle arrive…'));
       if (live) cnt.textContent += live;
       if (all && !btn.dataset.rdy) { btn.dataset.rdy = 1; api.sfx('good'); api.say('Tout est conforme. Cliquez vite : la lune bouge, Albert mange.', 'impressed'); } else if (!all) delete btn.dataset.rdy;
       renderView();
@@ -156,7 +157,7 @@ export default {
       if (p.includes('🥚') && revealed > IDX('egg') && !hatched) { eggT++; if (eggT >= 20) { hatched = true; p = p.replace('🥚', '🐔'); setPw(p); api.sfx('confetti'); api.say('L’œuf éclot ! C’est… une poule. Gérard pleure de joie. Moi aussi, un peu.', 'impressed'); } }
       if (wormOn && p.includes('🐛')) {
         tickN++;
-        if (tickN % 9 === 0) {
+        if (tickN % 9 === 0 && !(btn.dataset.rdy)) {
           const cs = [...p]; const k = cs.indexOf('🐛');
           if (k < cs.length - 1) { const eaten = cs[k + 1]; cs.splice(k + 1, 1); starve = 0; ate++; ateEl.textContent = String(ate); api.sfx('bad'); field.classList.remove('chomp'); void field.offsetWidth; field.classList.add('chomp'); api.say(ate % 2 ? `Albert a mangé « ${eaten} ». Ça ne le dérange pas, lui.` : `Repas n° ${ate}. Il a pris « ${eaten} ». Vérifiez votre compteur.`, 'smug'); setPw(cs.join('')); p = input.value; }
           else { starve++; if (starve >= 5) { setPw(p.replace('🐛', '💀')); starve = 0; api.say('Albert est mort de faim. Gérard est en deuil. Vous pouvez en reprendre un.', 'angry'); api.sfx('bad'); } }

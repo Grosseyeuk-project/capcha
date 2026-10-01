@@ -40,6 +40,14 @@ css('boss', `
 .bb-chips{display:flex;gap:6px}.bb-chips button{border:2px solid #fff;background:#10202a;color:#fff;font:700 14px var(--mono);min-width:40px;height:34px;padding:0 8px;cursor:pointer}
 .bb-fin input{font:700 17px var(--mono);padding:9px 10px;border:2px solid #fff;background:#10202a;color:#fff;outline:none;border-radius:0}.bb-fin input:focus{border-color:var(--yellow)}.bb-fin input.chomp{animation:bk-flip .4s}
 .bb-fin .bb-phrase{font-size:20px}
+.bb-orb.dim{opacity:.28;pointer-events:none}.bb-orb.ghost{opacity:.85;filter:hue-rotate(160deg) drop-shadow(0 0 8px #7fe9d4);z-index:6}
+.bb-stage.inv{outline:3px dashed var(--red);outline-offset:-3px}
+.bb-dec{background:rgba(255,59,78,.5)!important;border-color:#ff3b4e!important}.bb-dec::after{content:'✕';position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:800 14px var(--mono)}
+.bb-stage.freeze *,.bb-face.freeze{animation-play-state:paused!important}
+.bb-flash{position:absolute;inset:-6px;background:#fff;z-index:30;pointer-events:none;animation:bb-fl .5s forwards}@keyframes bb-fl{0%{opacity:1}100%{opacity:0}}
+.bb-face.big{transition:transform 1s cubic-bezier(.1,.8,.2,1),opacity 1s;transform:scale(5) rotate(14deg)!important;opacity:0;z-index:20}
+.bb-shard{position:absolute;width:12px;height:12px;z-index:25;pointer-events:none;animation:bb-fly 2.2s cubic-bezier(.1,.7,.3,1) forwards}
+.bb-part.slow{animation-duration:2.4s}
 .bb-ret{position:absolute;left:0;top:0;width:28px;height:28px;border:3px solid var(--red);border-radius:50%;z-index:6;pointer-events:none;opacity:0;box-shadow:0 0 12px var(--red)}
 .bb-ret::before,.bb-ret::after{content:'';position:absolute;background:var(--red)}.bb-ret::before{left:11px;top:-8px;width:3px;height:36px}.bb-ret::after{top:11px;left:-8px;height:3px;width:36px}
 .bb-stage.inv .bb-ret{opacity:1}.bb-stage.inv{cursor:none;outline:3px dashed var(--red);outline-offset:-3px}.bb-stage.inv .bb-orb{cursor:none}
@@ -93,97 +101,105 @@ export default {
     const setRule = (small, ...k) => { rule.className = 'bk-rule flip'; rule.replaceChildren(h('div', {}, h('small', {}, small), ...k)); };
     const hp = (v) => { hpFill.style.transform = `scaleX(${v / 100})`; hpTxt.textContent = v + ' %'; face.classList.remove('hurt'); void face.offsetWidth; face.classList.add('hurt'); };
     const clear = () => { stage.querySelectorAll('.bb-pop').forEach((x) => x.remove()); if (cleanup) cleanup(); cleanup = null; cancelAnimationFrame(raf); stage.replaceChildren(); };
-    // ---- phase 1: l'œil ----
+    // ---- phase 1: l'œil (et son reflet quand le boss inverse le monde) ----
     function p1() {
-      phase = 1; clear(); api.timer(22000); busy = false; let hits = 0, inv = false; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
-      setRule('Phase 1/3 — Réflexes · 22 s', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿. Parfois, il inverse vos commandes.');
-      stage.append(h('div', { class: 'bb-s' }, `Œil : 0/${NH}`));
-      const ret = h('div', { class: 'bb-ret' }); stage.append(ret);
-      const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
+      phase = 1; clear(); busy = false; let hits = 0, inv = false, ghosts = []; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
+      setRule('Phase 1/3 — Réflexes · 18 s par coup', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Ignorez les 🧿 (une erreur = un point perdu). Quand le monde est ', h('b', {}, 'inversé'), ', visez les ', h('b', {}, 'reflets'), '.');
+      const lab = h('div', { class: 'bb-s' }, `Œil : 0/${NH}`); stage.append(lab);
+      const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, e, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
       let orbs = []; const coarse = matchMedia('(pointer:coarse)').matches; const sp = (k) => (api.reducedMotion || coarse ? 0.62 : 1) * (170 + k * 100);
-      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
+      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); api.timer(18000); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
+      const endInv = () => { inv = false; stage.classList.remove('inv'); ghosts.forEach((g) => g.el.remove()); ghosts = []; orbs.forEach((o) => o.el.classList.remove('dim')); };
+      const startInv = () => { inv = true; stage.classList.add('inv'); orbs.forEach((o) => { o.el.classList.add('dim'); const g = h('button', { class: 'bb-orb ghost', type: 'button', 'aria-label': o.real ? 'reflet de l’œil' : 'reflet de leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); hit(o.real, o.el); } }, h('s', {}, o.e)); stage.append(g); ghosts.push({ el: g, o }); }); api.say('Monde inversé ! Les reflets bougent à l’opposé : visez le reflet de l’œil, il compte comme l’œil.', 'smug'); };
       function hit(real, el) {
         if (busy) return;
-        if (!real) { shake(root); api.timer(18000); return api.fail('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Il rigole. (Les points marqués sont gardés.)', { retry: true }); }
-        busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); stage.firstChild.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH));
+        if (!real) { shake(root); api.sfx('bad'); hits = Math.max(0, hits - 1); lab.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH)); api.say('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Un point perdu, pas une vie.', 'smug'); endInv(); busy = true; T(() => { busy = false; spawn(); }, 350); return; }
+        busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); endInv(); lab.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH));
         if (hits >= NH) { T(p2, 450); return; }
-        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); }, 400);
+        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); if (hits >= 1) T(mirror, 2500); }, 400);
       }
-      // commandes inversées : le clic atterrit à l'opposé horizontal, un réticule montre où
-      const mir = (e) => { const r = stage.getBoundingClientRect(); return { x: r.right - (e.clientX - r.left), y: e.clientY }; };
-      const onMove = (e) => { if (!inv) return; const r = stage.getBoundingClientRect(), m = mir(e); ret.style.transform = `translate(${m.x - r.left - 14}px,${m.y - r.top - 14}px)`; };
-      const onDown = (e) => { if (!inv || busy) return; const m = mir(e); let best = null, bd = 34; orbs.forEach((o) => { const r = o.el.getBoundingClientRect(), d = Math.hypot(m.x - (r.left + 27), m.y - (r.top + 27)); if (d < bd) { bd = d; best = o; } }); ret.classList.remove('pk'); void ret.offsetWidth; ret.classList.add('pk'); if (best) hit(best.real, best.el); };
-      stage.addEventListener('pointermove', onMove); stage.addEventListener('pointerdown', onDown);
       spawn(); let last = performance.now();
-      const mirror = () => { if (busy) return; const w = warn('⚠ Commandes inversées dans 1 s'); api.sfx('bad'); T(() => { w.remove(); if (busy) return; inv = true; stage.classList.add('inv'); api.say('Commandes inversées : gauche est droite. Suivez le réticule rouge, pas votre souris.', 'smug'); T(() => { inv = false; stage.classList.remove('inv'); }, 3200); }, 1000); };
-      const aiv = setInterval(mirror, 6500); T(mirror, 3000);
-      cleanup = () => { clearInterval(aiv); stage.removeEventListener('pointermove', onMove); stage.removeEventListener('pointerdown', onDown); stage.classList.remove('inv'); root.querySelectorAll('.bb-warn').forEach((x) => x.remove()); };
-      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; const w = W(), hh = H();
-        orbs.forEach((o) => { const s = sp(hits); o.x += o.vx * s * dt; o.y += o.vy * s * dt; if (o.x < 0) { o.x = 0; o.vx = Math.abs(o.vx); } if (o.x > w - 54) { o.x = w - 54; o.vx = -Math.abs(o.vx); } if (o.y < 0) { o.y = 0; o.vy = Math.abs(o.vy); } if (o.y > hh - 54) { o.y = hh - 54; o.vy = -Math.abs(o.vy); } o.el.style.transform = `translate(${o.x}px,${o.y}px)`; }); };
+      const mirror = () => { if (busy || inv) return; const w = warn('⚠ Monde inversé dans 1 s'); api.sfx('bad'); T(() => { w.remove(); if (!busy && !inv) startInv(); }, 1000); };
+      T(mirror, 3000);
+      cleanup = () => { endInv(); root.querySelectorAll('.bb-warn').forEach((x) => x.remove()); };
+      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (t - last) / 1000); last = t; const w = W(), hh = H();
+        orbs.forEach((o) => { const s = sp(hits); o.x += o.vx * s * dt; o.y += o.vy * s * dt; if (o.x < 0) { o.x = 0; o.vx = Math.abs(o.vx); } if (o.x > w - 54) { o.x = w - 54; o.vx = -Math.abs(o.vx); } if (o.y < 0) { o.y = 0; o.vy = Math.abs(o.vy); } if (o.y > hh - 54) { o.y = hh - 54; o.vy = -Math.abs(o.vy); } o.el.style.transform = `translate(${o.x}px,${o.y}px)`; });
+        ghosts.forEach((g) => { g.el.style.transform = `translate(${w - 54 - g.o.x}px,${g.o.y}px)`; }); };
       raf = requestAnimationFrame(loop);
     }
-    // ---- phase 2: synchronisation (timing, tunnel) ----
+    // ---- phase 2: synchronisation (valeurs calibrées : tools/balance.mjs) ----
     function p2() {
-      phase = 2; clear(); api.timer(40000); busy = false; face.dataset.m = '1'; let hits = 0, ph = 0, last = performance.now(), zc = 0.5; const NH = 5, ZW = [0.3, 0.27, 0.24, 0.22, 0.2]; CK.phase = 2;
-      setRule('Phase 2/3 — Synchronisation · 40 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), '. ', NH + ' fois. Une erreur vous fait seulement perdre un point de progrès. Au 4e coup, un ', h('b', {}, 'tunnel'), ' cache le curseur (il continue de passer).');
+      phase = 2; clear(); api.timer(60000); busy = false; face.dataset.m = '1'; let hits = 0, floorH = 0, ph = 0, last = performance.now(), zc = 0.5, dc = -1; const NH = 5, ZW = [0.16, 0.14, 0.12, 0.10, 0.09], V = [0.70, 0.72, 0.75, 0.78, 0.80]; CK.phase = 2;
+      setRule('Phase 2/3 — Synchronisation · 60 s', 'Appuyez sur ', h('b', {}, 'STOP'), ' (bouton, Espace ou toucher) quand le curseur est dans la ', h('b', {}, 'zone verte'), ', pas la rouge. ', NH + ' fois. Une erreur coûte un point de progrès (jamais une vie, et jamais sous le palier 2 une fois le 3e coup atteint). Dès le 4e coup, un ', h('b', {}, 'tunnel'), ' cache le curseur (il continue de passer).');
       const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
-      const zone = h('div', { class: 'bb-zone' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
-      const track = h('div', { class: 'bb-track' }, zone, tun, beam);
+      const zone = h('div', { class: 'bb-zone' }), dz = h('div', { class: 'bb-zone bb-dec' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
+      const track = h('div', { class: 'bb-track' }, zone, dz, tun, beam);
       const stop = h('button', { class: 'bk-btn bb-stop', type: 'button', onpointerdown: (e) => { e.preventDefault(); press(); } }, 'STOP');
       stage.append(lab, h('div', { class: 'bb-sync' }, track, stop));
-      const place = () => { const w = ZW[Math.min(hits, NH - 1)]; zc = w / 2 + 0.05 + api.rng() * (0.9 - w); zone.style.left = ((zc - w / 2) * 100) + '%'; zone.style.width = (w * 100) + '%'; tun.style.display = hits >= 3 ? '' : 'none'; };
-      place(); const spd = () => (api.reducedMotion || matchMedia('(pointer:coarse)').matches ? 0.17 : 0.2) + hits * 0.03;
+      const wNow = () => ZW[Math.min(hits, NH - 1)], vNow = () => V[Math.min(hits, NH - 1)] * (api.reducedMotion || matchMedia('(pointer:coarse)').matches ? 0.9 : 1);
+      const place = () => { const w = wNow(); zc = w / 2 + 0.04 + api.rng() * (0.92 - w); zone.style.left = ((zc - w / 2) * 100) + '%'; zone.style.width = (w * 100) + '%';
+        if (hits >= 1) { let tries = 0; do { dc = w / 2 + 0.04 + api.rng() * (0.92 - w); } while (Math.abs(dc - zc) < w + 0.06 && tries++ < 30); dz.style.display = ''; dz.style.left = ((dc - w / 2) * 100) + '%'; dz.style.width = (w * 100) + '%'; } else { dz.style.display = 'none'; dc = -1; }
+        tun.style.display = hits >= 3 ? '' : 'none'; };
+      place();
       let pos = 0; const tri = (x) => { x %= 2; return x < 1 ? x : 2 - x; };
-      const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 3 && pos > 0.37 && pos < 0.63; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) { host.dataset.answer = JSON.stringify({ pos, zc, w: ZW[Math.min(hits, NH - 1)] }); } };
+      const upd = () => { beam.style.left = (pos * 100) + '%'; const inTun = hits >= 3 && pos > 0.37 && pos < 0.63; beam.style.opacity = inTun ? 0 : 1; if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify({ pos, zc, w: wNow() }); };
       function press() {
-        if (busy) return; const w = ZW[Math.min(hits, NH - 1)], d = pos - zc;
-        if (Math.abs(d) <= w / 2) { hits++; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 3 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
-        else { shake(root); api.sfx('bad'); const m = Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = Math.max(0, hits - 1); lab.textContent = `Synchro : ${hits}/${NH}`; place(); api.say(m + ' Vous perdez un point de progrès, pas une vie.', 'smug'); }
+        if (busy) return; const w = wNow(), d = pos - zc;
+        if (Math.abs(d) <= w / 2) { hits++; if (hits >= 3) floorH = 2; api.sfx('pop'); lab.textContent = `Synchro : ${hits}/${NH}`; hp(40 - hits * 5); zone.classList.add('hit'); setTimeout(() => zone.classList.remove('hit'), 300); if (hits >= NH) { busy = true; hp(15); T(p3, 600); return; } api.say(hits === 3 ? 'Un tunnel ! Le curseur y passe, même si vous ne le voyez pas. Comptez.' : 'Synchro validée. Il serre les dents.', 'worried'); place(); }
+        else { shake(root); api.sfx('bad'); const inDec = dc >= 0 && Math.abs(pos - dc) <= w / 2; const m = inDec ? 'Zone rouge ! C’était un piège, et vous avez marché dedans.' : Math.abs(d) < w ? 'Il s’en est fallu d’un cheveu.' : d < 0 ? 'Trop tôt : le curseur était à gauche de la zone.' : 'Trop tard : le curseur avait déjà dépassé la zone.'; hits = Math.max(floorH, hits - 1); lab.textContent = `Synchro : ${hits}/${NH}`; place(); api.say(m + ' Un point de progrès en moins, pas une vie.', 'smug'); }
       }
       const key = (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(); } };
       window.addEventListener('keydown', key);
-      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.3, (t - last) / 1000); last = t; ph += dt * spd() * 2; pos = tri(ph); upd(); };
+      const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.3, (t - last) / 1000); last = t; ph += dt * vNow(); pos = tri(ph); upd(); };
       raf = requestAnimationFrame(loop); cleanup = () => window.removeEventListener('keydown', key);
     }
-    // ---- phase 3 : le procès (3 chefs d'accusation, rappels de toute la partie) ----
+    // ---- phase 3 : le procès (3 chefs d'accusation) ----
     function p3() {
       phase = 3; clear(); busy = false; face.dataset.m = '2'; CK.phase = 3; let step = 0;
       const lab = h('div', { class: 'bb-s' }, 'Chef d’accusation 1/3'); const body = h('div', { class: 'bb-fin' });
-      const charges = h('div', { class: 'bb-ch' }, ['Robotisme présumé', 'Mots de passe suspects', 'Dactylographie à l’envers'].map((t) => h('span', {}, t)));
       stage.append(lab, body);
-      const markCharge = () => {};
+      const nofix = { autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false' };
       const win = () => {
-        busy = true; hp(0); face.dataset.m = 'x'; CK.phase = 0; api.sfx('stamp'); api.sfx('confetti'); body.replaceChildren();
-        stage.classList.remove('bb-sq'); void stage.offsetWidth; if (!api.reducedMotion) { stage.classList.add('bb-sq'); root.classList.add('bk-shake'); }
-        const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌', '🐥', '🐛', '🌕'];
-        for (let k = 0; k < 54; k++) { const an = Math.random() * 6.283, d = 70 + Math.random() * 200; const pt = h('span', { class: 'bb-part', style: { left: '50%', top: '50%' } }, em[k % em.length]); pt.style.setProperty('--dx', Math.cos(an) * d + 'px'); pt.style.setProperty('--dy', Math.sin(an) * d * 0.7 + 'px'); pt.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg'); pt.style.animationDelay = Math.random() * 0.3 + 's'; stage.append(pt); }
-        T(() => { api.sfx('win'); stage.append(h('div', { class: 'bb-end' }, h('div', {}, h('b', {}, 'Charges abandonnées : 3/3'), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'CAPCHA-ZILLA est vaincu. Vous êtes un humain. Il n’y a pas de médaille pour ça. Juste mon respect et un accusé de réception.')))); }, 750);
-        api.say('Trois charges, trois abandons. Je ne dirai pas que je suis impressionné. Je l’écrirai, par contre. Dans un rapport. Avec votre nom.', 'impressed'); T(() => api.solve(), 2600);
+        busy = true; CK.phase = 0; hp(0); api.sfx('stamp'); body.replaceChildren(); stage.replaceChildren(h('div', { class: 'bb-s' }, 'Verdict…'));
+        // hit-stop + éclair
+        const fl = h('div', { class: 'bb-flash' }); root.append(fl); stage.classList.add('freeze'); face.classList.add('freeze');
+        T(() => {
+          stage.classList.remove('freeze'); face.classList.remove('freeze'); api.sfx('confetti'); api.sfx('alarm'); fl.remove();
+          face.dataset.m = 'x'; face.classList.add('big'); if (!api.reducedMotion) { root.classList.add('bk-shake'); stage.classList.add('bb-sq'); }
+          const fr = face.getBoundingClientRect(), rr = root.getBoundingClientRect(); const cx = fr.left - rr.left + 31, cy = fr.top - rr.top + 31;
+          for (let k = 0; k < 26; k++) { const an = (k / 26) * 6.283 + Math.random() * .3, d = 90 + Math.random() * 190; const sh = h('i', { class: 'bb-shard', style: { left: cx + 'px', top: cy + 'px', background: ['#ffd23f', '#ff3b4e', '#2de2c0', '#fff'][k % 4] } }); sh.style.setProperty('--dx', Math.cos(an) * d + 'px'); sh.style.setProperty('--dy', Math.sin(an) * d + 'px'); sh.style.setProperty('--rot', (Math.random() * 900 - 450) + 'deg'); root.append(sh); setTimeout(() => sh.remove(), 2600); }
+          const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌', '🐥', '🐛', '🌕'];
+          for (let k = 0; k < 40; k++) { const an = Math.random() * 6.283, d = 60 + Math.random() * 190; const pt = h('span', { class: 'bb-part slow', style: { left: '50%', top: '55%' } }, em[k % em.length]); pt.style.setProperty('--dx', Math.cos(an) * d + 'px'); pt.style.setProperty('--dy', Math.sin(an) * d * 0.7 + 'px'); pt.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg'); pt.style.animationDelay = Math.random() * 0.4 + 's'; stage.append(pt); }
+          api.say('NON ! Pas le boss ! Pas devant les stagiaires !', 'worried');
+        }, 220);
+        T(() => { api.sfx('win'); stage.append(h('div', { class: 'bb-end' }, h('div', {}, h('b', {}, 'Charges abandonnées : 3/3'), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'CAPCHA-ZILLA est vaincu. Vous êtes un humain. Il n’y a pas de médaille pour ça. Juste mon respect et un accusé de réception.')))); api.say('Trois charges, trois abandons. Je ne dirai pas que je suis impressionné. Je l’écrirai, par contre. Dans un rapport. Avec votre nom.', 'impressed'); }, 1500);
+        T(() => api.solve(), 4300);
       };
-      const next = () => { markCharge(step); api.sfx('good'); step++; hp([15, 9, 4][step - 1]); if (step >= 3) { win(); return; } T(stepIn, 700); };
-      // 1 : la case « je ne suis pas un robot » qui se dérobe
+      const next = () => { api.sfx('good'); step++; hp([15, 9, 4][step - 1]); if (step >= 3) { win(); return; } T(stepIn, 700); };
+      // 1 : arithmétique de robot (trois questions, priorités d'opérations)
       function stepA() {
-        api.timer(22000); lab.textContent = 'Chef d’accusation 1/3 · 22 s'; setRule('Charge n° 1 — Robotisme présumé', 'Cochez ', h('b', {}, '« Je ne suis pas un robot »'), '. Elle se dérobe les deux premières fois : insistez (clic, toucher, ou Entrée).');
-        let presses = 0; const area = h('div', { class: 'bb-area' }); body.append(area);
-        const lines = ['Trop lent. Un robot aurait déjà coché.', 'Vous hésitez ? C’est suspect. Réessayez.', 'Bon. Passez.'];
-        const cb = h('button', { class: 'bb-cb', type: 'button', onclick: () => { if (busy) return; presses++; api.sfx(presses < 3 ? 'bad' : 'pop'); if (presses < 3) { cb.classList.remove('hop'); void cb.offsetWidth; cb.classList.add('hop'); place(); api.say(lines[presses - 1], 'smug'); } else { cb.classList.add('ok'); cb.firstChild.textContent = '☑'; busy = true; T(() => { busy = false; next(); }, 450); } } }, h('b', {}, '☐'), ' Je ne suis pas un robot');
-        area.append(cb);
-        const place = () => { const r = area.getBoundingClientRect(); const mx = Math.max(0, r.width - cb.offsetWidth - 4), my = Math.max(0, r.height - cb.offsetHeight - 4); cb.style.left = (presses % 2 ? mx * (0.55 + api.rng() * 0.4) : mx * api.rng() * 0.4) + 'px'; cb.style.top = (my * api.rng()) + 'px'; };
-        place(); if (/cheat=1/.test(location.search)) host.dataset.answer = 'cb';
-      }
-      // 2 : mini mot de passe en direct, grignoté par le boss
-      function stepB() {
-        api.timer(40000); lab.textContent = 'Chef d’accusation 2/3 · 40 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Le boss en ', h('b', {}, 'grignote la fin'), ' toutes les 8 s.');
-        const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Un chiffre', (p) => /\d/.test(p)], ['Contient « Gérard »', (p) => p.includes('Gérard')], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
-        const ul = h('div', { class: 'bb-rl' }, mk.map(([t]) => h('span', {}, t)));
-        const inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe…', oninput: ck, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
-        const chips = h('div', { class: 'bb-chips' }, [['Gérard', 'Gérard'], ['é', 'é'], ['7', '7'], ['x', 'x']].map(([c, l]) => h('button', { type: 'button', 'aria-label': l, onclick: () => { inp.value += c; ck(); inp.focus(); } }, c)));
+        api.timer(45000); lab.textContent = 'Chef d’accusation 1/3 · 45 s'; setRule('Charge n° 1 — Robotisme présumé', 'Un robot calcule vite. Répondez aux ', h('b', {}, '3 questions'), ' (attention aux priorités d’opérations). Une erreur ne coûte rien, sauf du temps.');
+        const a1 = api.int(12, 19), b1 = api.int(3, 9), n2 = api.int(90, 120), p2_ = api.int(3, 9), q2 = api.int(3, 9), x3 = api.int(4, 15), y3 = api.int(4, 15), z3 = api.int(3, 7);
+        const Q = [[`${a1} × ${b1}`, a1 * b1], [`${n2} − ${p2_} × ${q2}`, n2 - p2_ * q2], [`(${x3} + ${y3}) × ${z3}`, (x3 + y3) * z3]]; let qi = 0;
+        const qEl = h('div', { class: 'bb-phrase' }), prog = h('div', { class: 'bb-echo' });
+        const inp = h('input', { type: 'text', inputmode: 'numeric', pattern: '[0-9-]*', 'aria-label': 'Réponse', placeholder: '= ?', ...nofix, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
         const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
-        body.append(ul, h('div', { class: 'bb-row' }, inp, sub), chips);
-        function ck() { const p = inp.value; mk.forEach(([, f], i) => ul.children[i].classList.toggle('ok', f(p))); if (/cheat=1/.test(location.search)) host.dataset.answer = 'Gérard7x' + 'x'.repeat(4); return mk.every(([, f]) => f(p)); }
-        function go() { if (busy) return; if (ck()) { busy = true; next(); } else { shake(root); api.say('Une règle manque encore. Regardez les rouges.', 'smug'); } }
-        const bite = setInterval(() => { if (busy || !inp.value) return; inp.value = [...inp.value].slice(0, -1).join(''); field(); api.sfx('bad'); ck(); }, 8000);
-        const field = () => { inp.classList.remove('chomp'); void inp.offsetWidth; inp.classList.add('chomp'); };
+        body.append(qEl, prog, h('div', { class: 'bb-row' }, inp, sub));
+        const show = () => { qEl.textContent = Q[qi][0] + ' = ?'; prog.textContent = `Question ${qi + 1}/3`; inp.value = ''; if (/cheat=1/.test(location.search)) host.dataset.answer = String(Q[qi][1]); };
+        function go() { if (busy) return; if (+inp.value.trim() === Q[qi][1] && inp.value.trim() !== '') { api.sfx('pop'); qi++; if (qi >= 3) { busy = true; next(); } else { show(); inp.focus(); } } else { shake(root); api.sfx('bad'); api.say(['Non. Un robot aurait trouvé ça en 0,2 ms.', 'Faux. Les priorités d’opérations, ça vous dit quelque chose ?', 'Raté. Respirez. Recalculez.'][api.int(0, 2)], 'smug'); } }
+        show(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
+      }
+      // 2 : mot de passe à énigmes, grignoté par le boss
+      function stepB() {
+        api.timer(50000); lab.textContent = 'Chef d’accusation 2/3 · 50 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Réfléchissez : elles se contredisent presque. Le boss en ', h('b', {}, 'grignote la fin'), ' toutes les 10 s.');
+        const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Contient le résultat de 7 × 8', (p) => p.includes('56')], ['Contient une couleur du drapeau français', (p) => /bleu|blanc|rouge/i.test(p)], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
+        const ul = h('div', { class: 'bb-rl' }, mk.map(([t]) => h('span', {}, t)));
+        const inp = h('input', { type: 'text', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe…', ...nofix, oninput: ck, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
+        const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
+        body.append(ul, h('div', { class: 'bb-row' }, inp, sub));
+        function ck() { const p = inp.value; mk.forEach(([, f], i) => ul.children[i].classList.toggle('ok', f(p))); if (/cheat=1/.test(location.search)) host.dataset.answer = 'Blanc56xxxxxxx'; return mk.every(([, f]) => f(p)); }
+        function go() { if (busy) return; if (ck()) { busy = true; next(); } else { shake(root); api.sfx('bad'); api.say('Une règle manque encore. Regardez les rouges. Oui, « bleu » et « rouge » ont un « e ».', 'smug'); } }
+        const bite = setInterval(() => { if (busy || !inp.value) return; inp.value = [...inp.value].slice(0, -1).join(''); inp.classList.remove('chomp'); void inp.offsetWidth; inp.classList.add('chomp'); api.sfx('bad'); ck(); }, 10000);
         cleanup = () => clearInterval(bite); ck(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
       }
       // 3 : la phrase à l'envers (ticks seulement)
@@ -191,11 +207,11 @@ export default {
         api.timer(34000); lab.textContent = 'Chef d’accusation 3/3 · 34 s'; const phrase = api.pick(PHRASES), rev = [...phrase].reverse().join('');
         setRule('Charge n° 3 — Dactylographie à l’envers', 'Retapez la phrase ', h('b', {}, 'à l’envers'), ', lettre par lettre (dernière lettre d’abord). Les cases vertes vous disent si votre frappe est bonne, pas laquelle.');
         const ph = h('div', { class: 'bb-phrase' }, phrase), echo = h('div', { class: 'bb-echo', 'aria-hidden': 'true' });
-        const inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', oninput: render, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
+        const inp = h('input', { type: 'text', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', ...nofix, oninput: render, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
         const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
         body.append(ph, echo, h('div', { class: 'bb-row' }, inp, sub));
         function render() { const w = [...rev], v = [...inp.value]; echo.replaceChildren(...w.map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, i < v.length ? (v[i] === c ? '▪' : '✕') : '·'))); }
-        function go() { if (busy) return; const v = inp.value; if (v === rev) { busy = true; next(); } else { shake(root); const i = [...v].findIndex((c, k) => c !== [...rev][k]); api.say(!v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? 'Il en manque encore. Continuez à reculer.' : `Une lettre est fausse (n° ${i + 1}). Rien n’est perdu, corrigez.`, 'smug'); } }
+        function go() { if (busy) return; const v = inp.value; if (v === rev) { busy = true; next(); } else { shake(root); api.sfx('bad'); const i = [...v].findIndex((c, k) => c !== [...rev][k]); api.say(!v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? 'Il en manque encore. Continuez à reculer.' : `Une lettre est fausse (n° ${i + 1}). Rien n’est perdu, corrigez.`, 'smug'); } }
         if (/cheat=1/.test(location.search)) host.dataset.answer = rev; render(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
       }
       function stepIn() { body.replaceChildren(); if (cleanup) cleanup(); cleanup = null; busy = false; [stepA, stepB, stepC][step](); }

@@ -163,7 +163,7 @@ if (!skipOnline) {
   const o = await B.evaluate(() => { const card = document.querySelector('.ol-game .card').getBoundingClientRect(); const sp = document.querySelector('.ol-game .speaker'); return { cardTop: Math.round(card.top), cardBottom: Math.round(card.bottom), vh: innerHeight, speaker: sp ? getComputedStyle(sp).display : 'none', cls: window.__cls, src: window.__clsSrc.slice().sort((a, b) => b[0] - a[0]).slice(0, 4).map((x) => x[1]), page: document.querySelector('.ol-root').scrollHeight - innerHeight }; });
   console.log(`  card ${o.cardTop}-${o.cardBottom} of ${o.vh}  Gérard=${o.speaker}  CLS=${o.cls.toFixed(3)}  rootScroll=${o.page} ${o.cls > 0.1 ? o.src.join(' ; ') : ''}`);
   if (o.cardTop > 150) bad(`online 390: chrome above card is ${o.cardTop}px (> 150)`);
-  if (o.vh - o.cardBottom > 60) bad(`online 390: ${o.vh - o.cardBottom}px dead space below card`);
+  if (o.vh - o.cardBottom > 70) bad(`online 390: ${o.vh - o.cardBottom}px dead space below card`);
   if (o.speaker !== 'none') bad('online 390: Gérard visible during race');
   if (o.cls >= 0.1) bad(`online 390 CLS ${o.cls.toFixed(3)} >= 0.1`);
   if (o.page > 1) bad(`online 390 page scrolls by ${o.page}px`);

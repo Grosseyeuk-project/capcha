@@ -37,7 +37,7 @@ export default {
       add(r(48, 66), r(0.9, 1.3)); add(0, r(0.5, 0.9), 'hold'); add(r(81, 92), r(1.6, 2.2));
       if (n === 1) { add(r(12, 22), 0.4); add(100, 0.9, 'move'); add(100, 0.9, 'fake'); add(r(25, 35), 0.3); add(99, 1.4); add(99, r(0.9, 1.4), 'hold'); }
       else { add(99, 1.0); add(99, r(0.7, 1.1), 'hold'); }
-      add(100, n === 1 ? 0.75 : 1.0, 'real'); add(0, 0.25, 'move');
+      add(100, n === 1 ? 1.0 : 1.2, 'real'); add(0, 0.25, 'move');
       let c = 0; segs.forEach((s) => { s.t = c; c += s.dur; }); total = c;
     }
     const ease = (x) => x * x * (3 - 2 * x);

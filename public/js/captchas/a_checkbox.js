@@ -68,7 +68,8 @@ export default {
     const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Relâché trop tôt. Un robot, lui, aurait tenu. Réessayez, plus longtemps.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };
     box.addEventListener('pointerup', rel); box.addEventListener('pointercancel', rel); box.addEventListener('pointerleave', (e) => touchy(e) && rel());
     box.addEventListener('contextmenu', (e) => e.preventDefault());
-    box.addEventListener('click', (e) => { if (touchy(e)) return; start(e); });
+    let touchAt = -9999; box.addEventListener('pointerdown', (e) => { if (touchy(e)) touchAt = performance.now(); }, true); box.addEventListener('pointerup', (e) => { if (touchy(e)) touchAt = performance.now(); }, true);
+    box.addEventListener('click', (e) => { if (touchy(e) || performance.now() - touchAt < 800) return; start(e); });
     function start(e) {
       if (busy) return; busy = true; box.disabled = true;
       box.replaceChildren(h('div', { class: 'ac-spin' })); api.sfx('click');
