@@ -1,0 +1,9 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CAPCHA — progression</title>
+<style>body{font:15px system-ui;background:#0b0d14;color:#e8ecf5;max-width:760px;margin:0 auto;padding:20px}h1{font-size:20px}
+.p{border:1px solid #2a3150;border-radius:8px;padding:10px 14px;margin:8px 0;display:grid;grid-template-columns:1fr auto;gap:2px 12px}
+.s{font-weight:600}.building{color:#ffb454}.judging{color:#5b8cff}.wowed{color:#4ade80}.queued{color:#8892b0}.gap{grid-column:1/3;color:#9aa4c4;font-size:13px}
+li{margin:3px 0;color:#9aa4c4}</style>
+<h1>CAPCHA — progression en direct</h1><div id=w></div><div id=l></div>
+<script>async function t(){try{const j=await (await fetch('progress.json',{cache:'no-store'})).json();
+w.innerHTML='<p>'+j.wave+' · '+j.updated+'</p>'+j.pieces.map(p=>`<div class=p><b>${p.name}</b><span class="s ${p.status}">${p.status} · tour ${p.round}</span><span class=gap>Critique : ${p.verdict} — plus gros écart : ${p.gap}</span></div>`).join('');
+l.innerHTML='<ul>'+j.log.slice(-12).reverse().map(x=>'<li>'+x+'</li>').join('')+'</ul>'}catch(e){}}t();setInterval(t,4000)</script>

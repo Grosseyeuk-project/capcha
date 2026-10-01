@@ -1,0 +1,6 @@
+{"updated":"","wave":"Wave 1 — builders","pieces":[
+{"id":"shell","name":"Shell, 3D, audio, narrator","status":"building","round":1,"verdict":"—","gap":"—"},
+{"id":"captchas-a","name":"Captchas tiers 1–2","status":"building","round":1,"verdict":"—","gap":"—"},
+{"id":"captchas-b","name":"Captchas tiers 3–5","status":"queued","round":0,"verdict":"—","gap":"—"},
+{"id":"online","name":"Online mode","status":"queued","round":0,"verdict":"—","gap":"—"}],
+"log":["Squelette posé : moteur, contrat, outil de capture."]}
