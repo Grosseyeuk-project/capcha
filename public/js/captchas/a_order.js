@@ -1,12 +1,12 @@
 import { css, frame, hasRule, coarse, numWords } from './a_kit.js';
 css('order', `
-.ao-l{position:relative;height:calc(var(--n)*46px)}
-.ao-r{position:absolute;left:0;right:0;height:42px;display:flex;align-items:center;gap:8px;padding:0 6px 0 4px;background:#fff;border:1px solid #c9ccd1;border-radius:5px;transition:top .2s cubic-bezier(.3,1.2,.5,1),box-shadow .15s,border-color .15s;touch-action:manipulation;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.ao-l{position:relative;height:calc(var(--n)*60px)}
+.ao-r{position:absolute;left:0;right:0;height:56px;display:flex;align-items:center;gap:8px;padding:0 6px 0 4px;background:#fff;border:1px solid #c9ccd1;border-radius:5px;transition:top .2s cubic-bezier(.3,1.2,.5,1),box-shadow .15s,border-color .15s;touch-action:manipulation;box-shadow:0 1px 2px rgba(0,0,0,.1)}
 .ao-r.d{transition:box-shadow .15s;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.3);border-color:#1a73e8;cursor:grabbing}
 .ao-r:focus-visible{border-color:#1a73e8}
 .ao-nb{flex:none;min-width:24px;height:24px;padding:0 8px;border-radius:12px;background:#e8f0fe;color:#1a73e8;font:700 12px/24px system-ui;text-align:center;white-space:nowrap}
-.ao-tx{flex:1;font-weight:600;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ao-gp{color:#9aa0a6;font-size:18px;letter-spacing:-2px;width:40px;height:40px;display:grid;place-items:center;cursor:grab;touch-action:none;margin-left:-4px;border-radius:5px}.ao-gp:hover{background:#eef0f3;color:#1a73e8}
+.ao-tx{flex:1;font-weight:600;font-size:13px;line-height:1.15;min-width:0;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ao-gp{color:#9aa0a6;font-size:18px;letter-spacing:-2px;width:40px;height:50px;display:grid;place-items:center;cursor:grab;touch-action:none;margin-left:-4px;border-radius:5px}.ao-gp:hover{background:#eef0f3;color:#1a73e8}
 .ao-ab{display:flex;flex-direction:row}
 .ao-ab button{appearance:none;border:0;background:transparent;color:#5f6368;width:40px;height:40px;font-size:14px;cursor:pointer;border-radius:3px;line-height:1}
 .ao-ab button:hover:not(:disabled){background:#e8eaed;color:#1a73e8}.ao-ab button:disabled{opacity:.3;cursor:default}
@@ -16,7 +16,7 @@ const fmt = (kg) => kg >= 1 ? (kg.toLocaleString('fr-FR') + ' kg') : kg >= .001 
 export default {
   id: 'a_order', tier: 2, title: 'Classement', time: 40000,
   mount(host, api) {
-    const { h } = api, N = 5, RH = 46; let desc = api.rng() < .5; const WORDS = hasRule('a_order', 'R2'), FLIP = hasRule('a_order', 'R5'); let flipped = false;
+    const { h } = api, N = 5, RH = 60; let desc = api.rng() < .5; const WORDS = hasRule('a_order', 'R2'), FLIP = hasRule('a_order', 'R5'); let flipped = false;
     // choose items with ratio >=3 between neighbours
     let pick; do pick = api.shuffle(POOL).slice(0, N).sort((a, b) => b[1] - a[1]); while (pick.some((x, i) => i && pick[i - 1][1] / x[1] < 3));
     let truth = desc ? pick : [...pick].reverse(); let ord = api.shuffle(pick); if (ord.every((x, i) => x === truth[i])) ord = [...ord].reverse();

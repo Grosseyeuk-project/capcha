@@ -8,6 +8,8 @@ css('grid', `
 .ag-t[aria-pressed=true] svg{animation:ag-wg .35s}@keyframes ag-wg{30%{transform:scale(.7) rotate(-4deg)}}
 @media (prefers-reduced-motion:reduce){.ag-t,.ag-t *{animation:none!important}}
 @media (max-width:480px){.ag-t{aspect-ratio:1.3}}
+.ag-t{aspect-ratio:1.25!important}
+@media (min-width:900px){.ag-w2{width:min(100%,440px)!important}}
 .ag-g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .ag-t{position:relative;aspect-ratio:1;padding:0;border:0;background:#ddd;cursor:pointer;overflow:hidden;border-radius:2px}
 .ag-t svg{display:block;width:100%;height:100%;transition:transform .18s cubic-bezier(.3,1.5,.5,1)}
@@ -52,7 +54,7 @@ export default {
       t.innerHTML = S(M.yes.includes(k) ? (isFeu ? ART.feu(api.rng, red.has(i) ? 0 : api.pick([1, 2])) : ART.velo(api.rng, red.has(i) ? '#c0392b' : api.pick(['#1565c0', '#2e7d32', '#6a1b9a']))) : ART[k](api.rng), sky, api.pick(GR)).replace('id="sk"', `id="sk${i}"`).replace('url(#sk)', `url(#sk${i})`); return t;
     });
     const fr = frame(h, { api, id: 'a_grid', small: 'Sélectionnez toutes les images avec des', title: M.target, note: M.note, body: h('div', { class: 'ag-g' }, tiles), onVerify: check });
-    fr.el.style.width = 'min(100%,340px)'; host.append(fr.el);
+    fr.el.style.width = 'min(100%,340px)'; fr.el.classList.add('ag-w2'); host.append(fr.el);
     const truth = () => yesIdx.filter((i) => !ruleOn || !red.has(i));
     const RULE = isFeu ? 'Rectificatif de la direction : les feux rouges sont suspendus. Plus aucun feu rouge ne compte.' : 'Rectificatif de la direction : les vélos rouges sont réquisitionnés. Plus aucun vélo rouge ne compte.';
     let rt = 0; function armRule() { rt = setTimeout(() => { if (ruleOn) return; ruleOn = true; fr.banner(RULE, 'rule', 0); api.say(RULE, 'smug'); api.sfx('whoosh'); if (/cheat=1/.test(location.search)) host.dataset.answer = truth().join(','); }, 900); }

@@ -35,7 +35,7 @@ export const RULES = [
   { after: 'a_grid', k: 'R3', t: 'calme', full: '« Vérifier » ne s’active qu’après 2 s : preuve de calme.' },
   { after: 'a_slider', k: 'R4', t: 'bacs mobiles', full: 'Les bacs de tri peuvent changer de côté en cours de route. Le règlement ne dit pas quand.' },
   { after: 'a_bins', k: 'R5', t: 'sens révocable', full: 'Le sens d’un classement peut être rectifié en cours de route, sans préavis.' },
-  { after: 'a_order', k: 'R6', t: '↑ HS · 2 poses', full: 'Le bouton ↑ est en maintenance. Une seule pose étant suspecte, il en faut deux.' }
+  { after: 'a_order', k: 'R6', t: '↑ HS, 2 poses', full: 'Le bouton ↑ est en maintenance. Une seule pose étant suspecte, il en faut deux.' }
 ];
 export const lvOf = (id) => Math.max(0, ORDER.indexOf(id));
 export const rulesFor = (id) => RULES.filter((r) => ORDER.indexOf(r.after) < ORDER.indexOf(id));
@@ -114,6 +114,15 @@ css('live', `
 .ak-mock{font-size:12px}
 @media (max-width:480px){.ak-head small,.ak-note{font-size:12px}.ak-mock{font-size:11.5px}.ak-sub{font-size:11px}.ak-brand span{font-size:10px}}
 `);
+css('live2', `
+.ak-drain{font:800 12px/1 system-ui;color:#c5221f;background:#fce8e6;border-radius:12px;padding:5px 8px;animation:ak-shake .4s}
+.ak-viol{border-color:#d93025!important;background:#fff5f5!important;color:#c5221f!important;box-shadow:0 0 0 3px rgba(217,48,37,.18)!important}
+.ak-btn:disabled{font-size:12px}
+.ak-lc{padding:4px 7px;gap:4px}
+.ak-st{gap:4px;padding:6px 10px 0;min-height:0}
+.ak-inc{top:auto}
+@media (min-width:900px){.ak-w{width:min(100%,520px)}.ak-note{font-size:13px}}
+`);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
 const BRAND2 = ['Confidentialité · Conditions', 'Confidentialité · Conditions', 'Confidentialité · Conditions', 'Vie privée (non) · Conditions', 'Vie privée (non) · Conditions', 'Données revendues', 'Aucune confidentialité', 'Non remboursable'];
 const MOCK = [null, null, null, ['☑', 'rappel pièce 1'], ['☑', 'sous réserve'], ['☑', 'en révision'], ['☐', 'décochée'], ['☐', 'peut-être robot']];
@@ -130,23 +139,20 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
   const noteEl = note != null ? h('div', { class: 'ak-note' }, note) : null;
   const sub = h('span', { class: 'ak-sub' }, SUB[lv]);
   const head = h('div', { class: 'ak-head' }, h('small', {}, small || 'Sélectionnez'), h('b', {}, title), sub);
-  let st = null, list = null; const chips = {};
+  let st = null, list = null, drainEl = null; const chips = {}, bad = new Set(); let drained = 0, dt = 0;
   if (rules.length || MOCK[lv]) {
     st = h('div', { class: 'ak-st' });
-    for (const r of rules) if ((REL[id] || []).includes(r.k)) { chips[r.k] = h('span', { class: 'ak-lc ' + (r.k === 'R3' ? 'warn' : /R[456]/.test(r.k) ? 'info' : 'ok'), 'data-k': r.k, title: r.full }, h('i'), r.k + ' ' + r.t); st.append(chips[r.k]); }
-    if (rules.length) {
-      list = h('ol', { class: 'ak-rlist' }, rules.map((r) => h('li', {}, h('b', {}, r.k + ' ' + r.t + ' : '), r.full))); list.hidden = true;
-      const rb = h('button', { class: 'ak-rb', type: 'button', 'aria-expanded': 'false', onclick: () => { list.hidden = !list.hidden; rb.setAttribute('aria-expanded', String(!list.hidden)); rb.textContent = rules.length + ' règle' + (rules.length > 1 ? 's' : '') + (list.hidden ? ' ▾' : ' ▴'); } }, rules.length + ' règle' + (rules.length > 1 ? 's' : '') + ' ▾');
-      st.append(rb);
-    }
+    for (const r of rules) { chips[r.k] = h('span', { class: 'ak-lc ' + (r.k === 'R3' ? 'warn' : /R[456]/.test(r.k) ? 'info' : 'ok'), 'data-k': r.k, title: r.full }, h('i'), r.k + ' ' + r.t); st.append(chips[r.k]); }
+    drainEl = h('span', { class: 'ak-drain', hidden: '' }, ''); st.append(drainEl);
     if (S.pen) st.append(h('span', { class: 'ak-pen', title: 'Chaque infraction coûte 5 s sur les cartes suivantes.' }, '−' + S.pen * 5 + ' s'));
     if (MOCK[lv]) st.append(h('button', { class: 'ak-mock', type: 'button', onclick: () => api && api.say(MOCKSAY[lv], 'smug') }, h('i', {}, MOCK[lv][0]), h('span', {}, MOCK[lv][1])));
   }
+  const foot = h('div', { class: 'ak-foot' }, h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, extra, brand(h, lv)), btn);
   const el = h('div', { class: 'ak-w', role: 'group', 'aria-label': title, 'data-lv': lv },
-    head, st, list, noteEl, h('div', { class: 'ak-body' }, body),
-    h('div', { class: 'ak-foot' }, h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, extra, brand(h, lv)), btn));
+    head, st, list, noteEl, h('div', { class: 'ak-body' }, body), foot);
   let inc = null;
-  const banner = (m, kind, ms = 6000) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = head.offsetHeight + 'px'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
+  const drain = () => { if (dt || !api) return; dt = setInterval(() => { if (!el.isConnected || !bad.size) { clearInterval(dt); dt = 0; return; } drained++; S.pen += 0; api.timer(Math.max(3000, S.left - 1000)); if (drainEl) { drainEl.hidden = false; drainEl.textContent = '−' + drained + ' s'; } api.sfx('tick'); }, 1000); };
+  const banner = (m, kind, ms = 6000) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = 'auto'; me.style.bottom = foot.offsetHeight + 'px'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
   if (S.last && S.lastId === id && Date.now() - S.lastT < 15000) banner('Essai précédent : ' + S.last, 'old', 5000);
   if (api) {
     const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; if (m) banner(m, '', 0); return f(m, o); };
@@ -161,7 +167,8 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     btn.disabled = true; let n = 2; btn.textContent = labs[0];
     const t = setInterval(() => { if (!el.isConnected) return clearInterval(t); n--; if (n <= 0) { btn.disabled = false; btn.textContent = verify; chips.R3 && (chips.R3.className = 'ak-lc ok'); clearInterval(t); } else btn.textContent = labs[1]; }, 1000);
   }
-  return { el, btn, noteEl, banner, rule: (k, state) => { const c = chips[k]; if (c) { c.className = 'ak-lc ' + state; if (state === 'bad') { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); } } }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
+  return { el, btn, noteEl, banner, rule: (k, state) => { const c = chips[k]; if (c) { c.className = 'ak-lc ' + state; if (state === 'bad') { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); } } if (state === 'bad' && (k === 'R1' || k === 'R2')) { bad.add(k); drain(); } else bad.delete(k); },
+    addChip: (text, state) => { const c = h('span', { class: 'ak-lc ' + (state || 'bad') }, h('i'), text); (drainEl ? st.insertBefore(c, drainEl) : (st || el).append(c)); return c; }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
 }
 export const numWords = (n) => {
   const u = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];

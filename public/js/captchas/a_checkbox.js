@@ -1,19 +1,20 @@
 import { css, brand, S, resetS, coarse } from './a_kit.js';
 css('chk', `
 .ac-w{width:min(100%,340px)}
+@media (min-width:900px){.ac-w{width:min(100%,440px)}}
 .ac-row{position:relative;height:70px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
 .ac-box{position:absolute;left:18px;top:20px;width:30px;height:30px;border:2px solid #c1c1c1;border-radius:3px;background:#fff;padding:0;cursor:pointer;transition:left .35s cubic-bezier(.3,1.6,.5,1),border-color .15s,box-shadow .15s;display:grid;place-items:center}
 .ac-box:hover{border-color:#1a73e8;box-shadow:0 0 0 4px rgba(26,115,232,.15)}
-.ac-box.hop{left:276px}
+.ac-box.hop{left:calc(100% - 50px)}
 .ac-box:disabled{cursor:progress}
 .ac-lab{position:absolute;left:64px;top:0;height:100%;display:flex;align-items:center;font-size:15px;font-weight:500;color:#202124;transition:left .35s}
 .ac-box.hop+.ac-lab{left:16px}
 .ac-spin{width:20px;height:20px;border:3px solid #dadce0;border-top-color:#1a73e8;border-radius:50%;animation:ac-sp .7s linear infinite}
 @keyframes ac-sp{to{transform:rotate(360deg)}}
 .ac-tick{width:22px;height:22px;animation:ak-pop .35s both}
-.ac-strip{height:52px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+.ac-strip{height:64px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
 .ac-st{flex:1;min-width:0}
-.ac-st span{display:block;font-size:11px;line-height:1.25;color:#5f6368;height:28px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ac-st span{display:block;font-size:12px;line-height:1.25;color:#5f6368;height:30px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ac-pb{height:5px;background:#e8eaed;border-radius:3px;margin-top:4px;overflow:hidden}
 .ac-pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:3px}
 .ac-w.bad .ac-pb i{background:#d93025}
@@ -33,7 +34,7 @@ export default {
     const row = h('div', { class: 'ac-row' }, box, lab);
     const bar = h('i'); const isTouch = coarse(); const msg = h('span', {}, isTouch ? 'Maintenez la case enfoncée : les robots lâchent vite.' : 'Analyse : en attente de preuves.');
     const w = h('div', { class: 'ak-w ac-w' }, row, h('div', { class: 'ac-strip' }, h('div', { class: 'ac-st' }, msg, h('div', { class: 'ac-pb' }, bar)), brand(h)));
-    host.append(w); if (isTouch) { box.classList.add('hint'); lab.textContent = 'Je ne suis pas un robot (appui long)'; }
+    host.append(w); if (isTouch) { box.classList.add('hint'); }
     const onMove = (e) => {
       if (e.pointerType !== 'mouse') return;
       const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; for (const c of (evs.length ? evs : [e])) pts.push({ x: c.clientX, y: c.clientY, t: performance.now() }); while (pts.length > 400) pts.shift();
@@ -48,12 +49,12 @@ export default {
       if (e && e.pointerType === 'touch') return { ok: true, why: 'Pouce légèrement moite : humain. Merci.' };
       const mouse = e && e.pointerType === 'mouse' && e.detail > 0;
       if (!mouse) return { ok: true, why: 'Pas de souris : on vous croit sur parole (sans enthousiasme).' };
-      const now = performance.now(), p = pts.filter((q) => now - q.t < 5000);
-      if (p.length < 3) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
+      const now = performance.now(), p3 = pts.filter((q) => now - q.t < 5000), p = pts.filter((q) => now - q.t < 1500);
+      if (p3.length < 3) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
       const a = p[0], b = p[p.length - 1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       let dev = 0, path = 0;
       p.forEach((q, i) => { dev = Math.max(dev, Math.abs((b.x - a.x) * (a.y - q.y) - (a.x - q.x) * (b.y - a.y)) / L); if (i) path += Math.hypot(q.x - p[i - 1].x, q.y - p[i - 1].y); });
-      if (dev < 3.5) { S.straight = true; return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` }; }
+      if (p.length >= 5 && path > 60 && dev < 2.5) { S.straight = true; return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` }; }
       return { ok: true, why: 'Tremblements réalistes détectés. Bravo, vous êtes visiblement stressé·e.' };
     };
     const touchy = (e) => e.pointerType === 'touch' || e.pointerType === 'pen';
