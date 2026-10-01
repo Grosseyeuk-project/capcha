@@ -1,4 +1,4 @@
-import { css, shake } from './b_kit.js';
+import { css, shake, recover } from './b_kit.js';
 css('hunt', `
 .bh-arena{position:relative;height:clamp(250px,52vw,290px);border:2px solid var(--ink);background:repeating-linear-gradient(0deg,#bfe3ef 0 20px,#b3dbe9 20px 40px);overflow:hidden;box-shadow:4px 4px 0 var(--ink);touch-action:manipulation;cursor:crosshair}
 .bh-arena::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(255,255,255,.5),transparent 60%);pointer-events:none}
@@ -45,7 +45,7 @@ export default {
       if (/cheat=1/.test(location.search)) host.dataset.answer = String(king) + ',' + bare;
       api.timer(round === 0 ? 24000 : 20000);
     }
-    function wrong(msg) { wrongs++; api.sfx('bad'); if (wrongs >= 3) { wrongs = 0; return api.fail(msg + ' (3e erreur : une vie.)', { retry: true }); } api.say(msg + ` (Erreur ${wrongs}/3 : tolérée.)`, 'smug'); }
+    function wrong(msg) { wrongs++; api.sfx('bad'); if (wrongs >= 3) { wrongs = 0; recover(host); return api.fail(msg + ' (3e erreur : une vie.)', { retry: true }); } api.say(msg + ` (Erreur ${wrongs}/3 : tolérée.)`, 'smug'); }
     function hit(i) {
       if (busy) return;
       const d = ducks[i];

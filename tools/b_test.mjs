@@ -42,7 +42,7 @@ async function run(id) {
     const king = () => p.evaluate(() => [...document.querySelectorAll('.bh-d')].findIndex((e) => e.querySelector('i')?.textContent === '👑'));
     const realClick = async (i) => { const bb = await p.locator('.bh-d').nth(i).boundingBox(); await p.mouse.click(bb.x + 23, bb.y + 23); };
     const bad = async () => { const k = await king(); const i = (k + 1) % 15; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), i); };
-    await bad(); await sleep(200); console.log('  1 wrong tolerated, strikes:', (await st()).strikes); await bad(); await bad(); await waitStrike('3e erreur (retry, partie gardée)');
+    await bad(); await sleep(200); console.log('  1 wrong tolerated, strikes:', (await st()).strikes); await bad(); await bad(); await waitStrike('3e erreur (retry, partie gardée)'); await sleep(1000);
     await realClick(await king()); await sleep(900); await shot('r2'); await realClick(await king()); await sleep(900); await shot('r3');
     await p.evaluate(() => [...document.querySelectorAll('.bh-d')].find((e) => e.querySelector('i')?.textContent === '👑').click()); await sleep(900);
     await sleep(200); await shot('erratum'); const bareI = +(await ans()).split(',')[1]; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), bareI); await waitSolve();
@@ -55,15 +55,14 @@ async function run(id) {
     await when('real'); await sleep(1200); await shot('stage2b');
     await when('real'); await waitSolve();
   } else if (id === 'b_memory') {
-    const play = async (rev) => { await p.waitForSelector('.bm-state.go', { timeout: 12000 }); const a = JSON.parse(await ans()); return a; };
-    await p.waitForSelector('.bm-state.go', { timeout: 12000 }); let a = JSON.parse(await ans()); await p.keyboard.press(String(((a[0] + 1) % 4) + 1)); await waitStrike('mauvais pad'); await remount();
-    await p.waitForSelector('.bm-state.go', { timeout: 12000 }); await shot('p1'); a = JSON.parse(await ans()); for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(60); }
-    await sleep(1200); await p.waitForFunction(() => /envers/i.test(document.querySelector('.bm-state').textContent) && document.querySelector('.bm-state.go'), null, { timeout: 15000 }); await shot('p2'); a = JSON.parse(await ans());
-    await p.keyboard.press(String(a[a.length - 1] + 1)); // forward instead of reverse? a already reversed; first = a[0]; pressing a last is wrong unless equal
-    await sleep(300);
-    const s = await st(); if (s.strikes === nS) { console.log('  (lucky: pressed correct)'); }
-    else { await waitStrike('sens inverse'); await remount(); await p.waitForSelector('.bm-state.go', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1)); await sleep(1300); await p.waitForFunction(() => document.querySelector('.bm-state.go') && /envers/i.test(document.querySelector('.bm-state').textContent), null, { timeout: 15000 }); a = JSON.parse(await ans()); for (const v of a) { await p.mouse.click(...ctr(await p.locator('.bm-p').nth(v).boundingBox())); await sleep(60); } await waitSolve(); return end(); }
-    for (const v of a) await p.keyboard.press(String(v + 1)); await waitSolve();
+    const goState = () => p.waitForFunction(() => document.querySelector('.bm-state.go'), null, { timeout: 15000 });
+    await goState(); let a = JSON.parse(await ans()); await p.keyboard.press(String(((a[0] + 1) % 4) + 1)); await waitStrike('phase 1 ratée (reprise phase 1)');
+    await sleep(2200); await p.waitForFunction(() => !document.querySelector('.bm-state.go') || true); await goState(); await sleep(200); a = JSON.parse(await ans()); await shot('p1');
+    for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(60); }
+    await sleep(900); await p.waitForFunction(() => /envers/i.test(document.querySelector('.bm-state').textContent) && document.querySelector('.bm-state.go'), null, { timeout: 20000 }); await shot('p2'); a = JSON.parse(await ans());
+    await p.keyboard.press(String(((a[0] + 1) % 4) + 1)); await waitStrike('phase 2 ratée (reprise phase 2 seulement)');
+    await sleep(2200); await p.waitForFunction(() => /envers/i.test(document.querySelector('.bm-state').textContent) && document.querySelector('.bm-state.go'), null, { timeout: 20000 }); a = JSON.parse(await ans());
+    for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(60); } await waitSolve();
   } else if (id === 'b_robot') {
     const pd = (sel, dx = 0, dy = 0) => p.evaluate(([sel, dx, dy]) => { const el = document.querySelector(sel); const r = el.getBoundingClientRect(); const x = r.left + (dx || r.width / 2), y = r.top + (dy || r.height / 2); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y })); }, [sel, dx, dy]);
     const go = () => p.evaluate(() => document.querySelector('.br-start button').click());
@@ -108,8 +107,8 @@ async function run(id) {
     await p.waitForSelector('.bb-fin input', { timeout: 6000 });
     for (let k = 0; k < 3; k++) { const a = await ans(); await p.fill('.bb-fin input', k === 0 ? '1' : a); if (k === 0) { await p.keyboard.press('Enter'); await sleep(200); await p.fill('.bb-fin input', await ans()); } await p.keyboard.press('Enter'); await sleep(300); }
     await sleep(900); await shot('p3b'); await p.waitForSelector('.bb-rl', { timeout: 6000 }); await p.fill('.bb-fin input', 'abc'); await p.keyboard.press('Enter'); await sleep(200); await p.fill('.bb-fin input', await ans()); await shot('p3b2'); await p.keyboard.press('Enter'); await sleep(1300);
-    await p.waitForSelector('.bb-echo', { timeout: 6000 }); const rev = await ans(); await p.fill('.bb-fin input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await sleep(300); console.log('  typo strikes (should stay 1):', (await st()).strikes);
-    await p.fill('.bb-fin input', rev); await shot('p3c'); await p.keyboard.press('Enter'); await sleep(260); await shot('boom1'); await sleep(500); await shot('boom2'); await sleep(1200); await shot('end'); await waitSolve();
+    await p.waitForSelector('.bb-echo', { timeout: 6000 }); const rev = await ans(); await p.fill('.bb-fin input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await sleep(300); console.log('  typo strikes (should stay 1):', (await st()).strikes); await p.evaluate(() => window.__cap.left(40000));
+    await p.fill('.bb-fin input', rev); await shot('p3c'); await p.evaluate(() => window.__cap.left(2500)); await p.keyboard.press('Enter'); await sleep(260); await shot('boom1'); await sleep(500); await shot('boom2'); await sleep(1200); await shot('end'); await waitSolve();
   }
   end();
   async function end() { await sleep(300); if (errs.length) console.log(`  [${id}] ERRORS:`, errs.slice(0, 4)); await ctx.close(); }

@@ -1,4 +1,4 @@
-import { css, shake } from './b_kit.js';
+import { css, shake, recover } from './b_kit.js';
 css('memory', `
 .bm-pads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bm-p{appearance:none;border:2px solid var(--ink);height:clamp(60px,14vw,76px);cursor:pointer;font:800 15px var(--display);color:var(--ink);position:relative;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--c);filter:saturate(.55) brightness(.85);box-shadow:4px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s,filter .08s;padding:0}
@@ -47,7 +47,7 @@ export default {
       if (i !== want) {
         accept = false; shake(root); const nth = pos + 1; pads[i].classList.remove('lit');
         const m = pos === 0 ? `Dès le premier signal : ${PADS[i].n} au lieu de ${PADS[want].n}. Ça commence fort.` : stage ? `Signal n° ${nth} (à l’envers) : vous avez tapé ${PADS[i].n}, il fallait ${PADS[want].n}. L’envers, c’est dur, hein ?` : `Au signal n° ${nth}, c’était ${PADS[want].n}, pas ${PADS[i].n}. Votre mémoire a la durée de vie d’un poisson rouge.`;
-        api.fail(m + ' (On reprend cette phase.)', { retry: true }); T(() => begin(stage), 1500); return;
+        recover(host); api.fail(m + ' (On reprend cette phase.)', { retry: true }); T(() => begin(stage), 1500); return;
       }
       api.sfx('click'); dots.children[pos].classList.add('ok'); pos++;
       if (pos >= seq.length) {

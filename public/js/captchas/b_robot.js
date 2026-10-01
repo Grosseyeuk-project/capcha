@@ -22,7 +22,7 @@ export default {
     arena.append(hud, start);
     const pips = h('b', {}, '0/' + N);
     const avg = h('span', {}, 'Réaction moyenne : — · ratés 0/3');
-    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en ', h('b', {}, '1,25 s (1,35 s au toucher)'), '. Clic ou touche indiquée. Trois ratés tolérés (les robots aussi ont des jours sans).'));
+    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en ', h('b', {}, '1,25 s (1,3 s au toucher)'), '. Clic ou touche indiquée. Trois ratés tolérés (les robots aussi ont des jours sans).'));
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, avg, pips)); host.append(root);
     const pts = []; const rect = () => ({ w: arena.clientWidth, h: arena.clientHeight });
     for (let i = 0; i <= N; i++) pts.push([api.rng(), api.rng()]);
@@ -36,7 +36,7 @@ export default {
     }
     function show(i) {
       idx = i; if (nextEl) nextEl.remove(); nextEl = null;
-      const coarse = matchMedia('(pointer:coarse)').matches; life = coarse ? 1350 : 1250;
+      const coarse = matchMedia('(pointer:coarse)').matches; life = coarse ? 1300 : 1250;
       const el = h('button', { class: 'br-t', type: 'button', 'aria-label': 'Cible ' + keys[i], onpointerdown: (e) => { e.stopPropagation(); e.preventDefault(); hit(); } }, keys[i]);
       el.style.setProperty('--life', life + 'ms'); place(el, i); arena.append(el); cur = el; tStart = performance.now(); expiry = tStart + life; hud.textContent = `CIBLE ${String(i + 1).padStart(2, '0')}/${N}`;
       if (i + 1 < N) { nextEl = h('div', { class: 'br-n' }, keys[i + 1]); place(nextEl, i + 1); arena.append(nextEl); }

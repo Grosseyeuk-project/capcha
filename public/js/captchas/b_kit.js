@@ -24,3 +24,7 @@ css('base', `
 `);
 export const pad2 = (n) => String(n).padStart(2, '0');
 export function shake(el) { el.classList.remove('bk-shake'); void el.offsetWidth; el.classList.add('bk-shake'); }
+// api.fail(msg, {retry:true}) keeps the UI mounted but the shell leaves .card.struck (pointer-events:none) on: lift it ourselves.
+export function recover(host) {
+  setTimeout(() => { const c = host.closest('.card'); if (c) { c.classList.remove('struck'); const st = c.querySelector('.stamp'); if (st) st.className = 'stamp'; } }, 650);
+}
