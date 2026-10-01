@@ -45,7 +45,7 @@ export default {
       renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); renderer.setPixelRatio(1); renderer.setSize(W * 2, H * 2, false); renderer.setScissorTest(true);
     } catch (e) { stage.append(h('div', { style: { color: '#fff', padding: '60px 10px', textAlign: 'center' } }, 'WebGL indisponible.')); }
     const scene = new THREE.Scene(); scene.add(new THREE.AmbientLight(0xffffff, 1.1)); const dl = new THREE.DirectionalLight(0xffffff, 2.2); dl.position.set(3, 5, 4); scene.add(dl);
-    const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50); cam.position.set(0, 0, 8.6);
+    const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50); cam.position.set(3.6, 3.2, 7.4); cam.lookAt(0, 0, 0);
     const geo = new THREE.BoxGeometry(.94, .94, .94), eg = new THREE.EdgesGeometry(geo), mats = [], lm = new THREE.LineBasicMaterial({ color: 0x111111 });
     const mk = () => { const g = new THREE.Group(); const inner = new THREE.Group(); inner.position.set(-.83, -.33, -.17); CELLS.forEach(([x, y, z, c]) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: .45 }); mats.push(m); const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); b.add(new THREE.LineSegments(eg, lm)); inner.add(b); }); g.add(inner); scene.add(g); return g; };
     const gT = mk(), gP = mk();

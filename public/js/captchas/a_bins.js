@@ -11,6 +11,7 @@ css('bins', `
 .ab-c.in{font-size:10.5px;padding:3px 6px;width:100%;box-shadow:none;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ab-c.gh{position:fixed;z-index:99999;pointer-events:none;transform:rotate(-3deg) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:grabbing;animation:none}
 .ab-c.dim{opacity:.35}
+@media (max-width:480px){.ab-pool{height:200px}.ab-bin{height:156px;overflow-y:auto}}
 `);
 const HUM = ['Soupirer devant une imprimante', 'Oublier pourquoi on est entré dans la pièce', 'Dire « ça va » en allant très mal', 'Chercher ses lunettes sur son front', 'Cliquer sur « Plus tard » 14 fois', 'Pleurer devant un dessin animé', 'Avoir peur d’un pigeon', 'Faire semblant de connaître la chanson', 'Regarder son frigo en espérant mieux'];
 const ROB = ['Calculer π à mille décimales en 0,2 s', 'Ne jamais dormir', 'Répondre « 01001000 »', 'Fonctionner sur batterie 5 V', 'Avoir un numéro de série gravé', 'Ne jamais se tromper de mot de passe', 'Compter 4 000 feux tricolores sans jamais s’ennuyer', 'Rouiller à la pluie', 'Exécuter la première instruction sans poser de question'];

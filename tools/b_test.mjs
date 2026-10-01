@@ -48,7 +48,7 @@ async function run(id) {
     const hat = await p.evaluate(() => [...document.querySelectorAll('.bh-d')].findIndex((e) => e.querySelector('i') && e.querySelector('i').textContent !== '👑'));
     await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), hat); await waitStrike('chapeau'); await remount();
     for (let r = 0; r < 3; r++) { await p.evaluate(() => [...document.querySelectorAll('.bh-d')].find((e) => e.querySelector('i')?.textContent === '👑').click()); await sleep(900); }
-    await waitSolve();
+    await sleep(200); await shot('erratum'); const bareI = +(await ans()).split(',')[1]; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), bareI); await waitSolve();
   } else if (id === 'b_loading') {
     const when = (cls) => p.evaluate((cls) => new Promise((res) => { const f = () => { const el = document.querySelector('.bl-bar.' + cls); if (el) { document.querySelector('.bl-go').click(); res(el.textContent); } else requestAnimationFrame(f); }; f(); }), cls);
     await p.click('.bl-go'); await waitStrike('trop tôt'); await remount();
