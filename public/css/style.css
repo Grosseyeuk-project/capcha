@@ -495,3 +495,19 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .screen.end .vc-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
 .screen.end .verdict-card .actions { position: static; background: none; padding: 12px 0 0; flex: none; }
 .screen.end { align-items: center; }
+
+/* ---------- r9 : budget d'espace téléphone ---------- */
+.cap-slot { scroll-padding-bottom: calc(var(--pin-h, 0px) + 8px); }
+.screen.end .vc-body { padding-bottom: 10px; }
+@media (max-width: 640px) {
+  .icon-btn { width: 42px; height: 42px; }
+  .cap-host .ak-st { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; }
+  .cap-host .ak-st > * { flex: none; }
+  .cap-host .ak-note { display: none; }
+}
+@media (max-width: 640px) and (max-height: 720px) {
+  .game-root .bubble { height: 38px; padding: 4px 8px; }
+  .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .75rem; line-height: 1.1; -webkit-line-clamp: 2; }
+  .cap-host .ak-mock { display: none; }
+  .hud { padding-top: 3px; padding-bottom: 6px; }
+}

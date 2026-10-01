@@ -12,7 +12,7 @@ css('chk', `
 .ac-spin{width:20px;height:20px;border:3px solid #dadce0;border-top-color:#1a73e8;border-radius:50%;animation:ac-sp .7s linear infinite}
 @keyframes ac-sp{to{transform:rotate(360deg)}}
 .ac-tick{width:22px;height:22px;animation:ak-pop .35s both}
-.ac-strip{min-height:76px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+.ac-strip{min-height:76px;padding:8px 12px 8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
 .ac-st{flex:1;min-width:0}
 .ac-w .ak-brand span{font-size:0}.ac-w .ak-brand b{font-size:12px}
 .ac-st span{display:block;font-size:12px;line-height:1.3;color:#5f6368;min-height:46px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}

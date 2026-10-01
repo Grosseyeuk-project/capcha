@@ -251,7 +251,7 @@ const CSS = `
 .ol-pod .blk{animation-duration:.4s!important;animation-delay:calc(var(--d)*.35)!important}
 .ol-racing{color:#ff5d6c!important;border-color:#ff5d6c!important;animation:ol-pulse 1.1s infinite}
 .ol-menugrid{margin-top:12px;display:grid;grid-template-columns:1fr;gap:14px}
-@media (min-width:980px){.ol-wrap.ol-menu{max-width:980px}.ol-menugrid{grid-template-columns:1fr 1fr;align-items:start}.ol-menugrid>div{display:flex;flex-direction:column;gap:14px}}
+@media (min-width:980px){.ol-wrap.ol-menu{max-width:980px}.ol-menugrid{grid-template-columns:1fr 1fr;align-items:start}.ol-menugrid>.ol-gerard,.ol-menugrid>.ol-span2{grid-column:1/-1}.ol-menugrid>.ol-card:not(.ol-gerard){align-self:stretch}}
 .ol-verd{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font:500 13px/1.35 var(--mono)}
 .ol-verd li{padding:6px 10px;border-radius:8px;background:var(--paper2);border:1.5px solid rgba(16,32,42,.25)}
 .ol-verd li.me{background:#fff3c4;border-color:var(--ink)}
@@ -310,6 +310,15 @@ const CSS = `
 .ol-end .ol-wrap{padding-bottom:110px}
 .ol-end .ol-actions .ol-btn:not(.pri){background:var(--paper);color:var(--ink);border:2.5px solid var(--ink)}
 .ol-end .ol-actions .ol-btn:not(.pri):hover{background:#fff}
+
+/* r9 */
+.ol-ghostbtn{min-height:42px;padding:10px 14px}
+.ol-btn.is-ready{background:#bff3de;border-color:#0b6a52;color:#064c3a}
+.ol-btn:disabled{opacity:.55}
+.ol-verdict{margin:6px 0 20px}
+.ol-bigstamp{margin-bottom:8px}
+.ol-wrap.ol-menu{justify-content:center}
+@media (max-width:820px){.ol-bigstamp{font-size:clamp(1.3rem,6vw,2rem);padding:2px 14px;border-width:5px}.ol-verdict{margin:6px 0 22px}}
 `;
 let done = false;
 export function injectCss() {
