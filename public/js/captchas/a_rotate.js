@@ -1,9 +1,9 @@
-import { css, frame, hasRule, coarse, S, roman, numWords, ruleHit, zap } from './a_kit.js';
+import { css, frame, hasRule, coarse, S, roman, numWords, ruleHit, zap, dossier } from './a_kit.js';
 css('rot', `
 .ar-st{position:relative;border-radius:4px;overflow:hidden;background:linear-gradient(180deg,#232a3a,#141824);touch-action:none;cursor:grab}
 .ar-st canvas{display:block;width:100%;height:auto}
 .ar-lb{position:absolute;top:6px;font:700 10px system-ui;letter-spacing:.12em;color:#9fb0d0;pointer-events:none;text-transform:uppercase}
-.ar-rd{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:52px;padding:0 6px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;line-height:1.25;color:#80868b}
+.ar-rd{flex-wrap:wrap;display:flex;align-items:center;gap:8px;margin-top:8px;min-height:52px;padding:0 6px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;line-height:1.25;color:#80868b}
 .ar-rd.on{border-style:solid;border-color:#f9ab00;background:#fff8e1;color:#664d03;animation:ak-pop .3s both}
 .ar-rm{flex:1;padding:4px}
 .ar-ri{width:34%;min-width:110px;height:44px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.ar-ri:disabled{opacity:.4}.ar-ri:focus{outline:0;border-color:#1a73e8}
@@ -41,7 +41,7 @@ export default {
     const mv0 = S.mathVal ?? 42, romanAns = roman(mv0).toLowerCase();
     const redoMsg = h('span', { class: 'ar-rm' }, two ? 'Un rectificatif est en préparation…' : 'Aucun rectificatif. Profitez-en.');
     const redoIn = h('input', { class: 'ar-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Résultat en chiffres romains', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
-    const redo = h('div', { class: 'ar-rd' }, redoMsg, redoIn);
+    const dos = dossier(h, api); const redo = h('div', { class: 'ar-rd' }, redoMsg, redoIn, dos.btn, dos.pan);
     const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt, two ? redo : null], onVerify: check });
     host.append(fr.el);
     const setAnswer = () => { // BFS path for tests
@@ -85,13 +85,13 @@ export default {
       if (n === 0 && two && round === 1) {
         round = 2; api.sfx('good'); const old = key(tgt); do tgt = api.pick(all); while (key(tgt) === old || distBetween(cur, tgt) < 2);
         gT.quaternion.copy(toQ(tgt)); kick(); glow(); if (/cheat=1/.test(location.search)) { setAnswer(); host.dataset.redo = romanAns; }
-        redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 4 invalidée : « ' + numWords(mv0) + ' » est écrit en lettres. Retapez ce résultat en chiffres romains, en minuscules.'; fr.addChip('R★ pièce 4 annulée', 'bad');
+        redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 4 invalidée (règle 2 : lettres interdites aux calculs). Retapez le résultat de la carte 4 en chiffres romains, minuscules :'; fr.addChip('R★ pièce 4 annulée', 'bad');
         fr.banner('Pose 1/2 validée. Une seule pose est suspecte : le modèle a changé, recommencez.', 'rule', 0); api.say('Une seule pose, c’est suspect. Le modèle vient de changer. Recommencez.', 'smug'); fr.shake(); return;
       }
       if (n === 0 && two) {
         const rv = redoIn.value.trim();
         if (rv && rv !== rv.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : les chiffres romains aussi se tapent en minuscules.');
-        if (rv !== romanAns) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! La pièce 4 était à refaire en chiffres romains. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas ${numWords(mv0)} en chiffres romains (C = cent, L = cinquante, X = dix, V = cinq, I = un).`); }
+        if (rv !== romanAns) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! La pièce 4 était à refaire en chiffres romains. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas le résultat de la carte 4 en romains (C = 100, L = 50, X = 10, V = 5, I = 1). Mémoire, ou dossier (−3 s).`); }
       }
       if (n === 0) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();

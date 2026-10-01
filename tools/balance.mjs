@@ -5,7 +5,7 @@ const pct = (x) => (100 * x).toFixed(0) + '%';
 
 // ---- b_boss phase 2 : stop-the-cursor (ZW, V identical to b_boss.js) ----
 {
-  const ZW = [0.16, 0.14, 0.12, 0.10, 0.09], V = [0.70, 0.72, 0.75, 0.78, 0.80], NH = 5, LIMIT = 60;
+  const ZW = [0.165, 0.148, 0.13, 0.113, 0.095], V = [0.65, 0.67, 0.70, 0.72, 0.74], NH = 5, LIMIT = 60;
   for (const [name, bias, sd, vscale] of [['humain typique desktop', 0.06, 0.09, 1], ['humain typique tactile (x0.9)', 0.08, 0.10, 0.9], ['rapide', 0.03, 0.05, 1], ['lent/maladroit', 0.10, 0.14, 1]]) {
     let wins = 0, att = 0, atts = 0, N = 20000, tsum = 0;
     for (let n = 0; n < N; n++) {

@@ -53,7 +53,7 @@ export default {
       const sky = api.pick(SKY), t = h('button', { class: 'ag-t', style: { animationDelay: i * 45 + 'ms' }, type: 'button', 'aria-pressed': 'false', 'aria-label': 'Image ' + (i + 1), onclick: () => { if (!ruleOn) { clearTimeout(rt); armRule(); } const on = !sel.has(i); on ? sel.add(i) : sel.delete(i); t.setAttribute('aria-pressed', on); api.sfx('click'); } });
       t.innerHTML = S(M.yes.includes(k) ? (isFeu ? ART.feu(api.rng, red.has(i) ? 0 : api.pick([1, 2])) : ART.velo(api.rng, red.has(i) ? '#c0392b' : api.pick(['#1565c0', '#2e7d32', '#6a1b9a']))) : ART[k](api.rng), sky, api.pick(GR)).replace('id="sk"', `id="sk${i}"`).replace('url(#sk)', `url(#sk${i})`); return t;
     });
-    const fr = frame(h, { api, id: 'a_grid', small: 'Sélectionnez toutes les images avec des', title: M.target, note: M.note, body: h('div', { class: 'ag-g' }, tiles), onVerify: check });
+    const fr = frame(h, { api, id: 'a_grid', small: 'Sélectionnez toutes les images avec des', title: M.target, body: [h('p', { class: 'ag-cap' }, M.note), h('div', { class: 'ag-g' }, tiles)], onVerify: check });
     fr.el.style.width = 'min(100%,340px)'; fr.el.classList.add('ag-w2'); host.append(fr.el);
     const truth = () => yesIdx.filter((i) => !ruleOn || !red.has(i));
     const RULE = isFeu ? 'Rectificatif de la direction : les feux rouges sont suspendus. Plus aucun feu rouge ne compte.' : 'Rectificatif de la direction : les vélos rouges sont réquisitionnés. Plus aucun vélo rouge ne compte.';

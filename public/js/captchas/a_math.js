@@ -20,7 +20,7 @@ export default {
   id: 'a_math', tier: 1, title: 'Calcul mental', time: 40000,
   mount(host, api) {
     const { h } = api; const a = api.int(4, 19), b = api.int(3, 15), c = api.int(2, 4), d = api.int(2, 12);
-    const v1 = a + b, v2 = v1 * c, v3 = v2 - d; S.mathVal = v3;
+    const v1 = a + b, v2 = v1 * c, v3 = v2 - d; S.mathVal = v3; S.mathWords = numWords(v3);
     const steps = [`Pensez au nombre <em>${numWords(a)}</em>.`, `Ajoutez-lui <em>${numWords(b)}</em>.`, `Multipliez le résultat par <em>${numWords(c)}</em>.`, `Retirez-en <em>${numWords(d)}</em>.`];
     const wrong = { prio: a + b * c - d, noMul: v1 - d, noSub: v2, add: a + b + c - d, sub: v3 + 2 * d };
     const p = h('div', { class: 'am-p' }, h('div', {}, 'Exécutez ces ordres dans l’ordre, comme à la mairie :'));

@@ -85,7 +85,9 @@ async function run(id) {
       else { await row.focus(); for (let k = 0; k < j - i; k++) await p.keyboard.press('ArrowUp'); }
       await sleep(300);
     }
-    console.log('  order now', (await cur()).join(' > ')); await shot('sorted'); await click('.ak-btn'); await waitSolve();
+    console.log('  order now', (await cur()).join(' > ')); await shot('sorted'); await click('.ak-btn'); await sleep(1500);
+    if (!(await p.evaluate(() => window.__game.stats.solves))) { const truth2 = (await ans()).split('|'); console.log('  flipped; re-sorting'); for (let i = 0; i < truth2.length; i++) { const c = await cur(); const j = c.indexOf(truth2[i]); if (j === i) continue; const row = p.locator('.ao-r', { hasText: new RegExp('^\\s*⋮⋮\\s*\\S+\\s*' + truth2[i].slice(0, 6), 'i') }).first(); await row.focus(); for (let k = 0; k < j - i; k++) await p.keyboard.press('ArrowUp'); await sleep(300); } await shot('sorted2'); await click('.ak-btn'); }
+    await waitSolve();
   } else if (id === 'a_rotate') {
     await sleep(500); await shot('init');
     await p.locator('.ar-bt button').nth(3).click({ force: true }); await sleep(400); await click('.ak-btn'); await waitStrike(); await remount();

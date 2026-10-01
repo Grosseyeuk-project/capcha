@@ -23,7 +23,7 @@ const base = `http://localhost:${port}/`;
 const VPS = quick ? [[390, 800]] : [[360, 640], [390, 800], [1280, 800]];
 // click-to-solve captchas: no final button, so they must fit without internal scrolling.
 // Layout bugs owned by the captcha builders, reported but not blocking the shell gate.
-const KNOWN = { a_bins: 'card pile overflows its own container, partly under the footer (captchas-a)' };
+const KNOWN = { b_hunt: 'roaming sprites may overlap each other by design', a_bins: 'card pile overflows its own container, partly under the footer (captchas-a)' };
 const NO_ACTION = new Set(['a_checkbox', 'b_flip', 'b_hunt', 'b_memory', 'b_robot', 'b_boss']);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const CLS_INIT = () => { window.__cls = 0; window.__clsSrc = []; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__clsSrc.push([e.value, (e.sources || []).map((s) => (s.node && (s.node.className || s.node.nodeName)) + '').join('|') + ':' + e.value.toFixed(3) + '@' + Math.round(performance.now())]); } }).observe({ type: 'layout-shift', buffered: true }); } catch { /* */ } };

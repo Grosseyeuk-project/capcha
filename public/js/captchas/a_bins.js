@@ -1,18 +1,18 @@
 import { css, frame, hasRule, coarse, numWords } from './a_kit.js';
 css('bins', `
 .ab-bins{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ab-bin{position:relative;height:112px;border:2px dashed #b8c0cc;border-radius:6px;padding:30px 5px 5px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;background:#fafbfc;transition:border-color .15s,background .15s,transform .15s}
+.ab-bin{position:relative;min-height:112px;border:2px dashed #b8c0cc;border-radius:6px;padding:30px 5px 5px;display:flex;flex-direction:column;gap:3px;overflow:visible;background:#fafbfc;transition:border-color .15s,background .15s,transform .15s}
 .ab-bin::before{content:attr(data-l);position:absolute;left:0;right:0;top:0;height:25px;line-height:25px;text-align:center;font:800 11px system-ui;letter-spacing:.12em;color:#fff;background:var(--c)}
 .ab-bin.over,.ab-bin.tgt{border-style:solid;border-color:var(--c);background:#f0f6ff;transform:scale(1.015)}
 .ab-w{width:min(100%,440px)}
-@media (min-width:900px){.ab-w{width:min(100%,560px)}.ab-pool{grid-template-columns:1fr 1fr 1fr;height:88px}.ab-bin{height:104px}}.ab-pool{margin-top:8px;height:122px;border-radius:6px;background:#f1f3f5;padding:6px;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;gap:5px;align-content:start}
-.ab-c{font:600 11.5px/1.15 system-ui,sans-serif;padding:6px 9px;border-radius:4px;background:#fff;border:1px solid #c9ccd1;box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;text-align:left;color:#202124;transition:box-shadow .15s,transform .15s,border-color .15s;animation:ak-pop .3s both}
+@media (min-width:900px){.ab-w{width:min(100%,560px)}.ab-pool{grid-template-columns:1fr 1fr 1fr;min-height:84px;height:auto}.ab-bin{min-height:100px}}.ab-pool{margin-top:8px;min-height:104px;border-radius:6px;background:#f1f3f5;padding:6px;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;gap:5px;align-content:start}
+.ab-c{font:600 12px/1.15 system-ui,sans-serif;padding:6px 9px;border-radius:4px;background:#fff;border:1px solid #c9ccd1;box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;text-align:left;color:#202124;transition:box-shadow .15s,transform .15s,border-color .15s;animation:ak-pop .3s both}
 .ab-c:hover{box-shadow:0 3px 8px rgba(0,0,0,.2)}
 .ab-c.sel{border-color:#1a73e8;box-shadow:0 0 0 3px rgba(26,115,232,.3)}
 .ab-c.in{font-size:10.5px;padding:3px 6px;width:100%;box-shadow:none;flex:none;overflow:hidden}
 .ab-c.gh{position:fixed;z-index:99999;pointer-events:none;transform:rotate(-3deg) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:grabbing;animation:none}
 .ab-c.dim{opacity:.35}.ab-c.lc{text-transform:lowercase}
-@media (max-width:480px){.ab-pool{height:150px;padding:5px;gap:4px;overflow-y:auto}.ab-bin{height:128px;overflow-y:auto;padding-top:27px}.ab-c{padding:5px 7px;font-size:12px}.ab-c.in{white-space:normal;font-size:12px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
+@media (max-width:480px){.ab-pool{min-height:104px;padding:5px;gap:4px}.ab-bin{min-height:112px;padding-top:27px}.ab-c{padding:5px 7px;font-size:12px}.ab-c.in{white-space:normal;font-size:12px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
 `);
 const HUM = ['Éternuer', 'Avoir un anniversaire', 'Rougir de honte', 'Manger une baguette', 'Avoir une belle-mère', 'Bâiller en réunion', 'Tomber amoureux·se', 'Se tromper de bus', 'Avoir des empreintes digitales'];
 const ROB = ['Fonctionner sur 5 volts', 'Avoir un numéro de série gravé', 'Rouiller sous la pluie', 'Se brancher sur une prise secteur', 'Parler en code binaire', 'Être garanti 2 ans', 'Avoir une prise de terre', 'Avoir un câble USB', 'Être monté en usine'];
@@ -55,13 +55,14 @@ export default {
         [binH, binR].forEach((b) => { b.animate([{ transform: 'rotateY(90deg)' }, { transform: 'none' }], { duration: 350 }); });
       }
     }
+    let pc = null;
     function render() {
       cards.forEach((c, i) => { c.classList.toggle('in', place[i] !== 'p'); c.classList.toggle('sel', selected === i); c.style.animation = 'none'; bins[place[i]].append(c); });
       binH.classList.toggle('tgt', selected >= 0); binR.classList.toggle('tgt', selected >= 0);
-      fr.btn.disabled = place.includes('p');
+      fr.btn.disabled = place.includes('p'); if (pc) { const n = place.filter((x) => x !== 'p').length; pc.className = 'ak-lc ' + (n === place.length ? 'ok' : 'warn'); pc.lastChild.textContent = 'classées ' + n + '/' + place.length; }
     }
-    const fr = frame(h, { api, id: 'a_bins', small: 'Glissez chaque carte vers', title: 'Humain ou robot ?', note: 'Chaque carte est propre à un humain OU à un robot. Glissez-la, ou touchez-la puis un bac. Clavier : ← bac de gauche, → bac de droite, ↓ retour.', body: [h('div', { class: 'ab-bins' }, binH, binR), pool], onVerify: check });
-    fr.el.classList.add('ab-w'); host.append(fr.el); render();
+    const fr = frame(h, { api, id: 'a_bins', small: 'Glissez chaque carte vers', title: 'Humain ou robot ?', body: [h('p', { class: 'ab-cap' }, 'Chaque carte est propre à un humain OU à un robot. Glissez-la, ou touchez-la puis un bac.'), h('div', { class: 'ab-bins' }, binH, binR), pool], onVerify: check });
+    fr.el.classList.add('ab-w'); pc = fr.addChip('classées 0/6', 'warn'); host.append(fr.el); render();
     if (/cheat=1/.test(location.search)) host.dataset.answer = items.map((x) => x.k).join('');
     fr.el.dataset.flip = '0';
     function check() {

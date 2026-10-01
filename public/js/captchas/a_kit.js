@@ -31,8 +31,8 @@ export const ORDER = ['a_checkbox', 'a_wavy', 'a_grid', 'a_math', 'a_slider', 'a
 const TIMES = { a_wavy: 30000, a_grid: 35000, a_math: 40000, a_slider: 30000, a_bins: 45000, a_order: 40000, a_rotate: 50000 };
 export const RULES = [
   { after: 'a_checkbox', k: 'R1', t: 'minuscules', full: 'Toute réponse tapée doit être en minuscules. Sans exception, sans clémence.' },
-  { after: 'a_wavy', k: 'R2', t: 'sans chiffres', full: 'Les nombres s’écrivent en toutes lettres, partout : réponses, numéros, classements.' },
-  { after: 'a_grid', k: 'R3', t: 'calme', full: '« Vérifier » ne s’active qu’après 2 s : preuve de calme.' },
+  { after: 'a_grid', k: 'R2', t: 'sans chiffres', full: 'Les nombres s’écrivent en toutes lettres, partout : réponses, numéros, classements.' },
+  { after: 'a_math', k: 'R3', t: 'calme', full: '« Vérifier » ne s’active qu’après 2 s : preuve de calme.' },
   { after: 'a_slider', k: 'R4', t: 'bacs mobiles', full: 'Les bacs de tri peuvent changer de côté en cours de route. Le règlement ne dit pas quand.' },
   { after: 'a_bins', k: 'R5', t: 'sens révocable', full: 'Le sens d’un classement peut être rectifié en cours de route, sans préavis.' },
   { after: 'a_order', k: 'R6', t: '↑ HS, 2 poses', full: 'Le bouton ↑ est en maintenance. Une seule pose étant suspecte, il en faut deux.' }
@@ -42,7 +42,16 @@ export const rulesFor = (id) => RULES.filter((r) => ORDER.indexOf(r.after) < ORD
 export const hasRule = (id, k) => rulesFor(id).some((r) => r.k === k);
 // shared across captchas for the page's lifetime; reset by the first card
 export const S = { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} };
-export const resetS = () => Object.assign(S, { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} });
+export function dossier(h, api) {
+  const pan = h('div', { class: 'ak-dosp', hidden: '' }); let paid = false;
+  const btn = h('button', { class: 'ak-dos', type: 'button', onclick: () => {
+    if (!pan.hidden) { pan.hidden = true; return; }
+    if (!paid) { paid = true; api.timer(Math.max(3000, S.left - 3000)); api.sfx('bad'); }
+    pan.innerHTML = ''; pan.append(h('b', {}, 'DOSSIER (−3 s)'), h('br'), 'Carte 2 · texte tordu : ' + (S.word ? S.word.toLowerCase() : '(introuvable)'), h('br'), 'Carte 4 · calcul : ' + (S.mathWords || '(introuvable)')); pan.hidden = false;
+  } }, 'Consulter le dossier (−3 s)');
+  return { btn, pan };
+}
+export const resetS = () => { delete S.word; delete S.mathWords; delete S.mathVal; return Object.assign(S, { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} }); };
 const REL = { a_wavy: ['R1'], a_math: ['R1', 'R2'], a_slider: ['R1', 'R3'], a_bins: ['R1', 'R2', 'R3', 'R4'], a_order: ['R1', 'R2', 'R3', 'R5'], a_rotate: ['R1', 'R3', 'R6'] };
 const RULESAY = { R1: 'Nouvelle règle : tout ce que vous tapez, en minuscules. Je ne crie pas, donc vous non plus.', R2: 'Nouvelle règle : plus un seul chiffre. Les nombres, en toutes lettres. Je les épelle très bien, moi.', R3: 'Nouvelle règle : « Vérifier » se débloque après deux secondes. Respirez. C’est un ordre.', R4: 'Nouvelle règle : les bacs de tri peuvent déménager. Gardez un œil dessus.', R5: 'Nouvelle règle : le sens d’un classement est révocable. Par moi. Quand je veux.', R6: 'Nouvelle règle : le bouton ↑ est en panne, et une seule pose est suspecte. Il en faut deux.' };
 export const roman = (n) => { const m = [[100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let r = ''; for (const [v, t] of m) while (n >= v) { r += t; n -= v; } return r; };
@@ -147,7 +156,15 @@ css('live3', `
 .ak-wob{animation:ak-shake .35s}
 .cap-host .ak-w .ak-st{flex-wrap:wrap!important;overflow:visible!important}
 .cap-host .ak-w .ak-st>*{flex:none}
-.ak-lc[hidden],.ak-drain[hidden],.ak-more[hidden]{display:none!important}
+.ak-lc[hidden],.ak-drain[hidden],.ak-more[hidden],.ak-dosp[hidden]{display:none!important}
+`);
+css('live4', `
+.ak-newtag{font:900 12px/1 system-ui;letter-spacing:.05em;color:#fff;background:#d93025;border-radius:3px;padding:5px 7px;transform:rotate(-3deg);animation:ak-nt .5s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes ak-nt{from{opacity:0;transform:translateX(-20px) rotate(-3deg)}to{opacity:1;transform:rotate(-3deg)}}
+.ak-dos{appearance:none;border:1px solid #c9ccd1;background:#fff;color:#1a3d7c;border-radius:6px;font:700 12px/1.1 system-ui;padding:0 10px;min-height:44px;cursor:pointer}
+.ak-dos:hover{background:#e8f0fe}
+.ak-dosp{flex-basis:100%;font:600 12px/1.4 ui-monospace,Menlo,monospace;background:#fffbe6;border:1px dashed #d4b106;border-radius:4px;padding:6px 8px;color:#614700}
+.ag-cap,.ab-cap,.ao-cap{font-size:12px;line-height:1.35;color:#3c4043;margin:0 0 8px}
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
 const BRAND2 = ['Confidentialité · Conditions', 'Confidentialité · Conditions', 'Confidentialité · Conditions', 'Vie privée (non) · Conditions', 'Vie privée (non) · Conditions', 'Données revendues', 'Aucune confidentialité', 'Non remboursable'];
@@ -179,13 +196,13 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     if (S.pen) st.append(h('span', { class: 'ak-pen', title: 'Chaque infraction passée coûte 5 s sur les cartes suivantes.' }, 'Pénalités −' + S.pen * 5 + ' s'));
     if (MOCK[lv]) st.append(h('button', { class: 'ak-mock', type: 'button', onclick: () => api && api.say(MOCKSAY[lv], 'smug') }, h('i', {}, MOCK[lv][0]), h('span', {}, MOCK[lv][1])));
   }
-  const newRules = rules.filter(isNew); if (newRules.length) head.append(h('span', { class: 'ak-stamp' }, 'NOUVELLE RÈGLE ' + newRules.map((r) => r.k).join(' + ')));
+  const newRules = rules.filter(isNew); if (newRules.length && st) st.prepend(h('span', { class: 'ak-newtag' }, 'NOUVELLE RÈGLE'));
   const foot = h('div', { class: 'ak-foot' }, h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, extra, brand(h, lv)), btn);
   const el = h('div', { class: 'ak-w', role: 'group', 'aria-label': title, 'data-lv': lv },
     head, st, list, noteEl, h('div', { class: 'ak-body' }, body), foot);
   let inc = null;
   const drain = () => { if (dt || !api) return; dt = setInterval(() => { if (!el.isConnected || !bad.size) { clearInterval(dt); dt = 0; return; } if (drained >= 5) return; drained++; api.timer(Math.max(3000, S.left - 1000)); if (drainEl) { drainEl.hidden = false; drainEl.textContent = '⏱ −1 s/s : −' + drained + ' s'; } api.sfx('tick'); }, 1000); };
-  const banner = (m, kind, ms = 4500) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = '0'; me.style.bottom = 'auto'; me.style.minHeight = head.offsetHeight + 'px'; me.style.display = 'flex'; me.style.alignItems = 'center'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
+  const banner = (m, kind, ms = 4500) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = head.offsetHeight + 'px'; me.style.bottom = 'auto'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
   if (api) {
     const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; return f(m, o); };
     const so = api.solve; api.solve = () => { S.last = ''; return so(); };

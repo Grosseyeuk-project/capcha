@@ -1,9 +1,9 @@
-import { css, frame, S, ruleHit, hasRule, coarse, zap } from './a_kit.js';
+import { css, frame, S, ruleHit, hasRule, coarse, zap, dossier } from './a_kit.js';
 css('slider', `
 .as-st{position:relative;width:100%;aspect-ratio:340/142;border-radius:3px;overflow:hidden;background:#cde}
 .as-st canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .as-pc{will-change:transform;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
-.as-rd{display:flex;align-items:center;gap:8px;margin-top:10px;min-height:52px;padding:0 4px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;color:#80868b}
+.as-rd{flex-wrap:wrap;display:flex;align-items:center;gap:8px;margin-top:10px;min-height:52px;padding:0 4px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;color:#80868b}
 .as-rd.on{border-style:solid;border-color:#f9ab00;background:#fff8e1;color:#664d03;animation:ak-pop .3s both}
 .as-rm{flex:1;line-height:1.25;padding:4px}
 .as-ri{width:34%;min-width:110px;height:44px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.as-ri:disabled{opacity:.4}.as-ri:focus{outline:0;border-color:#1a73e8}
@@ -43,13 +43,13 @@ export default {
     const wordRev = [...(S.word || 'PUZZLE')].reverse().join('').toLowerCase();
     const redoMsg = h('span', { class: 'as-rm' }, 'Le greffier prépare un rectificatif…');
     const redoIn = h('input', { class: 'as-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Mot retapé à l’envers', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
-    const redo = h('div', { class: 'as-rd' }, redoMsg, redoIn);
+    const dos = dossier(h, api); const redo = h('div', { class: 'as-rd' }, redoMsg, redoIn, dos.btn, dos.pan);
     let twisted = false, tmr = 0;
     function twist() {
       if (twisted) return; twisted = true; clearTimeout(tmr);
       const old = tx; do tx = api.int(110, W - P - 18); while (Math.abs(tx - old) < 50); paint(); set(val);
       stage.animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 500 });
-      redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 2 annulée. Retapez « ' + (S.word || 'PUZZLE').toLowerCase() + ' » à l’envers :';
+      redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 2 annulée. Retapez à l’envers, en minuscules, le mot de la carte 2 :';
       fr.addChip('R★ pièce 2 annulée', 'bad'); fr.banner('Rectificatif : travaux sur le puzzle, le trou a bougé. Et votre réponse à la pièce 2 est annulée : retapez le mot à l’envers, en minuscules.', 'warn', 8000); api.say('Rectificatif de dernière minute. Le trou a déménagé, et la pièce 2 est invalidée. Je suis désolé. Non, en fait.', 'smug'); api.sfx('whoosh');
       if (/cheat=1/.test(location.search)) { host.dataset.answer = tx; host.dataset.redo = wordRev; }
     }
@@ -71,7 +71,7 @@ export default {
       const rv = redoIn.value.trim();
       if (rv && rv !== rv.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : minuscules, même à l’envers.');
       const d = val - tx;
-      if (Math.abs(d) <= tol && rv.normalize('NFD').replace(/[\u0300-\u036f]/g, '') !== wordRev) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! Il fallait retaper « ' + (S.word || 'PUZZLE').toLowerCase() + ' » à l’envers. Les rectificatifs, on les lit.' : `« ${rv} » ? À l’envers, « ${(S.word || 'PUZZLE').toLowerCase()} » donne « ${wordRev} ». Lisez de droite à gauche, comme en hébreu, mais en français.`); }
+      if (Math.abs(d) <= tol && rv.normalize('NFD').replace(/[\u0300-\u036f]/g, '') !== wordRev) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! Il fallait retaper à l’envers le mot de la carte 2. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas le mot de la carte 2 à l’envers. Ayez la mémoire ou payez le dossier (−3 s).`); }
       if (Math.abs(d) <= tol) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); const a = Math.round(Math.abs(d));
       let m;
