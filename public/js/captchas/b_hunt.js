@@ -11,7 +11,7 @@ css('hunt', `
 @keyframes bh-hit{50%{transform:scale(1.7) rotate(20deg)}100%{transform:scale(0);opacity:0}}
 .bk-rule b.no{background:var(--red);color:#fff;padding:0 5px;box-shadow:2px 2px 0 var(--ink)}
 `);
-const HATS = ['🎩', '🎓', '🧢', '👒'];
+const HATS = ['🎩', '🎓', '🧢', '👒'], FAKES = ['🔱', '🏆', '🎀'];
 export default {
   id: 'b_hunt', tier: 3, title: 'Le canard royal', time: 30000,
   mount(host, api) {
@@ -24,20 +24,20 @@ export default {
     const ruleKing = () => setRule('Consigne', 'Cliquez sur le canard qui porte la ', h('b', {}, 'couronne 👑'), '. Un seul. Il bouge, c’est son droit.');
     ruleKing();
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, info, pips)); host.append(root);
-    const N = 13; let ducks = [], king = 0, W = 0, H = 0;
+    const N = 15; let ducks = [], king = 0, W = 0, H = 0;
     const measure = () => { W = arena.clientWidth; H = arena.clientHeight; };
-    const speed = () => (api.reducedMotion ? 0.6 : 1) * (70 + round * 45);
+    const speed = () => (api.reducedMotion ? 0.6 : 1) * (95 + round * 75);
     function spawn() {
       measure(); arena.replaceChildren(); ducks = [];
       king = api.int(0, N - 1); step2 = false; bare = -1; if (round < 2) ruleKing(); else setRule('Consigne', 'Cliquez sur le canard qui porte la ', h('b', {}, 'couronne 👑'), '. (Dernier roi. Probablement.)');
-      const nHat = [0, 4, N - 2][round];
+      const nHat = [2, 6, N - 2][round];
       const others = api.shuffle([...Array(N).keys()].filter((i) => i !== king));
       if (round === 2) bare = others[0];
       const hatted = others.filter((i) => i !== bare).slice(0, nHat);
       for (let i = 0; i < N; i++) {
         const a = api.rng() * 6.283, sp = speed() * (0.7 + api.rng() * 0.6);
         const el = h('button', { class: 'bh-d', type: 'button', 'aria-label': i === king ? 'canard à couronne' : 'canard', onclick: () => hit(i) }, h('s', {}, '🦆'));
-        if (i === king) el.append(h('i', { class: 'k' }, '👑')); else if (hatted.includes(i)) el.append(h('i', {}, api.pick(HATS)));
+        if (i === king) el.append(h('i', { class: 'k' }, '👑')); else if (hatted.includes(i)) el.append(h('i', {}, round > 0 && api.rng() < 0.4 ? api.pick(FAKES) : api.pick(HATS)));
         if (i === king) el.style.zIndex = 5;
         arena.append(el);
         ducks.push({ el, x: 10 + api.rng() * (W - 66), y: 10 + api.rng() * (H - 66), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 });
@@ -51,7 +51,7 @@ export default {
       if (step2) {
         if (i === king) { shake(root); return api.fail('Ce canard a abdiqué. Il porte encore la couronne, par nostalgie. Cherchez celui SANS chapeau.'); }
         if (i !== bare) { shake(root); return api.fail('Un chapeau ! L’erratum disait SANS chapeau. Vous avez arrêté un canard bien habillé, par réflexe.'); }
-      } else if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return api.fail(hat ? `Ce canard porte un ${hat.textContent}, pas une 👑. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
+      } else if (i !== king) { shake(root); const hat = d.el.querySelector('i'); return api.fail(hat ? `Ce canard porte un ${hat.textContent}, pas la vraie 👑. Les faux insignes, ça existe. Vous venez d’arrêter un innocent bien habillé.` : 'Ce canard est un civil. Pas de couronne, pas de procès. Vous venez de faire peur à un canard.'); }
       if (round === 2 && !step2) { // abdication : nouvelle consigne
         step2 = true; d.el.classList.add('hit'); api.sfx('whoosh'); king = -1;
         setRule('Erratum n° 3', 'Le roi vient d’abdiquer. Cliquez plutôt sur le canard ', h('b', { class: 'no' }, 'SANS chapeau'), '. Un seul.');

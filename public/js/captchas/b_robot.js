@@ -13,7 +13,7 @@ css('robot', `
 @keyframes br-up{to{transform:translateY(-26px);opacity:0}}
 `);
 export default {
-  id: 'b_robot', tier: 4, title: 'Prouvez que vous êtes un robot', time: 30000,
+  id: 'b_robot', tier: 4, title: 'Preuve de robotitude', time: 30000,
   mount(host, api) {
     const { h } = api; let alive = true, idx = 0, tStart = 0, life = 1250, running = false, cur = null, nextEl = null, expiry = 0; const N = 10; let sumMs = 0;
     const W = 'AZERQSDFWX'; const keys = api.shuffle(W.split('')).slice(0, N);
@@ -22,7 +22,7 @@ export default {
     arena.append(hud, start);
     const pips = h('b', {}, '0/' + N);
     const avg = h('span', {}, 'Temps de réaction moyen : —');
-    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en moins de ', h('b', {}, '1,2 s'), '. Clic ou touche indiquée. Aucun raté.'));
+    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Inversion des rôles'), 'Prouvez que vous êtes un ', h('b', {}, 'ROBOT'), ' : ' + N + ' cibles, chacune en moins de ', h('b', {}, '1 s environ'), '. Clic ou touche indiquée. Aucun raté.'));
     const root = h('div', { class: 'bk' }, rule, arena, h('div', { class: 'bk-meta' }, avg, pips)); host.append(root);
     const pts = []; const rect = () => ({ w: arena.clientWidth, h: arena.clientHeight });
     for (let i = 0; i <= N; i++) pts.push([api.rng(), api.rng()]);
@@ -36,7 +36,7 @@ export default {
     }
     function show(i) {
       idx = i; if (nextEl) nextEl.remove(); nextEl = null;
-      life = Math.max(750, 1250 - i * 55);
+      const coarse = matchMedia('(pointer:coarse)').matches; life = Math.max(coarse ? 1000 : 800, 1300 - i * 50);
       const el = h('button', { class: 'br-t', type: 'button', 'aria-label': 'Cible ' + keys[i], onpointerdown: (e) => { e.stopPropagation(); e.preventDefault(); hit(); } }, keys[i]);
       el.style.setProperty('--life', life + 'ms'); place(el, i); arena.append(el); cur = el; tStart = performance.now(); expiry = tStart + life; hud.textContent = `CIBLE ${String(i + 1).padStart(2, '0')}/${N}`;
       if (i + 1 < N) { nextEl = h('div', { class: 'br-n' }, keys[i + 1]); place(nextEl, i + 1); arena.append(nextEl); }
@@ -51,8 +51,9 @@ export default {
     }
     arena.addEventListener('pointerdown', (e) => {
       if (!running || !cur) return; const r = cur.getBoundingClientRect(), d = Math.round(Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)));
+      if (d < (matchMedia('(pointer:coarse)').matches ? 90 : 64)) { api.sfx('tick'); const pop = h('div', { class: 'br-pop', style: { left: (e.clientX - arena.getBoundingClientRect().left) + 'px', top: (e.clientY - arena.getBoundingClientRect().top) + 'px' } }, 'à côté (toléré)'); arena.append(pop); setTimeout(() => pop.remove(), 650); return; }
       running = false; shake(root);
-      api.fail(d < 60 ? `Raté de ${d} px. Un robot ne rate pas. Vous venez de saigner un peu de l’honneur de votre espèce.` : `Raté de ${d} px. Un robot aurait visé le centre. Vous avez visé « à peu près », la devise humaine.`);
+      api.fail(`Raté de ${d} px. Un robot aurait visé le centre. Vous avez visé « à peu près », la devise humaine.`);
     });
     const key = (e) => { if (!running || !cur || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return; const k = e.key.toUpperCase(); if (k.length !== 1) return; if (k === keys[idx]) { e.preventDefault(); hit(); } else if (W.includes(k)) { running = false; shake(root); api.fail(`Touche ${k} au lieu de ${keys[idx]}. Les doigts humains sont adorables, mais pas ici.`); } };
     window.addEventListener('keydown', key);

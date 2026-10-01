@@ -2,7 +2,7 @@
 import { chromium } from 'playwright-core';
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
-const port = opt('port', 8093), W = +opt('w', 1280), H = +opt('h', 800), shots = opt('shots', '');
+const port = opt('port', 8094), W = +opt('w', 1280), H = +opt('h', 800), shots = opt('shots', '');
 const ids = args.filter((a, i) => !a.startsWith('--') && !(i && args[i - 1].startsWith('--') && args[i - 1] !== '--mobile'));
 const ALL = ['a_checkbox', 'a_wavy', 'a_grid', 'a_math', 'a_slider', 'a_bins', 'a_order', 'a_rotate'];
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });

@@ -22,7 +22,14 @@ css('boss', `
 .bb-pop b{font:800 14px var(--display)}.bb-pop .x{position:absolute;right:3px;top:0;border:0;background:none;font:700 11px var(--mono);cursor:pointer;color:#888;padding:2px 4px}
 .bb-pop .a{align-self:stretch;border:2px solid var(--ink);background:var(--green);font:800 13px var(--display);padding:7px;cursor:pointer;text-transform:uppercase}
 .bb-pop .a:hover{background:#7fe9d4}
-.bb-stage{transition:transform .35s}
+.bb-ret{position:absolute;left:0;top:0;width:28px;height:28px;border:3px solid var(--red);border-radius:50%;z-index:6;pointer-events:none;opacity:0;box-shadow:0 0 12px var(--red)}
+.bb-ret::before,.bb-ret::after{content:'';position:absolute;background:var(--red)}.bb-ret::before{left:11px;top:-8px;width:3px;height:36px}.bb-ret::after{top:11px;left:-8px;height:3px;width:36px}
+.bb-stage.inv .bb-ret{opacity:1}.bb-stage.inv{cursor:none;outline:3px dashed var(--red);outline-offset:-3px}.bb-stage.inv .bb-orb{cursor:none}
+.bb-ret.pk{animation:bb-pk .25s}@keyframes bb-pk{50%{transform-origin:center;filter:brightness(2)}}
+.bb-part{position:absolute;pointer-events:none;z-index:9;font-size:20px;animation:bb-fly 1.1s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes bb-fly{from{transform:translate(0,0) scale(.4) rotate(0)}to{transform:translate(var(--dx),var(--dy)) scale(1.2) rotate(var(--rot));opacity:0}}
+.bb-end b{display:block;font:800 26px var(--display)}
+.bb-sq{animation:bb-sq .7s}@keyframes bb-sq{10%{transform:translate(-8px,5px)}30%{transform:translate(9px,-6px)}50%{transform:translate(-6px,-3px)}70%{transform:translate(5px,5px)}}
 
 .bb-face.hurt{animation:bb-hurt .5s}
 @keyframes bb-hurt{20%{transform:translateX(-8px) rotate(-6deg);background:var(--red)}50%{transform:translateX(8px) rotate(6deg)}}
@@ -40,17 +47,17 @@ css('boss', `
 .bb-pad kbd{position:absolute;right:4px;top:2px;font:600 10px var(--mono);opacity:.7}
 .bb-pad:hover:not(:disabled){filter:saturate(.8) brightness(.9)}.bb-pad.lit{filter:saturate(1.5) brightness(1.3);transform:scale(.94);box-shadow:0 0 18px #fff}
 .bb-pad:disabled{cursor:default}
-.bb-type{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.bb-type{position:absolute;inset:0;padding:24px 14px 12px;display:flex;flex-direction:column;gap:10px;justify-content:center}
 .bb-phrase{font:800 24px/1.15 var(--mono);letter-spacing:.04em;text-align:center;color:var(--yellow);word-break:break-word}
 .bb-echo{font:700 20px var(--mono);text-align:center;min-height:28px;letter-spacing:.05em;word-break:break-all}
 .bb-echo .g{color:#2de2c0}.bb-echo .r{color:#ff3b4e;text-decoration:underline}.bb-echo .p{opacity:.35}
 .bb-type input{font:700 17px var(--mono);padding:9px 10px;border:2px solid #fff;background:#10202a;color:#fff;width:100%;outline:none;border-radius:0}
 .bb-type input:focus{border-color:var(--yellow)}
 .bb-s{position:absolute;left:8px;top:6px;font:600 10px var(--mono);color:#7fe9d4;letter-spacing:.08em;text-transform:uppercase;z-index:3}
-.bb-end{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:var(--yellow);color:var(--ink);font:800 20px/1.2 var(--display);padding:16px;animation:bk-flip .6s;z-index:9}
+.bb-end{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:rgba(255,210,63,.93);color:var(--ink);font:800 20px/1.2 var(--display);padding:16px;animation:bk-flip .6s;z-index:9}
 `);
 const PADS = [{ s: '▲', c: '#ff6b6b' }, { s: '●', c: '#ffd23f' }, { s: '■', c: '#43d9a3' }, { s: '◆', c: '#5aa0ff' }];
-const PHRASES = ['je suis un humain', 'jamais vu ce robot', 'je ne suis pas un chat'];
+const PHRASES = ['je suis un humain tout a fait normal', 'jamais vu ce robot de ma vie', 'bonjour je suis une personne reelle'];
 export default {
   id: 'b_boss', tier: 5, title: 'CAPCHA-ZILLA — le boss final', time: 20000,
   mount(host, api) {
@@ -69,23 +76,29 @@ export default {
     const clear = () => { stage.querySelectorAll('.bb-pop').forEach((x) => x.remove()); if (cleanup) cleanup(); cleanup = null; cancelAnimationFrame(raf); stage.replaceChildren(); };
     // ---- phase 1: l'œil ----
     function p1() {
-      phase = 1; clear(); api.timer(18000); busy = false; let hits = 0; const W = () => stage.clientWidth, H = () => stage.clientHeight;
-      setRule('Phase 1/3 — Réflexes', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, '3 fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿.');
-      stage.append(h('div', { class: 'bb-s' }, 'Œil : 0/3'));
-      const mkOrb = (e, real, i) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); hit(real, el); } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
-      let orbs = []; const sp = (k) => (api.reducedMotion ? 0.6 : 1) * (140 + k * 90);
-      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < hits * 1; k++) orbs.push(mkOrb('🧿', false)); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
+      phase = 1; clear(); api.timer(22000); busy = false; let hits = 0, inv = false; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
+      setRule('Phase 1/3 — Réflexes', 'Cliquez sur l’', h('b', {}, 'œil 👁️'), ' du boss ', h('b', {}, NH + ' fois'), '. Il s’énerve à chaque coup. Ignorez les 🧿. Parfois, il inverse vos commandes.');
+      stage.append(h('div', { class: 'bb-s' }, `Œil : 0/${NH}`));
+      const ret = h('div', { class: 'bb-ret' }); stage.append(ret);
+      const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
+      let orbs = []; const sp = (k) => (api.reducedMotion ? 0.6 : 1) * (170 + k * 100);
+      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
       function hit(real, el) {
         if (busy) return;
         if (!real) { shake(root); busy = true; return api.fail('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Il rigole.'); }
-        busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); stage.firstChild.textContent = `Œil : ${hits}/3`; hp(100 - hits * 11);
-        if (hits >= 3) { T(p2, 450); return; }
-        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.', 'worried'); T(() => { busy = false; spawn(); }, 400);
+        busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); stage.firstChild.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH));
+        if (hits >= NH) { T(p2, 450); return; }
+        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); }, 400);
       }
+      // commandes inversées : le clic atterrit à l'opposé horizontal, un réticule montre où
+      const mir = (e) => { const r = stage.getBoundingClientRect(); return { x: r.right - (e.clientX - r.left), y: e.clientY }; };
+      const onMove = (e) => { if (!inv) return; const r = stage.getBoundingClientRect(), m = mir(e); ret.style.transform = `translate(${m.x - r.left - 14}px,${m.y - r.top - 14}px)`; };
+      const onDown = (e) => { if (!inv || busy) return; const m = mir(e); let best = null, bd = 34; orbs.forEach((o) => { const r = o.el.getBoundingClientRect(), d = Math.hypot(m.x - (r.left + 27), m.y - (r.top + 27)); if (d < bd) { bd = d; best = o; } }); ret.classList.remove('pk'); void ret.offsetWidth; ret.classList.add('pk'); if (best) hit(best.real, best.el); };
+      stage.addEventListener('pointermove', onMove); stage.addEventListener('pointerdown', onDown);
       spawn(); let last = performance.now();
-      const mirror = () => { if (busy) return; const w = warn('⚠ Miroir dans 1 s'); api.sfx('bad'); T(() => { w.remove(); if (busy) return; stage.style.transform = 'scaleX(-1)'; api.say('Le boss inverse votre écran. Droite, gauche : c’est vous qui voyez mal.', 'smug'); T(() => { stage.style.transform = ''; }, 2600); }, 1000); };
-      const aiv = setInterval(mirror, 5600); T(mirror, 2400);
-      cleanup = () => { clearInterval(aiv); stage.style.transform = ''; root.querySelectorAll('.bb-warn').forEach((x) => x.remove()); };
+      const mirror = () => { if (busy) return; const w = warn('⚠ Commandes inversées dans 1 s'); api.sfx('bad'); T(() => { w.remove(); if (busy) return; inv = true; stage.classList.add('inv'); api.say('Commandes inversées : gauche est droite. Suivez le réticule rouge, pas votre souris.', 'smug'); T(() => { inv = false; stage.classList.remove('inv'); }, 3200); }, 1000); };
+      const aiv = setInterval(mirror, 6500); T(mirror, 3000);
+      cleanup = () => { clearInterval(aiv); stage.removeEventListener('pointermove', onMove); stage.removeEventListener('pointerdown', onDown); stage.classList.remove('inv'); root.querySelectorAll('.bb-warn').forEach((x) => x.remove()); };
       const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; const w = W(), hh = H();
         orbs.forEach((o) => { const s = sp(hits); o.x += o.vx * s * dt; o.y += o.vy * s * dt; if (o.x < 0) { o.x = 0; o.vx = Math.abs(o.vx); } if (o.x > w - 54) { o.x = w - 54; o.vx = -Math.abs(o.vx); } if (o.y < 0) { o.y = 0; o.vy = Math.abs(o.vy); } if (o.y > hh - 54) { o.y = hh - 54; o.vy = -Math.abs(o.vy); } o.el.style.transform = `translate(${o.x}px,${o.y}px)`; }); };
       raf = requestAnimationFrame(loop);
@@ -93,37 +106,38 @@ export default {
     // ---- phase 2: mémoire inversée ----
     function p2() {
       phase = 2; clear(); api.timer(30000); busy = true; face.dataset.m = '1';
-      const seq = []; for (let i = 0; i < 4; i++) { let v; do { v = api.int(0, 3); } while (i && v === seq[i - 1]); seq.push(v); }
-      setRule('Phase 2/3 — Mémoire', 'Observez 4 signaux, puis rejouez-les ', h('b', {}, 'à l’envers'), '. Les pads se mélangent dès le 1er coup. (Touches 1-4 : chaque pad garde son numéro.)');
+      const seq = []; for (let i = 0; i < 5; i++) { let v; do { v = api.int(0, 3); } while (i && v === seq[i - 1]); seq.push(v); }
+      setRule('Phase 2/3 — Mémoire', 'Observez 5 signaux, puis rejouez-les ', h('b', {}, 'à l’envers'), '. Les pads se mélangent en route (deux fois). (Touches 1-4 : chaque pad garde son numéro.)');
       const status = h('div', { class: 'bb-s' }, 'Observez…'); stage.append(status);
       const grid = h('div', { class: 'bb-pads' }); stage.append(grid);
       const pads = PADS.map((p, i) => h('button', { class: 'bb-pad', type: 'button', disabled: true, 'aria-label': 'Pad ' + (i + 1), onclick: () => press(i) }, p.s, h('kbd', {}, i + 1)));
       pads.forEach((p, i) => { p.style.setProperty('--c', PADS[i].c); grid.append(p); }); let pos = 0, acc = false;
       const lit = (i, on) => pads[i].classList.toggle('lit', on);
       let t = 600; const step = api.reducedMotion ? 750 : 560; seq.forEach((v) => { T(() => { lit(v, true); api.sfx('pop'); }, t); T(() => lit(v, false), t + step * 0.62); t += step; });
-      T(() => { acc = true; pads.forEach((p) => (p.disabled = false)); status.textContent = 'À l’envers !'; api.timer(14000); api.sfx('whoosh'); }, t + 80);
-      api.timer(t + 14000);
+      T(() => { acc = true; pads.forEach((p) => (p.disabled = false)); status.textContent = 'À l’envers !'; api.timer(17000); api.sfx('whoosh'); }, t + 80);
+      api.timer(t + 17000);
       if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify([...seq].reverse());
       function press(i) {
         if (!acc) return; lit(i, true); T(() => lit(i, false), 130);
         const want = seq[seq.length - 1 - pos];
         if (i !== want) { acc = false; shake(root); return api.fail(pos === 0 && i === seq[0] ? 'Vous avez tapé le PREMIER signal. L’envers, c’est commencer par le dernier. Le boss pleure de rire.' : `Mauvais pad au rang ${pos + 1} (à l’envers). La mémoire à rebours, c’est un sport. Vous, vous êtes assis.`); }
-        api.sfx('click'); pos++; if (pos === 1) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((pp, k) => (pp.style.order = o[k])); api.sfx('whoosh'); api.say('Le boss mélange les pads en cours de route. Suivez les couleurs !', 'smug'); } if (pos >= 4) { acc = false; pads.forEach((p) => (p.disabled = true)); hp(33); T(p3, 700); }
+        api.sfx('click'); pos++; if (pos === 1) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((pp, k) => (pp.style.order = o[k])); api.sfx('whoosh'); api.say('Le boss mélange les pads en cours de route. Suivez les couleurs !', 'smug'); } if (pos === 3) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((pp, k) => (pp.style.order = o[k])); api.sfx('whoosh'); } if (pos >= 5) { acc = false; pads.forEach((p) => (p.disabled = true)); hp(33); T(p3, 700); }
       }
       const key = (e) => { const k = '1234'.indexOf(e.key); if (k > -1 && !e.repeat && !e.ctrlKey && !e.metaKey) press(k); };
       window.addEventListener('keydown', key); const old = cleanup; cleanup = () => window.removeEventListener('keydown', key);
     }
     // ---- phase 3: phrase à l'envers puis erratum ----
     function p3() {
-      phase = 3; clear(); busy = false; face.dataset.m = '2'; api.timer(40000);
+      phase = 3; clear(); busy = false; face.dataset.m = '2'; api.timer(55000);
       const phrase = api.pick(PHRASES); const rev = [...phrase].reverse().join(''); let step = 0;
       const ph = h('div', { class: 'bb-phrase' }, phrase), echo = h('div', { class: 'bb-echo', 'aria-hidden': 'true' }), inp = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', oninput: render, onkeydown: (e) => { if (e.key === 'Enter') ok(); } });
       const sub = h('button', { class: 'bk-btn', type: 'button', onclick: ok, style: { alignSelf: 'center', minHeight: '38px', padding: '6px 16px' } }, 'Valider');
       stage.append(h('div', { class: 'bb-s' }, 'Dernier test : 1/2'), h('div', { class: 'bb-type' }, ph, echo, inp, sub));
-      const want = () => (step === 0 ? rev : phrase);
-      setRule('Phase 3/3 — Dactylographie', 'Retapez la phrase ', h('b', {}, 'À L’ENVERS'), ', lettre par lettre. Le vert est bon signe.');
+      const fwdWords = phrase.split(' ').reverse().join(' ');
+      const want = () => (step === 0 ? rev : fwdWords);
+      setRule('Phase 3/3 — Dactylographie', 'Retapez la phrase ', h('b', {}, 'À L’ENVERS'), ', lettre par lettre. Les cases vertes disent juste si votre frappe est bonne : pas la réponse.');
       if (/cheat=1/.test(location.search)) host.dataset.answer = rev;
-      function render() { const w = want(), v = [...inp.value]; echo.replaceChildren(...[...w].map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, c === ' ' ? '␣' : c))); }
+      function render() { const w = [...want()], v = [...inp.value]; echo.replaceChildren(...w.map((c, i) => h('span', { class: i < v.length ? (v[i] === c ? 'g' : 'r') : 'p' }, i < v.length ? (v[i] === c ? '▪' : '✕') : '·'))); }
       render(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 50);
       let pops = 0;
       const popup = () => { if (busy || pops >= 3 || stage.querySelector('.bb-pop')) return; pops++; const close = () => { pp.remove(); api.sfx('click'); inp.focus(); }; const names = ['🍪 Ce boss utilise des cookies. 114 partenaires aimeraient connaître vos opinions.', '🔔 CAPCHA-ZILLA souhaite vous envoyer des notifications. Toutes les 4 secondes.', '⭐ Votre avis nous intéresse ! Sondage de 47 questions (obligatoire).'];
@@ -132,11 +146,14 @@ export default {
       const piv = setInterval(popup, 4800); T(popup, 2200); cleanup = () => clearInterval(piv);
       function ok() {
         if (busy) return; const v = inp.value, w = want();
-        if (v !== w) { shake(root); busy = true; const i = [...v].findIndex((c, k) => c !== [...w][k]); const msg = !v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? `Il manque la fin : « ${[...w].slice([...v].length).join('')} ». On ne rend pas copie blanche à moitié.` : `Caractère n° ${i + 1} : « ${[...v][i]} » au lieu de « ${[...w][i]} ». ${step ? 'À l’endroit, cette fois. Oui, c’est un piège.' : 'À l’envers, ça ne pardonne pas.'}`; return api.fail(msg); }
-        if (step === 0) { step = 1; inp.value = ''; api.sfx('whoosh'); hp(10); face.classList.remove('hurt'); stage.firstChild.textContent = 'Dernier test : 2/2'; ph.textContent = phrase; setRule('Erratum de dernière minute', 'En fait, ', h('b', {}, 'à l’endroit'), '. Désolé. Non : ', h('b', {}, 'pas désolé'), '.'); api.say('À l’endroit. J’ai changé d’avis. J’en ai le droit, je suis le boss.', 'smug'); api.timer(22000); render(); inp.focus(); return; }
-        busy = true; hp(0); face.dataset.m = 'x'; api.sfx('good');
-        stage.append(h('div', { class: 'bb-end' }, h('div', {}, 'CAPCHA-ZILLA est vaincu.', h('br', {}), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'Vous êtes un humain. Il n’y a pas de médaille pour ça.'))));
-        api.say('Bon. Vous êtes humain. Je vais devoir vous le dire en face : félicitations.', 'impressed'); T(() => api.solve(), 1500);
+        if (v !== w) { shake(root); busy = true; const i = [...v].findIndex((c, k) => c !== [...w][k]); const msg = !v ? 'Case vide. Le silence n’est pas une réponse, sauf chez Gérard.' : i === -1 ? `Il manque la fin : « ${[...w].slice([...v].length).join('')} ». On ne rend pas copie blanche à moitié.` : `Caractère n° ${i + 1} : « ${[...v][i]} » au lieu de « ${[...w][i]} ». ${step ? 'Mots à l’endroit, ordre des mots inversé. Oui, c’est un piège.' : 'À l’envers, ça ne pardonne pas.'}`; return api.fail(msg); }
+        if (step === 0) { step = 1; inp.value = ''; api.sfx('whoosh'); hp(10); face.classList.remove('hurt'); stage.firstChild.textContent = 'Dernier test : 2/2'; ph.textContent = phrase; setRule('Erratum de dernière minute', 'En fait, gardez les mots ', h('b', {}, 'à l’endroit'), ' mais inversez leur ', h('b', {}, 'ORDRE'), ' (dernier mot d’abord). Désolé. Non : pas désolé.'); api.say('Les mots à l’endroit, dans l’ordre inverse. J’ai changé d’avis. J’en ai le droit, je suis le boss.', 'smug'); api.timer(30000); render(); inp.focus(); return; }
+        busy = true; hp(0); face.dataset.m = 'x'; api.sfx('stamp'); api.sfx('confetti'); stage.querySelectorAll('.bb-pop').forEach((x) => x.remove());
+        stage.classList.remove('bb-sq'); void stage.offsetWidth; if (!api.reducedMotion) { stage.classList.add('bb-sq'); root.classList.add('bk-shake'); }
+        const em = ['💥', '✨', '🔩', '⚙️', '⭐', '🎉', '🔌'];
+        for (let k = 0; k < 44; k++) { const an = Math.random() * 6.283, d = 70 + Math.random() * 190; const pt = h('span', { class: 'bb-part', style: { left: '50%', top: '50%' } }, em[k % em.length]); pt.style.setProperty('--dx', Math.cos(an) * d + 'px'); pt.style.setProperty('--dy', Math.sin(an) * d * 0.7 + 'px'); pt.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg'); pt.style.animationDelay = Math.random() * 0.25 + 's'; stage.append(pt); }
+        T(() => { api.sfx('win'); stage.append(h('div', { class: 'bb-end' }, h('div', {}, h('b', {}, 'CAPCHA-ZILLA est vaincu.'), h('span', { style: { fontSize: '14px', fontWeight: 600 } }, 'Vous êtes un humain. Il n’y a pas de médaille pour ça. Juste mon respect et un accusé de réception.')))); }, 750);
+        api.say('Bon. Vous êtes humain. Je vais devoir vous le dire en face : félicitations. Ne le répétez pas à mon supérieur.', 'impressed'); T(() => api.solve(), 2400);
       }
     }
     setRule('Combat de boss', 'Trois épreuves, trois mécaniques que vous connaissez déjà. Il a juste changé les règles.'); hp(100);

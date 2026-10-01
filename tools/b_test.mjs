@@ -84,27 +84,34 @@ async function run(id) {
   } else if (id === 'b_pwd') {
     const rules = () => p.$$eval('.bp-r', (e) => e.length);
     await p.click('.bp-field input'); await p.keyboard.type('janvier', { delay: 10 }); await sleep(200); console.log('  rules after "janvier":', await rules());
-    await p.fill('.bp-field input', ''); const answer = await ans(); await p.keyboard.type(answer, { delay: 5 });
-    await sleep(300); console.log('  rules typed:', await rules()); await shot('mid');
-    await p.click('.bp-cp'); await sleep(300); console.log('  rules after copy:', await rules(), 'minute roll?', await ans() === answer);
-    await p.click('.bp-field input'); await p.fill('.bp-field input', await ans()); await p.click('.bp-cp'); await sleep(400); console.log('  rules:', await rules(), 'btn disabled', await p.$eval('.bk-btn:last-child, .bk > div:last-child .bk-btn', (b) => b.disabled)); await shot('ok');
-    await p.waitForFunction(() => !document.querySelector('.bk > div:last-child .bk-btn').disabled, null, { timeout: 5000 });
+    let okc = false, copied = false;
+    for (let k = 0; k < 60 && !okc; k++) {
+      const a = await ans(); await p.fill('.bp-field input', a);
+      if (await p.$eval('.bp-field:nth-of-type(2)', (e) => e.style.display !== 'none') && !copied) { await p.click('.bp-cp'); copied = true; }
+      await sleep(900);
+      okc = await p.evaluate(() => !document.querySelector('.bk > div:last-child .bk-btn').disabled);
+      if (k === 6) await shot('mid');
+    }
+    console.log('  rules:', await rules(), 'enabled', okc); await shot('ok');
     await p.click('.bk > div:last-child .bk-btn'); await waitSolve();
   } else if (id === 'b_boss') {
     await p.waitForSelector('.bb-orb', { timeout: 5000 });
-    const orbHit = async (sel) => { await sleep(150); const bb = await p.locator(sel).first().boundingBox(); await p.mouse.click(bb.x + 27, bb.y + 27); };
-    await sleep(300); await shot('p1'); await orbHit('.bb-orb'); await sleep(900); await shot('p1b'); // decoys now
-    await p.evaluate(() => document.querySelector('.bb-orb[aria-label="leurre"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await waitStrike('leurre'); await remount();
-    for (let k = 0; k < 3; k++) { await p.waitForSelector('.bb-orb[aria-label="œil du boss"]:not(.boom)', { timeout: 5000 }); await orbHit('.bb-orb[aria-label="œil du boss"]:not(.boom)'); await sleep(900); }
-    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 12000 }); await shot('p2'); let a = JSON.parse(await ans());
-    a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1));
+    const hitReal = () => p.evaluate(() => new Promise((res) => { const f = () => { const st = document.querySelector('.bb-stage'); const o = document.querySelector('.bb-orb[aria-label="œil du boss"]:not(.boom)'); if (st && o && !st.classList.contains('inv')) { const r = o.getBoundingClientRect(); o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 27, clientY: r.top + 27 })); res(); } else requestAnimationFrame(f); }; f(); }));
+    const hitInv = () => p.evaluate(() => new Promise((res) => { const f = () => { const st = document.querySelector('.bb-stage'); const o = document.querySelector('.bb-orb[aria-label="œil du boss"]:not(.boom)'); if (st && o && st.classList.contains('inv')) { const r = o.getBoundingClientRect(), sr = st.getBoundingClientRect(); const cx = r.left + 27, cy = r.top + 27; st.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: sr.right - (cx - sr.left), clientY: cy })); res(); } else requestAnimationFrame(f); }; f(); }));
+    const eyeP = async (n) => { for (let k = 0; k < n; k++) { await hitReal(); await sleep(900); } };
+    await sleep(300); await shot('p1');
+    await p.waitForSelector('.bb-stage.inv', { timeout: 12000 }); await shot('inv'); await hitInv(); await sleep(700); console.log('  inverted hit ->', await p.textContent('.bb-s'));
+    await p.waitForFunction(() => !document.querySelector('.bb-stage.inv')); await p.evaluate(() => document.querySelector('.bb-orb[aria-label="leurre"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await waitStrike('leurre'); await remount();
+    await eyeP(4);
+    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 15000 }); await shot('p2'); let a = JSON.parse(await ans()); console.log('  seq len', a.length);
+    for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(80); } await shot('p2done');
     await p.waitForSelector('.bb-type input', { timeout: 5000 }); await shot('p3'); const rev = await ans();
     await p.fill('.bb-type input', rev.slice(0, -1) + '?'); await p.keyboard.press('Enter'); await waitStrike('typo'); await remount();
-    for (let k = 0; k < 3; k++) { await p.waitForSelector('.bb-orb[aria-label="œil du boss"]:not(.boom)', { timeout: 5000 }); await orbHit('.bb-orb[aria-label="œil du boss"]:not(.boom)'); await sleep(900); }
-    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 12000 }); a = JSON.parse(await ans()); for (const v of a) await p.keyboard.press(String(v + 1));
+    await eyeP(4);
+    await p.waitForSelector('.bb-pad:not([disabled])', { timeout: 15000 }); a = JSON.parse(await ans()); for (const v of a) { await p.keyboard.press(String(v + 1)); await sleep(80); }
     await p.waitForSelector('.bb-type input', { timeout: 5000 }); const rev2 = await ans();
-    await p.fill('.bb-type input', rev2); await shot('p3typed'); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
-    const fwd = [...rev2].reverse().join(''); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await waitSolve();
+    await p.keyboard.type(rev2.slice(0, 8), { delay: 20 }); await sleep(300); await shot('p3typing'); await p.fill('.bb-type input', rev2); await p.keyboard.press('Enter'); await sleep(700); await shot('erratum');
+    const phrase = [...rev2].reverse().join(''); const fwd = phrase.split(' ').reverse().join(' '); await p.fill('.bb-type input', fwd); await p.keyboard.press('Enter'); await sleep(500); await shot('end'); await sleep(900); await shot('end2'); await waitSolve();
   }
   end();
   async function end() { await sleep(300); if (errs.length) console.log(`  [${id}] ERRORS:`, errs.slice(0, 4)); await ctx.close(); }
