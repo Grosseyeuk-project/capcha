@@ -13,18 +13,18 @@ css('bins', `
 .ab-c.dim{opacity:.35}
 @media (max-width:480px){.ab-pool{height:178px;padding:5px;gap:4px}.ab-bin{height:116px;overflow-y:auto;padding-top:27px}.ab-c{padding:5px 7px}.ab-c.in{white-space:normal;font-size:10px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
 `);
-const HUM = ['Soupirer devant une imprimante', 'Oublier pourquoi on est entré dans la pièce', 'Dire « ça va » en allant très mal', 'Chercher ses lunettes sur son front', 'Cliquer sur « Plus tard » 14 fois', 'Pleurer devant un dessin animé', 'Avoir peur d’un pigeon', 'Faire semblant de connaître la chanson', 'Regarder son frigo en espérant mieux'];
-const ROB = ['Calculer π à mille décimales en 0,2 s', 'Ne jamais dormir', 'Répondre « 01001000 »', 'Fonctionner sur batterie 5 V', 'Avoir un numéro de série gravé', 'Ne jamais se tromper de mot de passe', 'Compter 4 000 feux tricolores sans jamais s’ennuyer', 'Rouiller à la pluie', 'Exécuter la première instruction sans poser de question'];
+const HUM = ['Éternuer', 'Avoir un anniversaire', 'Rougir de honte', 'Manger une baguette', 'Avoir une belle-mère', 'Bâiller en réunion', 'Tomber amoureux·se', 'Se tromper de bus', 'Avoir des empreintes digitales'];
+const ROB = ['Fonctionner sur batterie', 'Avoir un numéro de série gravé', 'Rouiller sous la pluie', 'Se brancher sur une prise secteur', 'Parler en code binaire', 'Être garanti deux ans', 'Avoir une prise de terre', 'Avoir un câble USB', 'Être monté en usine'];
 export default {
   id: 'a_bins', tier: 2, title: 'Tri sélectif', time: 45000,
   mount(host, api) {
     const { h } = api, nH = api.int(2, 4), items = api.shuffle([...api.shuffle(HUM).slice(0, nH).map((t) => ({ t, k: 'h' })), ...api.shuffle(ROB).slice(0, 6 - nH).map((t) => ({ t, k: 'r' }))]);
-    const place = items.map(() => 'p'); let selected = -1, ghost = null;
+    const place = items.map(() => 'p'); let selected = -1, ghost = null, flipped = false, flipDone = false;
     const binH = h('div', { class: 'ab-bin', 'data-l': 'HUMAIN', 'data-b': 'h' }), binR = h('div', { class: 'ab-bin', 'data-l': 'ROBOT', 'data-b': 'r' }); binH.style.setProperty('--c', '#2e7d32'); binR.style.setProperty('--c', '#c62828'); const pool = h('div', { class: 'ab-pool', 'data-b': 'p' });
     const bins = { h: binH, r: binR, p: pool };
     const cards = items.map((it, i) => {
       const c = h('div', { class: 'ab-c', tabindex: 0, role: 'button', 'aria-label': it.t, title: it.t }, it.t);
-      c.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') { mv(i, 'h'); e.preventDefault(); } else if (e.key === 'ArrowRight') { mv(i, 'r'); e.preventDefault(); } else if (e.key === 'ArrowDown' || e.key === 'Backspace' || e.key === 'Delete') { mv(i, 'p'); e.preventDefault(); } else if (e.key === 'Enter' || e.key === ' ') { pick(i); e.preventDefault(); } });
+      c.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') { mv(i, flipped ? 'r' : 'h'); e.preventDefault(); } else if (e.key === 'ArrowRight') { mv(i, flipped ? 'h' : 'r'); e.preventDefault(); } else if (e.key === 'ArrowDown' || e.key === 'Backspace' || e.key === 'Delete') { mv(i, 'p'); e.preventDefault(); } else if (e.key === 'Enter' || e.key === ' ') { pick(i); e.preventDefault(); } });
       c.addEventListener('pointerdown', (e) => {
         if (e.button) return; const r = c.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, ox = sx - r.left, oy = sy - r.top; let moved = false;
         c.setPointerCapture(e.pointerId);
@@ -46,20 +46,27 @@ export default {
     function pick(i) { selected = selected === i ? -1 : i; api.sfx('click'); render(); }
     for (const b of [binH, binR]) b.addEventListener('click', (e) => { if (selected >= 0 && !e.target.closest('.ab-c')) { mv(selected, b.dataset.b); } });
     pool.addEventListener('click', (e) => { if (selected >= 0 && !e.target.closest('.ab-c')) mv(selected, 'p'); });
-    function mv(i, to) { place[i] = to; selected = -1; api.sfx('pop'); render(); }
+    function mv(i, to) {
+      place[i] = to; selected = -1; api.sfx('pop'); render();
+      if (hasRule('a_bins', 'R4') && !flipDone && place.filter((x) => x !== 'p').length >= 3) {
+        flipDone = true; flipped = true; binH.style.order = 1; binR.style.order = 0; fr.banner('Inversion syndicale : les deux bacs ont changé de côté (les cartes déjà classées les suivent). Vérifiez les étiquettes.', 'rule', 0); api.say('Inversion syndicale. Les bacs ont changé de côté. Les étiquettes, elles, ne mentent pas.', 'smug'); api.sfx('whoosh');
+        [binH, binR].forEach((b) => { b.animate([{ transform: 'rotateY(90deg)' }, { transform: 'none' }], { duration: 350 }); });
+      }
+    }
     function render() {
       cards.forEach((c, i) => { c.classList.toggle('in', place[i] !== 'p'); c.classList.toggle('sel', selected === i); c.style.animation = 'none'; bins[place[i]].append(c); });
       binH.classList.toggle('tgt', selected >= 0); binR.classList.toggle('tgt', selected >= 0);
       fr.btn.disabled = place.includes('p');
     }
-    const fr = frame(h, { api, id: 'a_bins', small: 'Glissez chaque carte vers', title: 'Humain ou robot ?', note: 'Glisser-déposer, ou toucher une carte puis un bac. Clavier : ← humain, → robot, ↓ retour.', body: [h('div', { class: 'ab-bins' }, binH, binR), pool], onVerify: check });
+    const fr = frame(h, { api, id: 'a_bins', small: 'Glissez chaque carte vers', title: 'Humain ou robot ?', note: 'Chaque carte est propre à un humain OU à un robot. Glissez-la, ou touchez-la puis un bac. Clavier : ← bac de gauche, → bac de droite, ↓ retour.', body: [h('div', { class: 'ab-bins' }, binH, binR), pool], onVerify: check });
     fr.el.classList.add('ab-w'); host.append(fr.el); render();
     if (/cheat=1/.test(location.search)) host.dataset.answer = items.map((x) => x.k).join('');
+    fr.el.dataset.flip = '0';
     function check() {
       const wrong = items.map((it, i) => place[i] !== it.k ? i : -1).filter((i) => i >= 0);
       if (!wrong.length) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); const w = items[wrong[0]]; const who = w.k === 'h' ? 'très humain' : 'très robotique';
-      api.fail(`« ${w.t} » ? Franchement, c’est ${who}.` + (wrong.length > 1 ? ` Et ${wrong.length - 1} autre${wrong.length > 2 ? 's' : ''} erreur${wrong.length > 2 ? 's' : ''} du même genre. Vous vous cherchez ?` : ' Une seule erreur, mais c’est la bonne.'));
+      api.fail(`« ${w.t} » ? Franchement, c’est ${who}.` + (flipped ? ' (Les bacs ont changé de côté en cours de route, c’était annoncé en bleu.)' : '') + (wrong.length > 1 ? ` Et ${wrong.length - 1} autre${wrong.length > 2 ? 's' : ''} erreur${wrong.length > 2 ? 's' : ''} du même genre. Vous vous cherchez ?` : ' Une seule erreur, mais c’est la bonne.'));
     }
     return { destroy() { ghost && ghost.remove(); } };
   }

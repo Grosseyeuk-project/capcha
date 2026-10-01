@@ -1,8 +1,8 @@
-import { css, brand, S } from './a_kit.js';
+import { css, brand, S, resetS } from './a_kit.js';
 css('chk', `
 .ac-w{width:min(100%,340px)}
-.ac-row{position:relative;height:84px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
-.ac-box{position:absolute;left:18px;top:28px;width:30px;height:30px;border:2px solid #c1c1c1;border-radius:3px;background:#fff;padding:0;cursor:pointer;transition:left .35s cubic-bezier(.3,1.6,.5,1),border-color .15s,box-shadow .15s;display:grid;place-items:center}
+.ac-row{position:relative;height:70px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
+.ac-box{position:absolute;left:18px;top:20px;width:30px;height:30px;border:2px solid #c1c1c1;border-radius:3px;background:#fff;padding:0;cursor:pointer;transition:left .35s cubic-bezier(.3,1.6,.5,1),border-color .15s,box-shadow .15s;display:grid;place-items:center}
 .ac-box:hover{border-color:#1a73e8;box-shadow:0 0 0 4px rgba(26,115,232,.15)}
 .ac-box.hop{left:276px}
 .ac-box:disabled{cursor:progress}
@@ -11,17 +11,19 @@ css('chk', `
 .ac-spin{width:20px;height:20px;border:3px solid #dadce0;border-top-color:#1a73e8;border-radius:50%;animation:ac-sp .7s linear infinite}
 @keyframes ac-sp{to{transform:rotate(360deg)}}
 .ac-tick{width:22px;height:22px;animation:ak-pop .35s both}
-.ac-strip{height:60px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+.ac-strip{height:52px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
 .ac-st{flex:1;min-width:0}
 .ac-st span{display:block;font-size:11px;line-height:1.25;color:#5f6368;height:28px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ac-pb{height:5px;background:#e8eaed;border-radius:3px;margin-top:4px;overflow:hidden}
 .ac-pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:3px}
 .ac-w.bad .ac-pb i{background:#d93025}
+.ac-ring{position:absolute;left:-6px;top:-6px;width:38px;height:38px;border-radius:50%;pointer-events:none;background:conic-gradient(#1a73e8 calc(var(--p,0)*1turn),transparent 0);-webkit-mask:radial-gradient(circle,transparent 15px,#000 16px);mask:radial-gradient(circle,transparent 15px,#000 16px)}
+.ac-box{touch-action:manipulation;-webkit-user-select:none}
 `);
 export default {
   id: 'a_checkbox', tier: 1, title: 'Case à cocher', time: 25000,
   mount(host, api) {
-    const { h } = api;
+    const { h } = api; resetS();
     const pts = []; let hopped = false, busy = false, raf = 0, tmo = [], warned = false;
     const box = h('button', { class: 'ac-box', type: 'button', 'aria-label': 'Je ne suis pas un robot' });
     const lab = h('div', { class: 'ac-lab' }, 'Je ne suis pas un robot');
@@ -40,6 +42,7 @@ export default {
     window.addEventListener('pointermove', onMove, { passive: true });
     const later = (f, ms) => tmo.push(setTimeout(f, ms));
     const verdict = (e) => {
+      if (e && e.pointerType === 'touch') return { ok: true, why: 'Pouce légèrement moite : humain. Merci.' };
       const mouse = e && e.pointerType === 'mouse' && e.detail > 0;
       if (!mouse) return { ok: true, why: 'Pas de souris : on vous croit sur parole (sans enthousiasme).' };
       const now = performance.now(), p = pts.filter((q) => now - q.t < 4000);
@@ -47,10 +50,23 @@ export default {
       const a = p[0], b = p[p.length - 1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       let dev = 0, path = 0;
       p.forEach((q, i) => { dev = Math.max(dev, Math.abs((b.x - a.x) * (a.y - q.y) - (a.x - q.x) * (b.y - a.y)) / L); if (i) path += Math.hypot(q.x - p[i - 1].x, q.y - p[i - 1].y); });
-      if (dev < 3.5) return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` };
+      if (dev < 3.5) S.straight = true; return { ok: false, why: `Trajectoire rectiligne à ${dev.toFixed(1)} px près. Aucune main humaine n’est aussi sûre d’elle. Hésitez un peu.` };
       return { ok: true, why: 'Tremblements réalistes détectés. Bravo, vous êtes visiblement stressé·e.' };
     };
-    box.addEventListener('click', (e) => {
+    const touchy = (e) => e.pointerType === 'touch' || e.pointerType === 'pen';
+    // touch: hold-to-prove (robots release too quickly)
+    let hold = null;
+    box.addEventListener('pointerdown', (e) => {
+      if (!touchy(e) || busy) return;
+      const t0 = performance.now(), ring = h('div', { class: 'ac-ring' }); box.append(ring); msg.textContent = 'Maintenez… un robot lâcherait déjà.';
+      const step = () => { const k = Math.min(1, (performance.now() - t0) / 1100); ring.style.setProperty('--p', k); if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
+      hold = { ring, raf: requestAnimationFrame(step) };
+    });
+    const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Relâché trop tôt. Un robot, lui, aurait tenu. Réessayez, plus longtemps.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };
+    box.addEventListener('pointerup', rel); box.addEventListener('pointercancel', rel); box.addEventListener('pointerleave', (e) => touchy(e) && rel());
+    box.addEventListener('contextmenu', (e) => e.preventDefault());
+    box.addEventListener('click', (e) => { if (touchy(e)) return; start(e); });
+    function start(e) {
       if (busy) return; busy = true; box.disabled = true;
       box.replaceChildren(h('div', { class: 'ac-spin' })); api.sfx('click');
       const v = verdict(e), t0 = performance.now(), dur = api.reducedMotion ? 600 : 1700;
@@ -75,7 +91,7 @@ export default {
         }
       };
       raf = requestAnimationFrame(loop);
-    });
+    }
     return { destroy() { window.removeEventListener('pointermove', onMove); cancelAnimationFrame(raf); tmo.forEach(clearTimeout); } };
   }
 };

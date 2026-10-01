@@ -1,4 +1,4 @@
-import { css, frame, hasRule, coarse } from './a_kit.js';
+import { css, frame, hasRule, coarse, numWords } from './a_kit.js';
 css('order', `
 .ao-l{position:relative;height:calc(var(--n)*46px)}
 .ao-r{position:absolute;left:0;right:0;height:42px;display:flex;align-items:center;gap:8px;padding:0 6px 0 4px;background:#fff;border:1px solid #c9ccd1;border-radius:5px;transition:top .2s cubic-bezier(.3,1.2,.5,1),box-shadow .15s,border-color .15s;touch-action:manipulation;box-shadow:0 1px 2px rgba(0,0,0,.1)}
@@ -16,10 +16,10 @@ const fmt = (kg) => kg >= 1 ? (kg.toLocaleString('fr-FR') + ' kg') : kg >= .001 
 export default {
   id: 'a_order', tier: 2, title: 'Classement', time: 40000,
   mount(host, api) {
-    const { h } = api, desc = api.rng() < .5, N = 5, RH = 46;
+    const { h } = api, N = 5, RH = 46; let desc = api.rng() < .5; const WORDS = hasRule('a_order', 'R2'), FLIP = hasRule('a_order', 'R5'); let flipped = false;
     // choose items with ratio >=3 between neighbours
     let pick; do pick = api.shuffle(POOL).slice(0, N).sort((a, b) => b[1] - a[1]); while (pick.some((x, i) => i && pick[i - 1][1] / x[1] < 3));
-    const truth = desc ? pick : [...pick].reverse(); let ord = api.shuffle(pick); if (ord.every((x, i) => x === truth[i])) ord = [...ord].reverse();
+    let truth = desc ? pick : [...pick].reverse(); let ord = api.shuffle(pick); if (ord.every((x, i) => x === truth[i])) ord = [...ord].reverse();
     const list = h('div', { class: 'ao-l' }); list.style.setProperty('--n', N);
     const rows = new Map();
     ord.forEach((it, i) => {
@@ -29,13 +29,19 @@ export default {
       r.addEventListener('keydown', (e) => { if (e.key === 'ArrowUp') { move(it, -1); e.preventDefault(); } else if (e.key === 'ArrowDown') { move(it, 1); e.preventDefault(); } });
       r.addEventListener('pointerdown', (e) => {
         if (!e.target.closest('.ao-gp') || e.button) return; const y0 = e.clientY, i0 = ord.indexOf(it); r.setPointerCapture(e.pointerId); r.classList.add('d'); api.sfx('tick');
-        const mm = (ev) => { const dy = ev.clientY - y0; r.style.top = Math.max(-4, Math.min((N - 1) * RH + 4, i0 * RH + dy)) + 'px'; const ni = Math.max(0, Math.min(N - 1, Math.round((i0 * RH + dy) / RH))); const cur = ord.indexOf(it); if (ni !== cur) { ord.splice(cur, 1); ord.splice(ni, 0, it); layout(it); api.sfx('click'); } };
+        const mm = (ev) => { const dy = ev.clientY - y0; r.style.top = Math.max(-4, Math.min((N - 1) * RH + 4, i0 * RH + dy)) + 'px'; const ni = Math.max(0, Math.min(N - 1, Math.round((i0 * RH + dy) / RH))); const cur = ord.indexOf(it); if (ni !== cur) { maybeFlip(); ord.splice(cur, 1); ord.splice(ni, 0, it); layout(it); api.sfx('click'); } };
         const uu = () => { r.removeEventListener('pointermove', mm); r.removeEventListener('pointerup', uu); r.removeEventListener('pointercancel', uu); r.classList.remove('d'); layout(); };
         r.addEventListener('pointermove', mm); r.addEventListener('pointerup', uu); r.addEventListener('pointercancel', uu);
       });
     });
-    function layout(skip) { ord.forEach((it, i) => { const r = rows.get(it); if (it !== skip) r.style.top = i * RH + 'px'; r._nb.textContent = i + 1; r._up.disabled = i === 0; r._dn.disabled = i === N - 1; }); }
-    function move(it, d) { const i = ord.indexOf(it), j = i + d; if (j < 0 || j >= N) return; ord.splice(i, 1); ord.splice(j, 0, it); layout(); api.sfx('click'); rows.get(it).focus(); }
+    function maybeFlip() {
+      if (!FLIP || flipped) return; flipped = true; desc = !desc; truth = [...truth].reverse();
+      fr.el.querySelector('.ak-head small').textContent = desc ? 'Du plus lourd (en haut) au plus léger' : 'Du plus léger (en haut) au plus lourd';
+      fr.banner('Rectificatif : le sens du classement est inversé. ' + (desc ? 'Le plus lourd en haut, désormais.' : 'Le plus léger en haut, désormais.'), 'rule', 0); api.say('Rectificatif. J’ai inversé le sens du classement. Relisez le haut de la carte.', 'smug'); api.sfx('whoosh');
+      if (/cheat=1/.test(location.search)) host.dataset.answer = truth.map((t) => t[0]).join('|');
+    }
+    function layout(skip) { ord.forEach((it, i) => { const r = rows.get(it); if (it !== skip) r.style.top = i * RH + 'px'; r._nb.textContent = WORDS ? numWords(i + 1) : i + 1; r._up.disabled = i === 0; r._dn.disabled = i === N - 1; }); }
+    function move(it, d) { const i = ord.indexOf(it), j = i + d; if (j < 0 || j >= N) return; maybeFlip(); ord.splice(i, 1); ord.splice(j, 0, it); layout(); api.sfx('click'); rows.get(it).focus(); }
     layout();
     const fr = frame(h, { api, id: 'a_order', small: desc ? 'Du plus lourd (en haut) au plus léger' : 'Du plus léger (en haut) au plus lourd', title: 'Classez par poids', note: 'Glissez les lignes, ou ▲▼ / flèches du clavier. On parle de poids moyen, pas de cas particuliers.', body: list, onVerify: check });
     host.append(fr.el);
@@ -46,7 +52,7 @@ export default {
       fr.shake();
       // find an adjacent inversion to report
       let m; const inv = ord.findIndex((x, i) => i && (desc ? ord[i - 1][1] < x[1] : ord[i - 1][1] > x[1]));
-      if (inv > 0) { const a = ord[inv - 1], b = ord[inv]; const heavy = a[1] > b[1] ? a : b, light = a[1] > b[1] ? b : a; m = `Vous avez placé ${a[0]} avant ${b[0]}. Or ${heavy[0]} pèse ${fmt(heavy[1])} et ${light[0]} ${fmt(light[1])}. Ça se sent à la main.`; }
+      if (inv > 0) { const a = ord[inv - 1], b = ord[inv]; const heavy = a[1] > b[1] ? a : b, light = a[1] > b[1] ? b : a; m = `Vous avez placé ${a[0]} avant ${b[0]}. Or ${heavy[0]} pèse ${fmt(heavy[1])} et ${light[0]} ${fmt(light[1])}. Ça se sent à la main.${WORDS ? ' (Je m’autorise les chiffres, moi. Pas vous.)' : ''}${flipped ? ' Et le sens a été inversé en cours de route, c’était écrit en bleu.' : ''}`; }
       else m = 'Le classement est bancal. Vérifiez : même une balance de cuisine y arriverait.';
       api.fail(m);
     }

@@ -127,6 +127,8 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; if (m) banner(m, '', 0); return f(m, o); };
     const so = api.solve; api.solve = () => { S.last = ''; return so(); };
     const T = TIMES[id]; if (S.pen && T) api.timer(Math.max(12000, T - S.pen * 5000));
+    const A = { a_math: S.upper ? 'À la carte 2, vous aviez écrit en majuscules. C’est dans le dossier. Ici : en lettres, en minuscules, avec humilité.' : '', a_slider: S.straight ? 'Pour mémoire : à la carte 1, votre trajectoire était trop rectiligne. Ici, on glisse avec un léger tremblement de culpabilité.' : '' }[id] || (S.pen && lv >= 5 ? `Pénalité cumulée : −${S.pen * 5} s. Chaque infraction se paie sur les cartes suivantes. Je n’invente rien.` : '');
+    if (A) setTimeout(() => el.isConnected && api.say(A, 'smug'), 1400);
   }
   if (patient) {
     const labs = ['Respirez…', 'Encore un peu…'];
