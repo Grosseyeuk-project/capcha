@@ -1,6 +1,46 @@
-{"updated":"","wave":"Wave 1 — builders","pieces":[
-{"id":"shell","name":"Shell, 3D, audio, narrator","status":"building","round":1,"verdict":"—","gap":"—"},
-{"id":"captchas-a","name":"Captchas tiers 1–2","status":"building","round":1,"verdict":"—","gap":"—"},
-{"id":"captchas-b","name":"Captchas tiers 3–5","status":"queued","round":0,"verdict":"—","gap":"—"},
-{"id":"online","name":"Online mode","status":"queued","round":0,"verdict":"—","gap":"—"}],
-"log":["Squelette posé : moteur, contrat, outil de capture."]}
+{
+ "updated": "2026-10-01 13:19 UTC",
+ "wave": "Vague 2 — boucles builder ↔ critic (3 agents max)",
+ "pieces": [
+  {
+   "id": "shell",
+   "name": "Shell, 3D, audio, narrateur",
+   "status": "judging",
+   "round": 8,
+   "verdict": "THEIRS WINS (shell 6.5→8 selon tours)",
+   "gap": "ergonomie mobile: zoom retiré, gate de mise en page durci"
+  },
+  {
+   "id": "captchas-a",
+   "name": "Captchas tiers 1–2",
+   "status": "building",
+   "round": 5,
+   "verdict": "THEIRS WINS (5–7/10)",
+   "gap": "les règles doivent être le jeu : liste live complète, conséquences immédiates"
+  },
+  {
+   "id": "captchas-b",
+   "name": "Captchas tiers 3–5",
+   "status": "judging",
+   "round": 6,
+   "verdict": "THEIRS WINS (6–7.5/10)",
+   "gap": "fin de partie : équilibre boss/robot, finale climax"
+  },
+  {
+   "id": "online",
+   "name": "Mode en ligne",
+   "status": "judging",
+   "round": 8,
+   "verdict": "THEIRS WINS (7–7.5/10)",
+   "gap": "rythme de course, podium, mobile"
+  }
+ ],
+ "log": [
+  "Aucun critic n'a encore dit « utterly wowed » : on continue.",
+  "Gate objectif de mise en page (tools/layout-gate.mjs) : 16 captchas × 3 tailles d'écran.",
+  "Banc d'équilibrage du boss/robot (tools/balance.mjs).",
+  "Règles cumulatives entre captchas + dossier/casier de Gérard.",
+  "Mode en ligne : lobby, bots, course, podium narratif.",
+  "Squelette posé : moteur, contrat, outil de capture."
+ ]
+}
