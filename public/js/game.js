@@ -164,12 +164,30 @@ export class Game {
   // Pas de zoom : le contenu défile dans .cap-slot et l'action principale reste collée en bas du défileur (sticky).
   findPrimary(host) {
     const ok = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 8 && r.height > 8 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
-    const all = [...host.querySelectorAll('[data-primary],.cap-go,button,[role=button],input[type=submit]')].filter(ok);
-    return all.find((e) => e.matches('[data-primary],.cap-go')) || all.find((e) => /v[ée]rifier|valider|confirmer|envoyer|continuer|suivant|terminer|soumettre|^ok$/i.test(e.textContent || e.value || ''));
+    const all = [...host.querySelectorAll('[data-primary],.cap-go,.ak-btn,.bk-btn,button,[role=button],input[type=submit]')].filter(ok);
+    return all.find((e) => e.matches('[data-primary],.cap-go,.ak-btn,.bk-btn')) || all.find((e) => /v[ée]rifier|valider|confirmer|envoyer|continuer|suivant|terminer|soumettre|^ok$/i.test(e.textContent || e.value || ''));
+  }
+  // Plancher de lisibilité tactile : texte >= 12 px effectifs, cibles interactives >= 40 px (aucun zoom, aucune transformation).
+  legible(host) {
+    const tsel = 'button,a[href],input:not([type=hidden]):not([type=checkbox]):not([type=radio]),select,textarea,[role=button],[role=slider]';
+    const skip = new Set(['SCRIPT', 'STYLE', 'CANVAS', 'OPTION', 'svg', 'path']);
+    host.querySelectorAll('*').forEach((e) => {
+      if (skip.has(e.tagName)) return;
+      const cs = getComputedStyle(e);
+      if (cs.display === 'none') return;
+      if ((cs.cursor === 'grab' || cs.cursor === 'pointer') && !e.matches(tsel) && !e.closest(tsel) && e.getBoundingClientRect().height > 8 && e.getBoundingClientRect().height < 40 && ![...e.children].some((k) => ['grab', 'pointer'].includes(getComputedStyle(k).cursor))) e.style.setProperty('min-height', '40px', 'important');
+      if (parseFloat(cs.fontSize) < 12 && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) e.style.setProperty('font-size', '12px', 'important');
+    });
+    host.querySelectorAll(tsel).forEach((e) => {
+      const r = e.getBoundingClientRect(); if (!r.width || !r.height) return;
+      if (r.height < 40) { e.style.setProperty('min-height', '40px', 'important'); }
+      if (r.width < 40) { e.style.setProperty('min-width', '40px', 'important'); }
+      if ((r.height < 40 || r.width < 40) && getComputedStyle(e).display === 'inline') { e.style.setProperty('display', 'inline-flex', 'important'); e.style.setProperty('align-items', 'center', 'important'); e.style.setProperty('justify-content', 'center', 'important'); }
+    });
   }
   fit() {
     const c = this.cur, slot = this.host; if (!c || !c.host || !slot) return;
-    const host = c.host;
+    const host = c.host; this.legible(host);
     host.querySelectorAll('.pin-action').forEach((e) => e.classList.remove('pin-action'));
     if (slot.scrollHeight > slot.clientHeight + 2) {
       const prim = this.findPrimary(host);

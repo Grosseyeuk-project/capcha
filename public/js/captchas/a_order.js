@@ -6,9 +6,9 @@ css('order', `
 .ao-r:focus-visible{border-color:#1a73e8}
 .ao-nb{flex:none;width:24px;height:24px;border-radius:50%;background:#e8f0fe;color:#1a73e8;font:700 12px/24px system-ui;text-align:center}
 .ao-tx{flex:1;font-weight:600;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ao-gp{color:#9aa0a6;font-size:18px;letter-spacing:-2px;width:34px;height:40px;display:grid;place-items:center;cursor:grab;touch-action:none;margin-left:-4px;border-radius:5px}.ao-gp:hover{background:#eef0f3;color:#1a73e8}
-.ao-ab{display:flex;flex-direction:column}
-.ao-ab button{appearance:none;border:0;background:transparent;color:#5f6368;width:30px;height:19px;font-size:9px;cursor:pointer;border-radius:3px;line-height:1}
+.ao-gp{color:#9aa0a6;font-size:18px;letter-spacing:-2px;width:40px;height:40px;display:grid;place-items:center;cursor:grab;touch-action:none;margin-left:-4px;border-radius:5px}.ao-gp:hover{background:#eef0f3;color:#1a73e8}
+.ao-ab{display:flex;flex-direction:row}
+.ao-ab button{appearance:none;border:0;background:transparent;color:#5f6368;width:40px;height:40px;font-size:14px;cursor:pointer;border-radius:3px;line-height:1}
 .ao-ab button:hover:not(:disabled){background:#e8eaed;color:#1a73e8}.ao-ab button:disabled{opacity:.3;cursor:default}
 `);
 const POOL = [['une baleine bleue', 150000], ['un éléphant', 5000], ['une voiture', 1300], ['un piano à queue', 480], ['un humain adulte', 70], ['un chat', 4], ['un melon', 1.5], ['une baguette', .25], ['un smartphone', .18], ['une souris d’ordinateur', .09], ['une mouche', .00001]];

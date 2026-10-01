@@ -42,9 +42,9 @@ const measure = () => {
   const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 2 && r.height > 2 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0'; };
   const inSlot = (e) => { const r = e.getBoundingClientRect(); return r.bottom > sr.top && r.top < sr.bottom; };
   // primary
-  const btns = [...host.querySelectorAll('[data-primary],.cap-go,button,[role=button],input[type=submit]')].filter(vis);
+  const btns = [...host.querySelectorAll('[data-primary],.cap-go,.ak-btn,.bk-btn,button,[role=button],input[type=submit]')].filter(vis);
   const re = /v[ée]rifier|valider|confirmer|envoyer|continuer|suivant|terminer|soumettre|^ok$/i;
-  const prim = btns.find((x) => x.matches('[data-primary],.cap-go')) || btns.find((x) => re.test(x.textContent || x.value || ''));
+  const prim = btns.find((x) => x.matches('[data-primary],.cap-go,.ak-btn,.bk-btn')) || btns.find((x) => re.test(x.textContent || x.value || ''));
   if (prim) {
     const r = prim.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2; const el = document.elementFromPoint(cx, cy);
     const cr = card.getBoundingClientRect(), foot = document.querySelector('.card-foot').getBoundingClientRect();
@@ -76,15 +76,15 @@ const measure = () => {
   return o;
 };
 
-const cdpDrag = async (p, x, y, dx, dy, probe) => {
+const cdpDrag = async (p, x, y, dx, dy, probe, start) => {
   const c = await p.context().newCDPSession(p); const T = (type, pts) => c.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
-  await T('touchStart', [{ x, y }]); const out = { before: await p.evaluate(probe) };
+  await T('touchStart', [{ x, y }]); const out = { before: await p.evaluate(probe), start: start ? await p.evaluate(start) : null };
   for (let i = 1; i <= 8; i++) { await T('touchMove', [{ x: x + dx * i / 8, y: y + dy * i / 8 }]); await sleep(30); }
   out.during = await p.evaluate(probe); await T('touchEnd', []); await c.detach(); return out;
 };
 const DRAGS = {
   a_slider: { sel: '.as-hd', dx: 90, dy: 0, probe: () => { const e = document.querySelector('.as-hd'); const r = e.getBoundingClientRect(); return r.left + r.width / 2; }, axis: 'dx' },
-  a_order: { sel: '.ao-r .ao-gp', dx: 0, dy: 60, probe: () => { const e = [...document.querySelectorAll('.ao-r')].find((r) => r.classList.contains('dr') || r.classList.contains('dg') || r.style.zIndex > 0) || document.querySelector('.ao-r'); const r = e.getBoundingClientRect(); return r.top + r.height / 2; }, axis: 'dy' },
+  a_order: { sel: '.ao-r .ao-gp', dx: 0, dy: 60, probe: () => { const e = document.querySelector('.ao-r.d'); if (!e) return null; const r = e.getBoundingClientRect(), l = document.querySelector('.ao-l').getBoundingClientRect(); return r.top + r.height / 2 - l.top; }, start: () => { const r = document.querySelector('.ao-r').getBoundingClientRect(), l = document.querySelector('.ao-l').getBoundingClientRect(); return r.top + r.height / 2 - l.top; }, axis: 'dy' },
   a_bins: { sel: '.ab-c', dx: 70, dy: 90, probe: () => { const g = document.querySelector('.ab-c.gh'); if (!g) return null; const r = g.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, axis: 'xy' },
 };
 
@@ -109,10 +109,10 @@ for (const [w, h] of VPS) {
     if (d && !skipDrag) {
       const box = await p.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, d.sel);
       if (!box) { bad(`${tag} drag: ${d.sel} not found`); continue; }
-      const res = await cdpDrag(p, box.x, box.y, d.dx, d.dy, d.probe);
+      const res = await cdpDrag(p, box.x, box.y, d.dx, d.dy, d.probe, d.start);
       let ok = true, msg = '';
       if (d.axis === 'xy') { if (!res.during) { ok = false; msg = 'no ghost during drag'; } else { const dxm = res.during[0] - box.x, dym = res.during[1] - box.y; ok = Math.abs(dxm - d.dx) / d.dx <= 0.08 && Math.abs(dym - d.dy) / d.dy <= 0.08; msg = `finger (${d.dx},${d.dy}) ghost (${dxm.toFixed(0)},${dym.toFixed(0)})`; } }
-      else { const del = res.during - res.before; const want = d[d.axis]; ok = Math.abs(del - want) / want <= 0.08; msg = `finger ${want} element ${del.toFixed(0)}`; }
+      else { if (res.during == null) { bad(`${tag} drag: no dragged row`); continue; } const del = res.during - (d.start ? res.start : res.before); const want = d[d.axis]; ok = Math.abs(del - want) / want <= 0.08; msg = `finger ${want} element ${del.toFixed(0)}`; }
       console.log(`   drag ${msg} ${ok ? 'ok' : 'DRIFT'}`); if (!ok) bad(`${tag} drag accuracy: ${msg}`);
     }
   }
