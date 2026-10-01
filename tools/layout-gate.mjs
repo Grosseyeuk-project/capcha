@@ -136,6 +136,7 @@ if (!skipCls) {
   for (const [w, h] of VPS) for (const id of ['a_checkbox', 'a_grid']) {
     const p = await page(w, h); await p.goto(`${base}?cap=${id}&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1500);
     await p.evaluate(() => __cap.fail('La réponse ne respecte pas la règle affichée : relisez la consigne.')); await p.waitForTimeout(2600);
+    { const v = await p.evaluate(() => document.querySelector('.card-foot').className); if (v.includes('v-bad')) bad(`${w}x${h} ${id} stale strike verdict still shown after retry mount`); }
     await p.evaluate(() => window.__cap.solve()); await p.waitForTimeout(2200);
     const cls = await p.evaluate(() => window.__cls), src = await p.evaluate(() => window.__clsSrc.slice().sort((a, b) => b[0] - a[0]).slice(0, 4).map((x) => x[1]));
     console.log(`  ${w}x${h} ${id.padEnd(11)} CLS=${cls.toFixed(3)} ${cls > 0.05 ? src.join(' ; ') : ''}`);

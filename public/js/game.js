@@ -132,6 +132,7 @@ export class Game {
 
   mount(def, seed) {
     clearConfetti(); this.card.classList.remove('entering', 'struck', 'solved'); this.banner.className = 'banner'; this.stamp.className = 'stamp';
+    this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; /* le verdict d'une tentative précédente ne survit pas au nouvel essai */
     const rng = mulberry32(seed);
     this.host.classList.add('ready');
     const host = h('div', { class: 'cap-host' }); this.host.replaceChildren(host);
@@ -321,7 +322,7 @@ export class Game {
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0');
     this.hudRefresh();
     sfx(win ? 'win' : 'lose');
-    document.body.classList.add('end-open');
+    document.body.classList.add('end-open'); this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; this.stamp.className = 'stamp'; this.srEl.textContent = '';
     if (win) { confetti(innerWidth / 2, innerHeight / 3, 220); this.later(() => confetti(innerWidth * 0.2, innerHeight * 0.4, 100), 350); this.later(() => confetti(innerWidth * 0.8, innerHeight * 0.4, 100), 600); }
     if (this.mode === 'solo') { const b = loadBest(); if (!b || lvlDone > (b.level ?? 0) || (win && !b.win)) saveBest({ level: lvlDone, total: this.total, rank, win }); }
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
