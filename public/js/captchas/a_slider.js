@@ -1,12 +1,12 @@
-import { css, frame, S, ruleHit, hasRule, coarse } from './a_kit.js';
+import { css, frame, S, ruleHit, hasRule, coarse, zap } from './a_kit.js';
 css('slider', `
 .as-st{position:relative;width:100%;aspect-ratio:340/142;border-radius:3px;overflow:hidden;background:#cde}
 .as-st canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .as-pc{will-change:transform;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
-.as-rd{display:flex;align-items:center;gap:8px;margin-top:10px;min-height:44px;padding:0 4px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;color:#80868b}
+.as-rd{display:flex;align-items:center;gap:8px;margin-top:10px;min-height:52px;padding:0 4px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;color:#80868b}
 .as-rd.on{border-style:solid;border-color:#f9ab00;background:#fff8e1;color:#664d03;animation:ak-pop .3s both}
 .as-rm{flex:1;line-height:1.25;padding:4px}
-.as-ri{width:34%;min-width:110px;height:36px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.as-ri:disabled{opacity:.4}.as-ri:focus{outline:0;border-color:#1a73e8}
+.as-ri{width:34%;min-width:110px;height:44px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.as-ri:disabled{opacity:.4}.as-ri:focus{outline:0;border-color:#1a73e8}
 .as-tr{position:relative;height:44px;margin-top:10px;background:#eef0f3;border:1px solid #d5d8dd;border-radius:22px;touch-action:none}
 .as-tr span{position:absolute;inset:0;padding-left:50px;display:grid;place-items:center;font-size:12px;color:#7b8089;pointer-events:none;transition:opacity .2s}
 .as-fl{position:absolute;left:0;top:0;bottom:0;border-radius:22px;background:rgba(26,115,232,.18);width:0}
@@ -42,7 +42,7 @@ export default {
     const tr = h('div', { class: 'as-tr' }, fill, hint, hd);
     const wordRev = [...(S.word || 'PUZZLE')].reverse().join('').toLowerCase();
     const redoMsg = h('span', { class: 'as-rm' }, 'Le greffier prépare un rectificatif…');
-    const redoIn = h('input', { class: 'as-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Mot retapé à l’envers', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); fr.rule('R1', b ? 'bad' : 'ok'); } });
+    const redoIn = h('input', { class: 'as-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Mot retapé à l’envers', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
     const redo = h('div', { class: 'as-rd' }, redoMsg, redoIn);
     let twisted = false, tmr = 0;
     function twist() {

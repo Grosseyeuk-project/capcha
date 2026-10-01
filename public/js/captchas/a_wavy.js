@@ -1,4 +1,4 @@
-import { css, frame, hasRule, coarse, ruleHit, S } from './a_kit.js';
+import { css, frame, hasRule, coarse, ruleHit, S, zap } from './a_kit.js';
 css('wavy', `
 .aw-cv{display:block;width:100%;height:auto;border-radius:3px;background:#eef1f5}
 .aw-row{display:flex;gap:8px;margin-top:10px}
@@ -36,7 +36,7 @@ export default {
       A = api.int(6, 9); f = api.rng() * 0.05 + 0.05; ph = api.rng() * 6; paint();
     }
     S.word = word; draw(); if (!api.reducedMotion) raf = requestAnimationFrame(loop); if (/cheat=1/.test(location.search)) host.dataset.answer = word;
-    let fr; const inp = h('input', { class: 'aw-in', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', oninput: () => { const b = /[A-ZÀ-Ý]/.test(inp.value); inp.classList.toggle('ak-viol', b); fr && fr.rule('R1', b ? 'bad' : 'ok'); }, placeholder: hasRule('a_wavy', 'R1') ? 'minuscules' : 'Tapez le texte', 'aria-label': 'Texte lu', maxlength: 14, onkeydown: (e) => { if (e.key === 'Enter') check(); } });
+    let fr; const inp = h('input', { class: 'aw-in', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', oninput: () => { const b = /[A-ZÀ-Ý]/.test(inp.value); inp.classList.toggle('ak-viol', b); if (b) zap(h, inp, 'MAJUSCULE !'); fr && fr.rule('R1', b ? 'bad' : 'ok'); }, placeholder: hasRule('a_wavy', 'R1') ? 'minuscules' : 'Tapez le texte', 'aria-label': 'Texte lu', maxlength: 14, onkeydown: (e) => { if (e.key === 'Enter') check(); } });
     const rf = h('button', { class: 'ak-ghost aw-rf', type: 'button', title: 'Autre image', 'aria-label': 'Autre image', onclick: () => { draw(); api.sfx('tick'); inp.focus(); } }, '⟳');
     fr = frame(h, { api, id: 'a_wavy', small: 'Tapez le mot', title: 'Lisez ce que vous voyez', note: 'Respectez l’ordre. Un humain lit de gauche à droite (sauf le dimanche).', body: [cv, h('div', { class: 'aw-row' }, inp, rf)], onVerify: check });
     host.append(fr.el); if (!coarse()) setTimeout(() => inp.focus(), 50);

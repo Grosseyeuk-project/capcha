@@ -3,11 +3,11 @@ css('chk', `
 .ac-w{width:min(100%,340px)}
 @media (min-width:900px){.ac-w{width:min(100%,440px)}}
 .ac-row{position:relative;height:70px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
-.ac-box{position:absolute;left:18px;top:20px;width:30px;height:30px;border:2px solid #c1c1c1;border-radius:3px;background:#fff;padding:0;cursor:pointer;transition:left .35s cubic-bezier(.3,1.6,.5,1),border-color .15s,box-shadow .15s;display:grid;place-items:center}
+.ac-box{position:absolute;left:16px;top:15px;width:40px;height:40px;border:2px solid #c1c1c1;border-radius:3px;background:#fff;padding:0;cursor:pointer;transition:left .35s cubic-bezier(.3,1.6,.5,1),border-color .15s,box-shadow .15s;display:grid;place-items:center}
 .ac-box:hover{border-color:#1a73e8;box-shadow:0 0 0 4px rgba(26,115,232,.15)}
-.ac-box.hop{left:calc(100% - 50px)}
+.ac-box.hop{left:calc(100% - 56px)}
 .ac-box:disabled{cursor:progress}
-.ac-lab{position:absolute;left:64px;top:0;height:100%;display:flex;align-items:center;font-size:15px;font-weight:500;color:#202124;transition:left .35s}
+.ac-lab{position:absolute;left:72px;top:0;height:100%;display:flex;align-items:center;font-size:15px;font-weight:500;color:#202124;transition:left .35s}
 .ac-box.hop+.ac-lab{left:16px}
 .ac-spin{width:20px;height:20px;border:3px solid #dadce0;border-top-color:#1a73e8;border-radius:50%;animation:ac-sp .7s linear infinite}
 @keyframes ac-sp{to{transform:rotate(360deg)}}
@@ -19,8 +19,10 @@ css('chk', `
 .ac-pb{height:5px;background:#e8eaed;border-radius:3px;margin-top:4px;overflow:hidden}
 .ac-pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1a73e8,#34a853);border-radius:3px}
 .ac-w.bad .ac-pb i{background:#d93025}
-.ac-ring{position:absolute;left:-6px;top:-6px;width:38px;height:38px;border-radius:50%;pointer-events:none;background:conic-gradient(#1a73e8 calc(var(--p,0)*1turn),transparent 0);-webkit-mask:radial-gradient(circle,transparent 15px,#000 16px);mask:radial-gradient(circle,transparent 15px,#000 16px)}
+.ac-ring{position:absolute;left:-8px;top:-8px;width:52px;height:52px;border-radius:50%;pointer-events:none;background:conic-gradient(#1a73e8 calc(var(--p,0)*1turn),transparent 0);-webkit-mask:radial-gradient(circle,transparent 15px,#000 16px);mask:radial-gradient(circle,transparent 15px,#000 16px)}
 .ac-box{touch-action:manipulation;-webkit-user-select:none}
+.ac-fine{width:min(100%,340px);margin:14px auto 0;font-size:12px;color:#5f6368;line-height:1.35}.ac-fine label{display:flex;gap:8px;align-items:center;min-height:42px;cursor:pointer}.ac-fine input{width:22px;height:22px;flex:none}.ac-fine p{margin:4px 0 0;opacity:.8}
+@media (min-width:900px){.ac-fine{width:min(100%,440px)}}
 .ac-box.hint{animation:ac-hint 1.6s ease-in-out infinite}
 @keyframes ac-hint{0%,100%{box-shadow:0 0 0 0 rgba(26,115,232,.45)}50%{box-shadow:0 0 0 9px rgba(26,115,232,0)}}
 @media (prefers-reduced-motion:reduce){.ac-box.hint{animation:none}}
@@ -36,6 +38,8 @@ export default {
     const bar = h('i'); const isTouch = coarse(); const msg = h('span', {}, isTouch ? 'Maintenez la case : les robots lâchent vite.' : 'Analyse : en attente de preuves.');
     const w = h('div', { class: 'ak-w ac-w' }, row, h('div', { class: 'ac-strip' }, h('div', { class: 'ac-st' }, msg, h('div', { class: 'ac-pb' }, bar)), brand(h)));
     host.append(w); if (isTouch) { box.classList.add('hint'); }
+    const fine = h('div', { class: 'ac-fine' }, h('label', {}, h('input', { type: 'checkbox', onchange: (e) => { api.sfx('pop'); api.say(e.target.checked ? 'Vous avez accepté 14 pages de conditions, dont la clause 9 (votre second prénom nous appartient).' : 'Vous avez décoché. Je le note. Cela ne change rien, mais je le note.', 'smug'); } }), h('span', {}, ' J’accepte d’être observé·e depuis ce matin.')), h('p', {}, 'Formulaire C-1 · Vérification d’humanité · Valable 4 s · Non remboursable'));
+    host.append(fine);
     const onMove = (e) => {
       if (e.pointerType !== 'mouse') return;
       const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; for (const c of (evs.length ? evs : [e])) pts.push({ x: c.clientX, y: c.clientY, t: performance.now() }); while (pts.length > 400) pts.shift();
@@ -65,7 +69,7 @@ export default {
     box.addEventListener('pointerdown', (e) => {
       if (!touchy(e) || busy) return;
       const t0 = performance.now(), ring = h('div', { class: 'ac-ring' }); box.append(ring); msg.textContent = 'Maintenez… un robot lâcherait déjà.';
-      const HOLD = ['Mesure du tremblement du pouce…', 'Pouce détecté : 87 % humain, 13 % saucisse.', 'Analyse de la moiteur…']; const step = () => { const k = Math.min(1, (performance.now() - t0) / 1100); ring.style.setProperty('--p', k); msg.textContent = HOLD[Math.min(2, Math.floor(k * 3))]; if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
+      const HOLD = ['Mesure du tremblement du pouce…', 'Pouce détecté : 87 % humain, 13 % saucisse.', 'Analyse de la moiteur…']; const step = () => { const k = Math.min(1, (performance.now() - t0) / 650); ring.style.setProperty('--p', k); msg.textContent = HOLD[Math.min(2, Math.floor(k * 3))]; if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
       hold = { ring, raf: requestAnimationFrame(step) };
     });
     const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Trop tôt ! Un robot aurait tenu. Réessayez.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };

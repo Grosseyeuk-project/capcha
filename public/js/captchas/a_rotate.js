@@ -1,8 +1,12 @@
-import { css, frame, hasRule, coarse } from './a_kit.js';
+import { css, frame, hasRule, coarse, S, roman, numWords, ruleHit, zap } from './a_kit.js';
 css('rot', `
 .ar-st{position:relative;border-radius:4px;overflow:hidden;background:linear-gradient(180deg,#232a3a,#141824);touch-action:none;cursor:grab}
 .ar-st canvas{display:block;width:100%;height:auto}
 .ar-lb{position:absolute;top:6px;font:700 10px system-ui;letter-spacing:.12em;color:#9fb0d0;pointer-events:none;text-transform:uppercase}
+.ar-rd{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:52px;padding:0 6px;border:1px dashed #c9ccd1;border-radius:6px;font-size:12px;line-height:1.25;color:#80868b}
+.ar-rd.on{border-style:solid;border-color:#f9ab00;background:#fff8e1;color:#664d03;animation:ak-pop .3s both}
+.ar-rm{flex:1;padding:4px}
+.ar-ri{width:34%;min-width:110px;height:44px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.ar-ri:disabled{opacity:.4}.ar-ri:focus{outline:0;border-color:#1a73e8}
 .ar-dv{position:absolute;left:50%;top:10px;bottom:10px;width:1px;background:rgba(255,255,255,.18)}
 .ar-bt{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
 .ar-bt button{height:36px;border:1px solid #c9ccd1;border-radius:4px;background:#fff;font-size:17px;cursor:pointer;color:#1a3d7c;transition:background .12s,transform .08s,border-color .12s;padding:0}
@@ -34,7 +38,11 @@ export default {
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
     defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; const bb = h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 6 : ↑ en maintenance' : l, style: dis ? { opacity: .35, cursor: 'not-allowed',  } : {}, onclick: () => rot(i) }, t); if (dis) { bb.disabled = true; bb.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>'; } bt.append(bb); });
-    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt], onVerify: check });
+    const mv0 = S.mathVal ?? 42, romanAns = roman(mv0).toLowerCase();
+    const redoMsg = h('span', { class: 'ar-rm' }, two ? 'Un rectificatif est en préparation…' : 'Aucun rectificatif. Profitez-en.');
+    const redoIn = h('input', { class: 'ar-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Résultat en chiffres romains', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
+    const redo = h('div', { class: 'ar-rd' }, redoMsg, redoIn);
+    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt, two ? redo : null], onVerify: check });
     host.append(fr.el);
     const setAnswer = () => { // BFS path for tests
       const par = new Map([[key(cur), null]]), qq = [cur]; let hit = null;
@@ -76,8 +84,14 @@ export default {
       const n = distBetween(cur, tgt);
       if (n === 0 && two && round === 1) {
         round = 2; api.sfx('good'); const old = key(tgt); do tgt = api.pick(all); while (key(tgt) === old || distBetween(cur, tgt) < 2);
-        gT.quaternion.copy(toQ(tgt)); kick(); glow(); if (/cheat=1/.test(location.search)) setAnswer();
+        gT.quaternion.copy(toQ(tgt)); kick(); glow(); if (/cheat=1/.test(location.search)) { setAnswer(); host.dataset.redo = romanAns; }
+        redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 4 invalidée : « ' + numWords(mv0) + ' » est écrit en lettres. Retapez ce résultat en chiffres romains, en minuscules.'; fr.addChip('R★ pièce 4 annulée', 'bad');
         fr.banner('Pose 1/2 validée. Une seule pose est suspecte : le modèle a changé, recommencez.', 'rule', 0); api.say('Une seule pose, c’est suspect. Le modèle vient de changer. Recommencez.', 'smug'); fr.shake(); return;
+      }
+      if (n === 0 && two) {
+        const rv = redoIn.value.trim();
+        if (rv && rv !== rv.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : les chiffres romains aussi se tapent en minuscules.');
+        if (rv !== romanAns) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! La pièce 4 était à refaire en chiffres romains. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas ${numWords(mv0)} en chiffres romains (C = cent, L = cinquante, X = dix, V = cinq, I = un).`); }
       }
       if (n === 0) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();

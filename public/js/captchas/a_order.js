@@ -5,7 +5,7 @@ css('order', `
 .ao-r.d{transition:box-shadow .15s;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.3);border-color:#1a73e8;cursor:grabbing}
 .ao-r:focus-visible{border-color:#1a73e8}
 .ao-nb{flex:none;min-width:24px;height:24px;padding:0 8px;border-radius:12px;background:#e8f0fe;color:#1a73e8;font:700 12px/24px system-ui;text-align:center;white-space:nowrap}
-.ao-tx{flex:1;font-weight:600;font-size:13px;line-height:1.15;min-width:0;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ao-tx.lc{text-transform:lowercase}.ao-tx{flex:1;font-weight:600;font-size:13px;line-height:1.15;min-width:0;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ao-gp{color:#9aa0a6;font-size:18px;letter-spacing:-2px;width:40px;height:50px;display:grid;place-items:center;cursor:grab;touch-action:none;margin-left:-4px;border-radius:5px}.ao-gp:hover{background:#eef0f3;color:#1a73e8}
 .ao-ab{display:flex;flex-direction:row}
 .ao-ab button{appearance:none;border:0;background:transparent;color:#5f6368;width:40px;height:40px;font-size:14px;cursor:pointer;border-radius:3px;line-height:1}
@@ -24,7 +24,7 @@ export default {
     const rows = new Map();
     ord.forEach((it, i) => {
       const up = h('button', { type: 'button', 'aria-label': 'Monter', tabindex: -1, onclick: (e) => { e.stopPropagation(); move(it, -1); } }, '▲'), dn = h('button', { type: 'button', 'aria-label': 'Descendre', tabindex: -1, onclick: (e) => { e.stopPropagation(); move(it, 1); } }, '▼');
-      const nb = h('span', { class: 'ao-nb' }), r = h('div', { class: 'ao-r', tabindex: 0, role: 'listitem', 'aria-label': it[0] }, h('span', { class: 'ao-gp' }, '⋮⋮'), nb, h('span', { class: 'ao-tx' }, it[0][0].toUpperCase() + it[0].slice(1)), h('div', { class: 'ao-ab' }, up, dn));
+      const nb = h('span', { class: 'ao-nb' }), r = h('div', { class: 'ao-r', tabindex: 0, role: 'listitem', 'aria-label': it[0] }, h('span', { class: 'ao-gp' }, '⋮⋮'), nb, h('span', { class: 'ao-tx' + (hasRule('a_order', 'R1') ? ' lc' : '') }, it[0][0].toUpperCase() + it[0].slice(1)), h('div', { class: 'ao-ab' }, up, dn));
       r._nb = nb; r._up = up; r._dn = dn; rows.set(it, r); list.append(r);
       r.addEventListener('keydown', (e) => { if (e.key === 'ArrowUp') { move(it, -1); e.preventDefault(); } else if (e.key === 'ArrowDown') { move(it, 1); e.preventDefault(); } });
       r.addEventListener('pointerdown', (e) => {

@@ -93,7 +93,7 @@ async function run(id) {
     console.log('  path', path.join(','));
     for (const m of path.slice(0, 1)) { const sb = await box('.ar-st'); const [x, y] = ctr(sb); const d = { 0: [0, -60], 1: [0, 60], 2: [-60, 0], 3: [60, 0] }[m]; if (d) { await p.mouse.move(x + 40, y); await p.mouse.down(); await p.mouse.move(x + 40 + d[0], y + d[1], { steps: 6 }); await p.mouse.up(); } else await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(300); }
     for (const m of path.slice(1)) { await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(260); }
-    await sleep(400); await shot('solved'); await click('.ak-btn'); await sleep(1200); await shot('pose2'); { const path2 = (await ans()).split(',').filter(Boolean).map(Number); console.log('  pose2 path', path2.join(',')); for (const m of path2) { await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(260); } await sleep(400); } await click('.ak-btn'); await waitSolve();
+    await sleep(400); await shot('solved'); await click('.ak-btn'); await sleep(1200); await shot('pose2'); { const path2 = (await ans()).split(',').filter(Boolean).map(Number); console.log('  pose2 path', path2.join(',')); for (const m of path2) { await p.evaluate((i) => document.querySelectorAll('.ar-bt button')[i].click(), m); await sleep(260); } await sleep(400); await p.fill('.ar-ri', await p.evaluate(() => document.querySelector('.cap-host').dataset.redo)); } await click('.ak-btn'); await waitSolve();
   }
   if (errs.length) console.log('  ERRORS', errs);
   await ctx.close();

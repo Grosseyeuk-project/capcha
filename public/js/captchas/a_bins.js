@@ -1,4 +1,4 @@
-import { css, frame, hasRule, coarse } from './a_kit.js';
+import { css, frame, hasRule, coarse, numWords } from './a_kit.js';
 css('bins', `
 .ab-bins{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ab-bin{position:relative;height:112px;border:2px dashed #b8c0cc;border-radius:6px;padding:30px 5px 5px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;background:#fafbfc;transition:border-color .15s,background .15s,transform .15s}
@@ -11,20 +11,21 @@ css('bins', `
 .ab-c.sel{border-color:#1a73e8;box-shadow:0 0 0 3px rgba(26,115,232,.3)}
 .ab-c.in{font-size:10.5px;padding:3px 6px;width:100%;box-shadow:none;flex:none;overflow:hidden}
 .ab-c.gh{position:fixed;z-index:99999;pointer-events:none;transform:rotate(-3deg) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:grabbing;animation:none}
-.ab-c.dim{opacity:.35}
+.ab-c.dim{opacity:.35}.ab-c.lc{text-transform:lowercase}
 @media (max-width:480px){.ab-pool{height:150px;padding:5px;gap:4px;overflow-y:auto}.ab-bin{height:128px;overflow-y:auto;padding-top:27px}.ab-c{padding:5px 7px;font-size:12px}.ab-c.in{white-space:normal;font-size:12px;line-height:1.1;padding:3px 5px}.ab-note-x{display:none}}
 `);
 const HUM = ['Éternuer', 'Avoir un anniversaire', 'Rougir de honte', 'Manger une baguette', 'Avoir une belle-mère', 'Bâiller en réunion', 'Tomber amoureux·se', 'Se tromper de bus', 'Avoir des empreintes digitales'];
-const ROB = ['Fonctionner sur batterie', 'Avoir un numéro de série gravé', 'Rouiller sous la pluie', 'Se brancher sur une prise secteur', 'Parler en code binaire', 'Être garanti deux ans', 'Avoir une prise de terre', 'Avoir un câble USB', 'Être monté en usine'];
+const ROB = ['Fonctionner sur 5 volts', 'Avoir un numéro de série gravé', 'Rouiller sous la pluie', 'Se brancher sur une prise secteur', 'Parler en code binaire', 'Être garanti 2 ans', 'Avoir une prise de terre', 'Avoir un câble USB', 'Être monté en usine'];
 export default {
   id: 'a_bins', tier: 2, title: 'Tri sélectif', time: 45000,
   mount(host, api) {
     const { h } = api, nH = api.int(2, 4), items = api.shuffle([...api.shuffle(HUM).slice(0, nH).map((t) => ({ t, k: 'h' })), ...api.shuffle(ROB).slice(0, 6 - nH).map((t) => ({ t, k: 'r' }))]);
+    const R1 = hasRule('a_bins', 'R1'), R2 = hasRule('a_bins', 'R2'); const show = (t) => R2 ? t.replace(/\d+/g, (m) => numWords(+m)) : t;
     const place = items.map(() => 'p'); let selected = -1, ghost = null, flipped = false, flipDone = false;
     const binH = h('div', { class: 'ab-bin', 'data-l': 'HUMAIN', 'data-b': 'h' }), binR = h('div', { class: 'ab-bin', 'data-l': 'ROBOT', 'data-b': 'r' }); binH.style.setProperty('--c', '#2e7d32'); binR.style.setProperty('--c', '#c62828'); const pool = h('div', { class: 'ab-pool', 'data-b': 'p' });
     const bins = { h: binH, r: binR, p: pool };
     const cards = items.map((it, i) => {
-      const c = h('div', { class: 'ab-c', tabindex: 0, role: 'button', 'aria-label': it.t, title: it.t }, it.t);
+      const c = h('div', { class: 'ab-c' + (R1 ? ' lc' : ''), tabindex: 0, role: 'button', 'aria-label': show(it.t), title: show(it.t) }, show(it.t));
       c.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') { mv(i, flipped ? 'r' : 'h'); e.preventDefault(); } else if (e.key === 'ArrowRight') { mv(i, flipped ? 'h' : 'r'); e.preventDefault(); } else if (e.key === 'ArrowDown' || e.key === 'Backspace' || e.key === 'Delete') { mv(i, 'p'); e.preventDefault(); } else if (e.key === 'Enter' || e.key === ' ') { pick(i); e.preventDefault(); } });
       c.addEventListener('pointerdown', (e) => {
         if (e.button) return; const r = c.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, ox = sx - r.left, oy = sy - r.top; let moved = false;
@@ -67,7 +68,7 @@ export default {
       const wrong = items.map((it, i) => place[i] !== it.k ? i : -1).filter((i) => i >= 0);
       if (!wrong.length) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); const w = items[wrong[0]]; const who = w.k === 'h' ? 'très humain' : 'très robotique';
-      api.fail(`« ${w.t} » ? Franchement, c’est ${who}.` + (flipped ? ' (Les bacs ont changé de côté en cours de route, c’était annoncé en bleu.)' : '') + (wrong.length > 1 ? ` Et ${wrong.length - 1} autre${wrong.length > 2 ? 's' : ''} erreur${wrong.length > 2 ? 's' : ''} du même genre. Vous vous cherchez ?` : ' Une seule erreur, mais c’est la bonne.'));
+      api.fail(`« ${show(w.t)} » ? Franchement, c’est ${who}.` + (flipped ? ' (Les bacs ont changé de côté en cours de route, c’était annoncé en bleu.)' : '') + (wrong.length > 1 ? ` Et ${wrong.length - 1} autre${wrong.length > 2 ? 's' : ''} erreur${wrong.length > 2 ? 's' : ''} du même genre. Vous vous cherchez ?` : ' Une seule erreur, mais c’est la bonne.'));
     }
     return { destroy() { ghost && ghost.remove(); } };
   }

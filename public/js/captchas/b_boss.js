@@ -129,7 +129,7 @@ export default {
     }
     // ---- phase 2: synchronisation (valeurs calibrées : tools/balance.mjs) ----
     function p2() {
-      phase = 2; clear(); api.timer(60000); busy = false; face.dataset.m = '1'; let hits = 0, floorH = 0, ph = 0, last = performance.now(), zc = 0.5, dc = -1; const NH = 5, ZW = [0.16, 0.14, 0.12, 0.10, 0.09], V = [0.70, 0.72, 0.75, 0.78, 0.80]; CK.phase = 2;
+      phase = 2; clear(); api.timer(60000); busy = false; face.dataset.m = '1'; let hits = 0, floorH = 0, ph = 0, last = performance.now(), zc = 0.5, dc = -1; const NH = 5, ZW = [0.175, 0.157, 0.138, 0.12, 0.10], V = [0.65, 0.67, 0.70, 0.72, 0.74]; CK.phase = 2;
       setRule('Phase 2/3 · 60 s', h('b', {}, 'STOP'), ' (bouton, Espace, toucher) dans la ', h('b', {}, 'zone verte'), ' ×' + NH + '. Rouge = piège. Erreur : −1 progrès.');
       const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
       const zone = h('div', { class: 'bb-zone' }), dz = h('div', { class: 'bb-zone bb-dec' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');

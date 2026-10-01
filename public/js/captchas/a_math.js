@@ -1,4 +1,4 @@
-import { css, frame, numWords, hasRule, coarse, ruleHit } from './a_kit.js';
+import { css, frame, numWords, hasRule, coarse, ruleHit, zap, S } from './a_kit.js';
 css('math', `
 .am-p{background:#f6f7f9;border:1px dashed #c9ccd1;border-radius:4px;padding:10px 12px 10px 12px;font-size:14px;line-height:1.5}
 .am-p ol{margin:6px 0 0;padding-left:20px}
@@ -20,12 +20,12 @@ export default {
   id: 'a_math', tier: 1, title: 'Calcul mental', time: 40000,
   mount(host, api) {
     const { h } = api; const a = api.int(4, 19), b = api.int(3, 15), c = api.int(2, 4), d = api.int(2, 12);
-    const v1 = a + b, v2 = v1 * c, v3 = v2 - d;
+    const v1 = a + b, v2 = v1 * c, v3 = v2 - d; S.mathVal = v3;
     const steps = [`Pensez au nombre <em>${numWords(a)}</em>.`, `Ajoutez-lui <em>${numWords(b)}</em>.`, `Multipliez le résultat par <em>${numWords(c)}</em>.`, `Retirez-en <em>${numWords(d)}</em>.`];
     const wrong = { prio: a + b * c - d, noMul: v1 - d, noSub: v2, add: a + b + c - d, sub: v3 + 2 * d };
     const p = h('div', { class: 'am-p' }, h('div', {}, 'Exécutez ces ordres dans l’ordre, comme à la mairie :'));
     const ol = h('ol'); steps.forEach((s, i) => { const li = h('li'); li.style.animationDelay = .25 + i * .3 + 's'; li.innerHTML = s; ol.append(li); }); p.append(ol, h('div', { class: 'am-st' }, 'CALCULATRICE', h('br'), 'CONFISQUÉE'));
-    let fr; const inp = h('input', { class: 'am-n', id: 'am-n', type: 'text', inputmode: 'numeric', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', 'aria-label': 'Résultat en chiffres', placeholder: '?', oninput: () => { if (!fr) return; const d = WORDS && /\d/.test(inp.value), u = /[A-ZÀ-Ý]/.test(inp.value); inp.classList.toggle('ak-viol', d || u); fr.rule('R2', d ? 'bad' : 'ok'); fr.rule('R1', u ? 'bad' : 'ok'); }, onkeydown: (e) => { if (e.key === 'Enter') check(); } });
+    let fr; const inp = h('input', { class: 'am-n', id: 'am-n', type: 'text', inputmode: 'numeric', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', 'aria-label': 'Résultat en chiffres', placeholder: '?', oninput: () => { if (!fr) return; const d = WORDS && /\d/.test(inp.value), u = /[A-ZÀ-Ý]/.test(inp.value); inp.classList.toggle('ak-viol', d || u); if (d) zap(h, inp, 'UN CHIFFRE ?!'); else if (u) zap(h, inp, 'MAJUSCULE !'); fr.rule('R2', d ? 'bad' : 'ok'); fr.rule('R1', u ? 'bad' : 'ok'); }, onkeydown: (e) => { if (e.key === 'Enter') check(); } });
     const WORDS = hasRule('a_math', 'R2');
     if (WORDS) { inp.placeholder = 'en lettres'; inp.style.width = '200px'; inp.style.fontSize = '15px'; inp.removeAttribute('inputmode'); }
     fr = frame(h, { api, id: 'a_math', small: WORDS ? 'Répondez en toutes lettres (règle 2)' : 'Répondez en chiffres', title: 'Quel est le résultat ?', note: 'Chaque opération s’applique au résultat précédent. Pas de priorité, pas de parenthèses, pas de pitié.', body: [p, h('div', { class: 'am-r' }, h('label', { for: 'am-n' }, 'Résultat final'), inp)], onVerify: check });
