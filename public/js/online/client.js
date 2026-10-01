@@ -191,7 +191,7 @@ function end(room) {
     h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub)),
     gerard('end' + (win ? 'w' : beatenBy.length ? 'b' : mp?.status === 'done' ? 'p' : 'l'), win ? (beaten.length ? [`Vous avez battu ${beaten.length} script${beaten.length > 1 ? 's' : ''}. L’humanité marque un point. Je n’ai pas dit qu’elle le méritait.`, ...GL.win] : GL.win) : beatenBy.length ? [`Battu par ${beatenBy[0].nick} (un script). Un script, ${mp?.nick || 'vous'}. Je vais devoir l’écrire dans votre dossier.`, `${beatenBy[0].nick} vous devance. Il n’a ni mains, ni doutes. Vous avez les deux, ça se voit.`] : mp?.status === 'done' ? GL.place : GL.lose, win ? 'impressed' : 'smug'),
     h('div', { class: 'ol-endgrid' }, h('div', { class: 'ol-card' }, pod, verdicts), h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl)),
-    h('div', { class: 'ol-row2' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));
+    h('div', { class: 'ol-row2 ol-actions' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));
   if (win) confetti();
   sfx(win ? 'good' : 'bad');
 }

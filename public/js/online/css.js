@@ -274,7 +274,7 @@ const CSS = `
 /* r5 */
 .ol-root:has(.ol-race) .ol-toasts{top:auto;bottom:10px}
 .ol-lanes{max-height:260px;overflow-y:auto;-webkit-mask-image:linear-gradient(#000 85%,transparent);mask-image:linear-gradient(#000 85%,transparent);padding-bottom:18px}
-@media (max-height:900px){.ol-pod.p1 .blk{height:80px}.ol-pod.p2 .blk{height:58px}.ol-pod.p3 .blk{height:40px}.ol-podium{min-height:150px}.ol-bigstamp{font-size:clamp(1.4rem,5vw,2.4rem)}.ol-end .ol-wrap{gap:8px}}
+@media (max-height:900px){.ol-pod.p1 .blk{height:92px}.ol-pod.p2 .blk{height:70px}.ol-pod.p3 .blk{height:54px}.ol-pod .blk{font-size:20px}.ol-podium{min-height:170px}.ol-bigstamp{font-size:clamp(1.4rem,5vw,2.4rem)}.ol-end .ol-wrap{gap:8px}}
 @media (max-width:820px){.ol-root:has(.ol-race) .ol-toasts{top:150px;bottom:auto}}
 
 /* r6 */
@@ -297,6 +297,10 @@ const CSS = `
  .ol-rtop .ol-rank{display:inline-flex}
  .ol-wrap{padding-top:8px}
 }
+
+/* r7 */
+.ol-end .ol-actions{position:sticky;bottom:0;z-index:6;padding:10px 0 12px;background:linear-gradient(transparent,rgba(4,7,10,.92) 40%)}
+@media (max-width:820px){.online .card{min-height:calc(100dvh - 150px)}.ol-root:has(.ol-race){display:block}}
 `;
 let done = false;
 export function injectCss() {

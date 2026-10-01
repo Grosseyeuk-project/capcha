@@ -417,3 +417,18 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .speaker.big .bubble-text { min-height: 2.8em; }
 @media (max-width: 640px) { .speaker.big .bubble-text { min-height: 5.6em; } }
 @media (max-height: 700px) { .speaker.big .bubble-text { min-height: 5.2em; font-size: .9rem; } }
+
+/* ---------- r7 : plus de zoom ; action principale collée en bas du défileur ---------- */
+.pin-action { position: sticky !important; bottom: 0; z-index: 4; box-shadow: 0 -10px 14px -10px rgba(0, 0, 0, .35); }
+.game-root:not(.online) .card { flex: 0 1 auto; }
+.cap-host { justify-content: safe center; }
+.cap-slot { display: flex; flex-direction: column; }
+.cap-host { flex: 1 0 auto; }
+@media (max-width: 640px) and (max-height: 720px) {
+  .pips { display: none; }
+  .hud { padding-bottom: 8px; }
+  .game-root .avatar { width: 32px; height: 32px; }
+  .game-root .bubble { height: 46px; padding: 4px 8px; }
+  .game-root .bubble-text { font-size: .76rem; } .game-root .bubble-text.fit { font-size: .7rem; -webkit-line-clamp: 3; }
+  .game-root, .stage { gap: 6px; }
+}

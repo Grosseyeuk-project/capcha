@@ -161,13 +161,27 @@ export class Game {
     this.fitMO = new MutationObserver(() => this.fitSoon()); this.fitMO.observe(host, { childList: true, subtree: true, characterData: true });
   }
 
+  // Pas de zoom : le contenu défile dans .cap-slot et l'action principale reste collée en bas du défileur (sticky).
+  findPrimary(host) {
+    const ok = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 8 && r.height > 8 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+    const all = [...host.querySelectorAll('[data-primary],.cap-go,button,[role=button],input[type=submit]')].filter(ok);
+    return all.find((e) => e.matches('[data-primary],.cap-go')) || all.find((e) => /v[ée]rifier|valider|confirmer|envoyer|continuer|suivant|terminer|soumettre|^ok$/i.test(e.textContent || e.value || ''));
+  }
   fit() {
     const c = this.cur, slot = this.host; if (!c || !c.host || !slot) return;
-    const host = c.host; host.style.zoom = '';
-    const over = () => slot.scrollHeight > slot.clientHeight + 2;
-    if (over()) {
-      let z = 1;
-      for (let i = 0; i < 5 && over() && z > 0.7; i++) { z = Math.max(0.7, z * (slot.clientHeight - 2) / slot.scrollHeight); host.style.zoom = z.toFixed(3); }
+    const host = c.host;
+    host.querySelectorAll('.pin-action').forEach((e) => e.classList.remove('pin-action'));
+    if (slot.scrollHeight > slot.clientHeight + 2) {
+      const prim = this.findPrimary(host);
+      if (prim) {
+        let A = null;
+        for (let e = prim; e && e !== host; e = e.parentElement) { const par = e.parentElement; if (par && par.getBoundingClientRect().height > slot.clientHeight - 30 && e.offsetHeight < slot.clientHeight * 0.45) { A = e; break; } }
+        if (A) {
+          A.classList.add('pin-action');
+          if (getComputedStyle(A).backgroundColor === 'rgba(0, 0, 0, 0)') A.style.background = '#fff';
+          for (let e = A.parentElement; e && e !== slot; e = e.parentElement) { const o = getComputedStyle(e).overflow; if (o === 'hidden' || o === 'auto' || o === 'scroll') e.style.overflow = 'clip'; }
+        }
+      }
     }
     this.slotMore();
   }
