@@ -24,7 +24,7 @@ function showTitle() {
     best: loadBest(), speaker: titleSpeaker, onlineReady,
     onSolo: () => startSolo(),
     onOnline: (ok) => {
-      if (ok) { try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); } catch (e) { console.error(e); } }
+      if (ok) { try { window.CAPCHA_ONLINE.open({ showTitle, startSolo }); if (window.CAPCHA_ONLINE.isOpen?.()) setHidden(true); } catch (e) { console.error(e); } }
       else titleSpeaker.say(say('online', Math.random), 'worried');
     }
   });

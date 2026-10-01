@@ -274,3 +274,5 @@ body:has(.game-root[data-pressure="high"]) .vignette { background: radial-gradie
   .verdict-card .actions .btn { flex-basis: 100%; }
   .ledger-bar { height: 54px; font-size: .8rem; }
 }
+
+body:has(> .ol-root) #app { visibility: hidden !important; }

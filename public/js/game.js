@@ -66,8 +66,7 @@ export class Game {
     this.flashEl = h('div', { class: 'flash', 'aria-hidden': 'true' });
     this.banner = h('div', { class: 'banner', 'aria-hidden': 'true' });
     this.stage = h('div', { class: 'stage' }, this.hud, this.speaker.el, this.card, this.bar);
-    this.root.append(this.ledger);
-    this.root.append(this.stage, this.flashEl);
+    this.root.append(this.stage, this.ledger, this.flashEl);
     this.card.append(this.banner);
   }
   speak(t, mood = 'neutral', force = false) { this.sayTok++; this.speaker.say(t, mood, { force }); }

@@ -42,7 +42,7 @@ export default {
     const verdict = (e) => {
       const mouse = e && e.pointerType === 'mouse' && e.detail > 0;
       if (!mouse) return { ok: true, why: 'Pas de souris : on vous croit sur parole (sans enthousiasme).' };
-      const now = performance.now(), p = pts.filter((q) => now - q.t < 2500);
+      const now = performance.now(), p = pts.filter((q) => now - q.t < 4000);
       if (p.length < 3) return { ok: false, why: 'Aucun mouvement de souris avant le clic. Vous vous êtes téléporté·e ? Les humains traversent l’espace.' };
       const a = p[0], b = p[p.length - 1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       let dev = 0, path = 0;
