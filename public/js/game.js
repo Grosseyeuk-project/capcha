@@ -121,7 +121,7 @@ export class Game {
     this.hudRefresh(); this.syncMood();
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0'); this.clock.textContent = '--';
     const tier = def.tier || 1;
-    if (!retry) { this.card.classList.remove('struck', 'solved'); this.footDefault = matchMedia('(max-width: 640px) and (max-height: 720px)').matches ? `${pad(this.level)} · ${def.title} · CAPCHA™` : this.footBase; this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
+    if (!retry) { this.card.classList.remove('struck', 'solved'); this.footDefault = matchMedia('(max-width: 640px)').matches ? `${pad(this.level)} · ${def.title} · CAPCHA™` : this.footBase; this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
     const fast = this.mode !== 'solo';
     const delay = retry ? 0 : RM() ? 120 : fast ? 260 : 640;
     if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.tierNote ? h('span', { class: 'bn-p' }, this.tierNote) : null, this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1].t + ' »')) : null));
@@ -141,7 +141,7 @@ export class Game {
     this.tierNote = null;
     const go = () => this.mount(def, seed ?? this.seedFor(this.level));
     if (beat) {
-      this.root.classList.add('cine'); const ov = h('div', { class: 'tier-beat', 'aria-hidden': 'true' }, h('i', {}, 'Palier'), h('b', {}, `${tier} / 5`), h('span', {}, TN[tier] || '')); document.body.append(ov);
+      this.root.classList.add('cine'); const ov = h('div', { class: 'tier-beat', 'aria-hidden': 'true' }, h('i', {}, 'Palier'), h('b', {}, `${tier} / 5`), h('span', {}, TN[tier] || '')); /* la carte s'efface d'abord, puis le chiffre arrive */ setTimeout(() => { if (!done) document.body.append(ov); }, 300);
       let done = false; const fin = () => { if (done) return; done = true; ov.remove(); this.root.classList.remove('cine'); removeEventListener('pointerdown', fin, true); removeEventListener('keydown', fin, true); clearTimeout(id); go(); };
       const id = this.later(fin, delay + beat); setTimeout(() => { if (!done) { addEventListener('pointerdown', fin, true); addEventListener('keydown', fin, true); } }, 300);
       this.beatSkip = fin;

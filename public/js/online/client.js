@@ -143,7 +143,7 @@ function countdown(room) {
   };
   S.cdTick();
 }
-function dropCountdown() { S.cdTotal = 0; if (S.main) S.main.inert = false; S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
+function dropCountdown() { S.cdTotal = 0; if (S.main) { S.main.inert = false; S.main.style.visibility = ''; } S.root?.querySelector('.ol-count')?.remove(); S.cdTick = null; S.lastCd = null; }
 
 // ---------------- race
 function race(room) {
@@ -171,9 +171,9 @@ function end(room) {
   const prog = mp ? mp.solved / Math.max(1, room.total) : 0, near = mp && mp.status === 'out' && mp.reason !== 'dq' && (prog >= 0.6 || mp.rank <= Math.ceil(room.players.length / 2));
   const byAttr = win && mp.status !== 'done';
   const head = !mp ? 'Partie terminée' : byAttr ? 'Dernier debout.' : win ? 'Humain certifié.' : mp.status === 'done' ? `Vous finissez ${mp.rank}${mp.rank === 1 ? 'er' : 'e'}.` : mp.reason === 'dq' ? 'Disqualifié.' : near ? 'Éliminé de justesse.' : mp.status === 'out' ? 'Robot confirmé.' : 'Trop lent.';
-  const sub = byAttr ? `Humain par forfait : les autres ont craqué, vous aviez ${mp.solved}/${room.total}. Le comité accepte la victoire, pas le mérite.` : win ? 'Le comité est (très) légèrement impressionné.' : near ? `Trois erreurs, mais ${mp.solved}/${room.total} vérifications : un dossier honorable. Gérard est presque ému.` : room.endReason === 'last' ? 'Dernier debout : la victoire par attrition.' : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
+  const sub = byAttr ? `Humain par forfait : les autres ont craqué, vous aviez ${mp.solved}/${room.total}. Le comité accepte la victoire, pas le mérite.` : win ? 'Le comité est (très) légèrement impressionné.' : near ? `Trois erreurs, mais ${mp.solved}/${room.total} vérifications : un dossier honorable. Gérard est presque ému.` : room.endReason === 'last' ? `${sorted[0]?.nick || 'Un autre candidat'} reste seul debout : victoire par attrition. Pas la vôtre.` : room.endReason === 'lastcall' ? 'Le portique a fermé.' : 'Le comité a pris des notes.';
   const slot = (p, n, d) => p ? h('div', { class: `ol-pod p${n}`, style: `--c:${col(p)};--d:${d}ms` }, h('div', { class: 'av' }, ini(p)), h('div', { class: 'nm' }, p.nick), h('div', { class: 'sub' }, p.status === 'done' ? sec(p.finishMs) : `${p.solved}/${room.total}`), h('div', { class: 'blk' }, n)) : h('div', {});
-  const pod = h('div', { class: 'ol-podium' }, ...[[1, 2, 500], [0, 1, 900], [2, 3, 100]].filter(([i]) => sorted[i]).map(([i, n, d]) => slot(sorted[i], n, d)));
+  const pod = h('div', { class: 'ol-podium' }, ...[[1, 2, 500], [0, 1, 900], [2, 3, 100]].map(([i, n, d]) => sorted[i] ? slot(sorted[i], n, d) : h('div', { class: 'ol-pod empty', 'aria-hidden': 'true' })));
   const tbl = h('table', { class: 'ol-tbl' }, h('thead', {}, h('tr', {}, ...['#', 'Joueur', 'Niveaux', 'Erreurs', 'Meilleur', 'Moyen'].map((x, i) => h('th', { class: i > 3 ? 'hm' : '' }, x)))),
     h('tbody', {}, sorted.map((p) => h('tr', { class: p.id === S.me ? 'me' : '' },
       h('td', {}, p.rank), h('td', {}, p.nick, p.best != null && p.best === fastest ? ' ⚡' : '', h('span', { class: 'ol-tag ' + (p.bot ? 'bot' : p.status === 'out' ? 'no' : 'ok') }, p.bot ? 'script' : p.status === 'out' ? 'robot' : 'humain')), h('td', {}, p.status === 'done' ? '✓ ' + p.solved + '/' + room.total : `${p.solved}/${room.total}${p.reason === 'dq' ? ' DQ' : ''}`), h('td', {}, p.strikes + '/3'),
@@ -192,8 +192,8 @@ function end(room) {
   const stampTxt = byAttr ? 'DERNIER DEBOUT' : win ? 'ACCÈS ACCORDÉ' : mp?.status === 'done' ? 'HOMOLOGUÉ' : mp?.reason === 'dq' ? 'DISQUALIFIÉ' : near ? 'PRESQUE HUMAIN' : 'ACCÈS REFUSÉ';
   mountScreen('end', h('div', { class: 'ol-wrap ol-end' },
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter')),
-    h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' || near ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
-    h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub)),
+    h('div', { class: 'ol-endhead' }, h('div', { class: 'ol-verdict' }, h('span', { class: 'ol-bigstamp ' + (win || mp?.status === 'done' || near ? 'win' : 'lose'), 'aria-hidden': 'true' }, stampTxt)),
+      h('div', {}, h('h1', { class: win ? 'win' : 'lose' }, head), h('p', { class: 'ol-hint' }, sub))),
     gerard('end' + (win ? 'w' : beatenBy.length ? 'b' : mp?.status === 'done' ? 'p' : 'l'), win ? (beaten.length ? [`Vous avez battu ${beaten.length} script${beaten.length > 1 ? 's' : ''}. L’humanité marque un point. Je n’ai pas dit qu’elle le méritait.`, ...GL.win] : GL.win) : beatenBy.length ? [`Battu par ${beatenBy[0].nick} (un script). Un script, ${mp?.nick || 'vous'}. Je vais devoir l’écrire dans votre dossier.`, `${beatenBy[0].nick} vous devance. Il n’a ni mains, ni doutes. Vous avez les deux, ça se voit.`] : mp?.status === 'done' ? GL.place : GL.lose, win ? 'impressed' : 'smug'),
     h('div', { class: 'ol-endgrid' }, h('div', { class: 'ol-card' }, pod, verdicts), h('div', { class: 'ol-card' }, h('h3', {}, 'Résultats'), tbl)),
     h('div', { class: 'ol-row2 ol-actions' }, h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'rematch' }) }, 'Rejouer'), h('button', { class: 'ol-btn', onclick: leave }, 'Retour à l’accueil'))));
@@ -212,7 +212,7 @@ function render() {
   if (!S.root) return;
   if (!room) { if (S.view !== 'menu') menu(); return; }
   if (room.state === 'lobby') { dropCountdown(); S.fillTotal = room.fillAt ? S.fillTotal : 0; lobby(room); }
-  else if (room.state === 'countdown') { lobby(room); countdown(room); if (S.main) S.main.inert = true; }
+  else if (room.state === 'countdown') { lobby(room); countdown(room); if (S.main) { S.main.inert = true; S.main.style.visibility = 'hidden'; } }
   else if (room.state === 'race') race(room);
   else if (room.state === 'done') {
     if (S.view === 'race' && S.race) {

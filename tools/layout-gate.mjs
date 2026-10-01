@@ -20,10 +20,10 @@ if (!port) {
   for (let i = 0; i < 40; i++) { try { if ((await fetch(`http://localhost:${port}/healthz`)).ok) break; } catch { /* */ } await sleep(150); }
 }
 const base = `http://localhost:${port}/`;
-const VPS = (quick ? [[390, 800]] : [[360, 640], [390, 800], [1280, 800]]).filter(([w, h]) => !opt('vp') || opt('vp') === `${w}x${h}`);
+const VPS = (quick ? [[360, 640], [390, 800]] : [[360, 640], [390, 800], [1280, 800]]).filter(([w, h]) => !opt('vp') || opt('vp') === `${w}x${h}`);
 // click-to-solve captchas: no final button, so they must fit without internal scrolling.
 // Layout bugs owned by the captcha builders, reported but not blocking the shell gate.
-const KNOWN = { b_hunt: 'roaming sprites may overlap each other by design', a_bins: 'card pile overflows its own container, partly under the footer (captchas-a)' };
+const KNOWN = {}; // no excuses: every captcha must pass
 const NO_ACTION = new Set(['a_checkbox', 'b_flip', 'b_hunt', 'b_memory', 'b_robot', 'b_boss']);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const CLS_INIT = () => { window.__cls = 0; window.__clsSrc = []; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__cls += e.value; window.__clsSrc.push([e.value, (e.sources || []).map((s) => (s.node && (s.node.className || s.node.nodeName)) + '').join('|') + ':' + e.value.toFixed(3) + '@' + Math.round(performance.now())]); } }).observe({ type: 'layout-shift', buffered: true }); } catch { /* */ } };
@@ -46,6 +46,17 @@ const CONTRAST = (rootSel) => {
   return [...new Set(out)];
 };
 const go = async (p, url) => { for (let i = 0; i < 3; i++) { try { return await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 }); } catch (e) { if (i === 2) throw e; await sleep(1500); } } };
+
+const TEXT_OVERLAP = (rootSel) => {
+  const root = document.querySelector(rootSel); if (!root) return ['no ' + rootSel];
+  const items = []; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) { if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || e.closest('svg,script,style,.sr-only,[aria-hidden="true"]')) continue; const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity < 0.5) continue;
+    const rg = document.createRange(); rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.width > 4 && r.height > 4) items.push({ e, r, t: n.textContent.trim().slice(0, 16) }); }
+  const out = [];
+  for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) { const A = items[i], B = items[j]; if (A.e === B.e || A.e.contains(B.e) || B.e.contains(A.e)) continue;
+    const ix = Math.min(A.r.right, B.r.right) - Math.max(A.r.left, B.r.left), iy = Math.min(A.r.bottom, B.r.bottom) - Math.max(A.r.top, B.r.top); if (ix > 3 && iy > 3 && ix * iy > 14) out.push(`"${A.t}" x "${B.t}"`); }
+  return [...new Set(out)];
+};
 const fails = []; const bad = (m) => { fails.push(m); console.log('  FAIL', m); };
 
 const p0 = await page(1280, 800); await go(p0, base + '?cheat=1'); await p0.waitForTimeout(1500);
@@ -121,6 +132,7 @@ for (const [w, h] of VPS) {
     if (m.zoom) bad(`${tag} uses zoom on ${m.zoom} elements`);
     if (m.page > 1) bad(`${tag} page scrolls by ${m.page}px`);
     if (m.hx > 1) bad(`${tag} horizontal page overflow ${m.hx}px`);
+    if ((w === 390 || w === 1280) && m.scroll > 8) bad(`${tag} card content scrolls internally by ${m.scroll}px (budget 8)`);
     if (m.hostX > 3) bad(`${tag} host horizontal overflow ${m.hostX}px`);
     if (m.btn) { if (!m.inView) bad(`${tag} primary "${m.btn}" not fully visible above footer (${m.top}-${m.bottom})`); else if (!m.uncovered) bad(`${tag} primary "${m.btn}" covered`); if (m.h < 40) bad(`${tag} primary "${m.btn}" only ${m.h}px tall`); }
     else if (!NO_ACTION.has(id)) bad(`${tag} no primary action found (declare data-primary or add to NO_ACTION)`);
@@ -143,7 +155,7 @@ for (const [w, h] of VPS) {
             e.scrollIntoView({ block: blk }); const r = e.getBoundingClientRect(), sr = slot.getBoundingClientRect(); const pr = pin ? pin.getBoundingClientRect() : null;
             const inside = r.top >= sr.top - 1 && r.bottom <= sr.bottom + 1 && (!pr || r.bottom <= pr.top + 1 || r.top >= pr.bottom - 1 || pr.top >= sr.bottom);
             const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-            if (inside && el && (el === e || e.contains(el) || el.contains(e))) { ok = true; break; }
+            if (inside && el && (el === e || e.contains(el) || el.contains(e) || (host.contains(el) && !el.closest('.pin-action')))) { ok = true; break; }
           }
           if (!ok) out.unreach.push(((e.className || e.tagName) + '').toString().slice(0, 18) + '[' + (e.textContent || e.value || '').trim().slice(0, 8) + ']');
         }
@@ -185,6 +197,7 @@ for (const [w, h] of VPS) {
       if (st.top < 0 || st.topCard < 0 || st.right < 0 || st.left < 0) bad(`${w}x${h} end-card stamp clipped by its card (top ${Math.round(st.top)}, left ${Math.round(st.left)}, right ${Math.round(st.right)})`); }
     const e = await p.evaluate((CONTRAST) => { const f = eval(CONTRAST); const vh = innerHeight; const b = [...document.querySelectorAll('.screen.end .actions .btn')].map((x) => x.getBoundingClientRect().bottom); const stat = [...document.querySelectorAll('.screen.end .stat')].map((x) => x.textContent).join('|'); return { btnBottom: Math.max(...b), vh, contrast: f('.screen.end .verdict-card'), stat }; }, `(${CONTRAST.toString()})`);
     console.log(`   solo game-over: actions bottom ${Math.round(e.btnBottom)}/${e.vh}; ${e.contrast.length} contrast issues`);
+    { const ov = await p.evaluate(`(${TEXT_OVERLAP.toString()})('.screen.end .verdict-card')`); if (ov.length) bad(`${w}x${h} game-over text overlaps: ${ov.slice(0, 3).join(', ')}`); }
     if (e.btnBottom > e.vh + 1) bad(`${w}x${h} game-over actions below fold (${Math.round(e.btnBottom)} > ${e.vh})`);
     if (e.contrast.length) bad(`${w}x${h} game-over contrast < 4.5: ${e.contrast.slice(0, 4).join(', ')}`);
     if (/\d\s*\/\s*3/.test(e.stat.split('|')[2] || '')) bad(`${w}x${h} game-over shows an "n / 3" error count that can exceed 3: ${e.stat}`);
@@ -204,9 +217,9 @@ if (!quick) {
   await p.context().close();
 }
 
-if (!quick) {
-  console.log('\n== cinematics (390x800)');
-  const p = await page(390, 800); await go(p, `${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
+for (const [cw, ch] of (quick ? [[360, 640]] : [[360, 640], [390, 800]])) {
+  console.log(`\n== cinematics (${cw}x${ch})`);
+  const p = await page(cw, ch); await go(p, `${base}?cap=a_checkbox&cheat=1&seed=7`); await p.waitForSelector('.cap-host'); await p.waitForTimeout(1200);
   await p.evaluate(() => { const g = __cap.game; g.lastTier = 1; g.level = 10; g.beginLevel(); });
   await p.waitForSelector('.tier-beat', { timeout: 10000 }).catch(() => bad('tier change: .tier-beat overlay never appeared')); await p.waitForTimeout(600);
   const so = await p.evaluate(() => document.querySelector('.game-root').classList.contains('cine')); if (!so) bad('tier change: card not hidden (.cine missing) during the 3D beat');
@@ -267,6 +280,7 @@ if (!skipOnline) {
       console.log(`  results ${name}: actions ${Math.round(r.top)}-${Math.round(r.bottom)} of ${r.vh}, last row ${Math.round(r.lastRow)} vs bar top ${Math.round(r.barTop)}, contrast issues ${r.contrast.length}`);
       if (r.bottom > r.vh + 1) bad(`online results ${name}: actions below fold`);
       if (!r.desk && r.lastRow > r.barTop + 1) bad(`online results ${name}: result list hidden under the sticky bar`);
+      { const ov = await P.evaluate(`(${TEXT_OVERLAP.toString()})('.ol-end')`); if (ov.length) bad(`online results ${name} text overlaps: ${ov.slice(0, 3).join(', ')}`); }
       if (r.contrast.length) bad(`online results ${name} contrast < 4.5: ${r.contrast.slice(0, 5).join(', ')}`);
     }
   }

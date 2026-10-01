@@ -127,7 +127,7 @@ export class Speaker {
     this.pending = null; clearTimeout(this.timer); this.tok++;
     this.full = text; this.text.classList.remove('fit'); this.text.textContent = text; if (this.text.scrollHeight > this.text.clientHeight + 2) this.text.classList.add('fit'); this.w.mood(mood); this.el.dataset.mood = mood; this.live.textContent = text;
     this.bubble.classList.remove('pop'); void this.bubble.offsetWidth; this.bubble.classList.add('pop');
-    if (instant || reducedMotion()) { this.finish(); return; }
+    if (instant || reducedMotion() || matchMedia('(max-width: 640px) and (max-height: 720px)').matches) { this.finish(); return; }
     this.typing = true; this.el.classList.add('talking'); this.bubble.classList.add('typing'); this.w.talk(true);
     this.text.textContent = ''; let i = 0; const my = this.tok;
     const stepFn = () => {

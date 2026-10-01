@@ -117,22 +117,28 @@ export function startScene(canvas) {
   const veinMat = new THREE.LineBasicMaterial({ color: 0xff2b3d, transparent: true, opacity: 0, fog: false }); eye.add(new THREE.LineSegments(veinGeo, veinMat));
   // le Grand Portail (deux battants + lumière)
   const doors = new THREE.Group(); doors.position.z = -15; doors.visible = false; scene.add(doors);
-  const doorTex = (flip) => { const c = document.createElement('canvas'); c.width = 256; c.height = 512; const x = c.getContext('2d');
-    const g = x.createLinearGradient(0, 0, 256, 0); g.addColorStop(0, '#0b1419'); g.addColorStop(1, '#1d333d'); x.fillStyle = g; x.fillRect(0, 0, 256, 512);
-    x.strokeStyle = 'rgba(120,200,210,.35)'; x.lineWidth = 3; for (let i = 1; i < 5; i++) { x.beginPath(); x.moveTo(0, i * 102); x.lineTo(196, i * 102); x.stroke(); }
-    x.strokeRect(14, 14, 168, 484); x.fillStyle = 'rgba(150,220,230,.5)'; for (let i = 0; i < 6; i++) for (const bx of [28, 168]) { x.beginPath(); x.arc(bx, 40 + i * 86, 5, 0, 7); x.fill(); }
-    x.save(); x.beginPath(); x.rect(196, 0, 60, 512); x.clip(); x.fillStyle = '#ffd23f'; x.fillRect(196, 0, 60, 512); x.fillStyle = '#10202a'; for (let i = -10; i < 24; i++) { x.beginPath(); x.moveTo(190, i * 44); x.lineTo(270, i * 44 - 80); x.lineTo(270, i * 44 - 40); x.lineTo(190, i * 44 + 40); x.fill(); } x.restore();
-    if (flip) { const f = document.createElement('canvas'); f.width = 256; f.height = 512; const y = f.getContext('2d'); y.translate(256, 0); y.scale(-1, 1); y.drawImage(c, 0, 0); const t = new THREE.CanvasTexture(f); t.colorSpace = THREE.SRGBColorSpace; t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 2); return t; }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 2); return t; };
+  const doorTex = (flip) => { const c = document.createElement('canvas'); c.width = 256; c.height = 1024; const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 256, 0); g.addColorStop(0, '#0b1419'); g.addColorStop(1, '#1d333d'); x.fillStyle = g; x.fillRect(0, 0, 256, 1024);
+    x.strokeStyle = 'rgba(120,200,210,.32)'; x.lineWidth = 3; for (let i = 1; i < 8; i++) { x.beginPath(); x.moveTo(0, i * 128); x.lineTo(196, i * 128); x.stroke(); }
+    x.strokeRect(14, -10, 168, 1044); x.fillStyle = 'rgba(150,220,230,.5)'; for (let i = 0; i < 12; i++) for (const bx of [28, 168]) { x.beginPath(); x.arc(bx, 40 + i * 86, 5, 0, 7); x.fill(); }
+    x.save(); x.beginPath(); x.rect(196, 0, 60, 1024); x.clip(); x.fillStyle = '#ffd23f'; x.fillRect(196, 0, 60, 1024); x.fillStyle = '#10202a'; for (let i = -10; i < 40; i++) { x.beginPath(); x.moveTo(190, i * 44); x.lineTo(270, i * 44 - 80); x.lineTo(270, i * 44 - 40); x.lineTo(190, i * 44 + 40); x.fill(); } x.restore();
+    let cv = c; if (flip) { cv = document.createElement('canvas'); cv.width = 256; cv.height = 1024; const y = cv.getContext('2d'); y.translate(256, 0); y.scale(-1, 1); y.drawImage(c, 0, 0); }
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; };
   const dGeo = new THREE.PlaneGeometry(8.4, 36);
   const dL = new THREE.Mesh(dGeo, new THREE.MeshBasicMaterial({ map: doorTex(false), fog: false, side: THREE.DoubleSide })), dR = new THREE.Mesh(dGeo, new THREE.MeshBasicMaterial({ map: doorTex(true), fog: false, side: THREE.DoubleSide })); doors.add(dL, dR);
   const dEdge = new THREE.LineSegments(new THREE.EdgesGeometry(dGeo), new THREE.LineBasicMaterial({ color: 0xffffff, fog: false })); dL.add(dEdge); dR.add(dEdge.clone());
   const coreTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 0, 128, 128, 128); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,244,200,.85)'); g.addColorStop(0.6, 'rgba(255,200,90,.25)'); g.addColorStop(1, 'rgba(255,200,90,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); return t; })();
   const add = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false };
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshBasicMaterial({ map: coreTex, opacity: 0, ...add })); glow.position.z = -2; doors.add(glow);
-  const rayGroup = new THREE.Group(); rayGroup.position.z = -1.5; doors.add(rayGroup); const rayGeo = new THREE.PlaneGeometry(1.1, 70); rayGeo.translate(0, 35, 0);
-  const rayMats = []; for (let i = 0; i < 18; i++) { const mt = new THREE.MeshBasicMaterial({ color: 0xfff1c0, opacity: 0, ...add }); rayMats.push(mt); const m = new THREE.Mesh(rayGeo, mt); m.rotation.z = i / 18 * Math.PI * 2; m.scale.x = 0.6 + (i % 3) * 0.6; rayGroup.add(m); }
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0, ...add })); ring.position.z = -1; doors.add(ring);
+  const rayTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 256; const x = c.getContext('2d'); const g = x.createLinearGradient(0, 256, 0, 0); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.18, 'rgba(255,225,150,.55)'); g.addColorStop(0.55, 'rgba(255,170,70,.18)'); g.addColorStop(1, 'rgba(255,120,40,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 256);
+    const m = x.createLinearGradient(0, 0, 64, 0); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.5, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)'); x.globalCompositeOperation = 'destination-in'; x.fillStyle = m; x.fillRect(0, 0, 64, 256); return new THREE.CanvasTexture(c); })();
+  const NS = 220, sp = new Float32Array(NS * 3), sv = new Float32Array(NS * 3); const sparkGeo = new THREE.BufferGeometry(); sparkGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+  const sparkMat = new THREE.PointsMaterial({ color: 0xffd98a, size: 0.32, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }); const sparks = new THREE.Points(sparkGeo, sparkMat); sparks.position.z = -1; doors.add(sparks);
+  const burst = (hex) => { sparkMat.color.set(hex); for (let i = 0; i < NS; i++) { const a = Math.random() * 7, sp0 = 3 + Math.random() * 16; sp[i * 3] = sp[i * 3 + 1] = 0; sp[i * 3 + 2] = Math.random() * 2; sv[i * 3] = Math.cos(a) * sp0; sv[i * 3 + 1] = Math.sin(a) * sp0 + 2; sv[i * 3 + 2] = (Math.random() - 0.3) * 6; } sparkMat.opacity = 1; sparkGeo.attributes.position.needsUpdate = true; };
+  bg._burst = burst;
+  const rayGroup = new THREE.Group(); rayGroup.position.z = -1.5; doors.add(rayGroup); const rayGeo = new THREE.PlaneGeometry(2.2, 70); rayGeo.translate(0, 35, 0);
+  const rayMats = []; for (let i = 0; i < 18; i++) { const mt = new THREE.MeshBasicMaterial({ map: rayTex, color: [0xffffff, 0xffe2a0, 0xffc060, 0xffffff][i % 4], opacity: 0, ...add }); rayMats.push(mt); const m = new THREE.Mesh(rayGeo, mt); m.rotation.z = i / 18 * Math.PI * 2; m.scale.x = 0.5 + (i % 3) * 0.7; rayGroup.add(m); }
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0, ...add })); ring.position.z = -1; doors.add(ring);
   const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
   addEventListener('pointermove', (e) => { ptr.x = e.clientX / innerWidth * 2 - 1; ptr.y = -(e.clientY / innerHeight * 2 - 1); }, { passive: true });
@@ -198,14 +204,15 @@ export function startScene(canvas) {
       eye.position.y = lerp(eye.position.y, ny * hh, dt * 5); eye.position.x = lerp(eye.position.x, nx * hh * cam.aspect, dt * 5); eye.scale.setScalar(lerp(eye.scale.x, sc, dt * (lock ? 3 : 5))); }
     // portail : victoire (s'ouvre sur la lumière) / défaite (claque)
     { const dm = st.doorMode; let open = 0, gl = 0, rayO = 0, ringS = 0;
-      if (dm === 'opening') { st.doorT += dt / 2.0; const T = Math.min(1, st.doorT); open = ease(Math.max(0, (T - 0.12) / 0.72)); gl = Math.pow(Math.max(0, (T - 0.2) / 0.6), 0.8); rayO = Math.sin(Math.min(1, Math.max(0, (T - 0.2) / 0.7)) * Math.PI) * 0.55; ringS = Math.max(0, (T - 0.45)) * 40; if (!st.doorFired && T > 0.45) { st.doorFired = true; st.flashCol.set(0xfff1c0); st.flash = 1; st.shake = 0.6; } st.boost = Math.max(st.boost, Math.sin(T * Math.PI) * 1.4); if (T >= 1) st.doorMode = 'open'; }
+      if (dm === 'opening') { st.doorT += dt / 2.0; const T = Math.min(1, st.doorT); open = ease(Math.max(0, (T - 0.12) / 0.72)); gl = Math.pow(Math.max(0, (T - 0.2) / 0.6), 0.8); rayO = Math.sin(Math.min(1, Math.max(0, (T - 0.2) / 0.7)) * Math.PI) * 0.55; ringS = Math.max(0, (T - 0.45)) * 40; if (!st.doorFired && T > 0.45) { st.doorFired = true; bg._burst(0xffd98a); st.flashCol.set(0xfff1c0); st.flash = 1; st.shake = 0.6; } st.boost = Math.max(st.boost, Math.sin(T * Math.PI) * 1.4); if (T >= 1) st.doorMode = 'open'; }
       else if (dm === 'open') { open = 1; gl = 1; rayO = 0.12; }
       else if (dm === 'wait') { st.eyeLockT += dt; open = 1; if (st.eyeLockT >= 1.0) { st.doorMode = 'closing'; st.doorT = 0; } }
-      else if (dm === 'closing') { st.doorT += dt / 0.28; const e = Math.min(1, st.doorT); open = 1 - e * e; if (e >= 1) { st.doorMode = 'closed'; st.shake = 1; st.flashCol.set(0xff2b3d); st.flash = 1; } }
+      else if (dm === 'closing') { st.doorT += dt / 0.28; const e = Math.min(1, st.doorT); open = 1 - e * e; if (e >= 1) { st.doorMode = 'closed'; bg._burst(0xff4a4a); st.shake = 1; st.flashCol.set(0xff2b3d); st.flash = 1; } }
       else if (dm === 'closed') { open = 0; }
+      if (sparkMat.opacity > 0) { for (let i = 0; i < NS; i++) { sv[i * 3 + 1] -= 6 * dt; sp[i * 3] += sv[i * 3] * dt; sp[i * 3 + 1] += sv[i * 3 + 1] * dt; sp[i * 3 + 2] += sv[i * 3 + 2] * dt; } sparkGeo.attributes.position.needsUpdate = true; sparkMat.opacity = Math.max(0, sparkMat.opacity - dt * 0.55); }
       doors.visible = dm !== 'hidden';
       const x = 4.2 + open * 13; dL.position.x = -x; dR.position.x = x; glow.material.opacity = Math.min(1, gl); const gs = 0.5 + gl * 1.4; glow.scale.set(gs, gs, 1);
-      rayGroup.rotation.z += dt * 0.25; rayMats.forEach((mt) => { mt.opacity = rayO; }); ring.scale.setScalar(Math.max(0.001, ringS)); ring.material.opacity = ringS > 0 ? Math.max(0, 0.45 - ringS / 60) : 0;
+      rayGroup.rotation.z += dt * 0.25; rayMats.forEach((mt) => { mt.opacity = rayO; }); ring.scale.setScalar(Math.max(0.001, ringS)); ring.material.opacity = ringS > 0 ? Math.max(0, 0.3 - ringS / 90) : 0;
       dEdge.material.color.copy(tint); dR.children[0] && dR.children[0].material.color.copy(tint); }
     cam.fov = (innerWidth < innerHeight ? 85 : 70) + st.tierT * 12 * k; cam.updateProjectionMatrix(); st.tanHalf = Math.tan(cam.fov * Math.PI / 360);
     rays.rotation.z += dt * (0.2 + m);

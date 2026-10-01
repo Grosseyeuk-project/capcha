@@ -555,3 +555,9 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .flash.win { background: radial-gradient(circle at 50% 45%, rgba(255, 245, 200, .85), rgba(255, 220, 120, 0) 70%); animation: fl .8s ease-out; }
 .bark { position: absolute; left: 8px; right: 8px; top: 8px; z-index: 7; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; padding: 6px 10px; font: 500 .8rem/1.25 var(--body); box-shadow: 0 4px 0 #000; pointer-events: none; animation: slamfade .25s both; }
 .bark.out { opacity: 0; transition: opacity .3s; }
+
+/* r12 : le 3D reste présent pendant le jeu sur téléphone */
+.hud { background: rgba(7, 11, 15, .5); backdrop-filter: blur(3px); }
+@media (max-width: 640px) { .card-head { display: none; } .game-root .bubble { height: 40px; padding: 4px 8px; } .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .75rem; line-height: 1.12; -webkit-line-clamp: 2; } .game-root .nameplate { display: none; } .pips li { height: 5px; } }
+.game-root.cine .stage, .game-root.cine .ledger { transition: opacity .18s; }
+@media (max-width: 640px) { .cap-host { padding: 4px 6px; } .cap-host .ak-mock { display: none; } .cap-host .ak-w { box-shadow: 0 2px 8px rgba(0,0,0,.2); } }

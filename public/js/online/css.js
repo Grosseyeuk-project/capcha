@@ -345,6 +345,17 @@ const CSS = `
 @media (max-width:820px){.ol-gap .ol-chip2 s{height:6px}}
 
 @media (min-width:821px){.ol-game{max-width:760px}.online .card{max-height:calc(100dvh - 210px);min-height:calc(100dvh - 210px)}}
+
+/* r12 */
+.ol-endhead{display:flex;flex-direction:column;gap:6px}
+.ol-pod.empty{visibility:hidden}
+.ol-count{background:#04070a!important}
+@media (min-width:1000px){
+ .ol-endhead{flex-direction:row;align-items:center;gap:22px}.ol-endhead .ol-verdict{margin:0;flex:none}.ol-endhead .ol-bigstamp{font-size:clamp(1.4rem,2.6vw,2.2rem);padding:2px 14px;border-width:5px;margin:0}
+ .ol-end .ol-wrap{gap:10px;padding-top:12px}.ol-end h1{font-size:clamp(26px,3vw,38px)}
+ .ol-podium{min-height:150px}.ol-pod.p1 .blk{height:84px!important}.ol-pod.p2 .blk{height:62px!important}.ol-pod.p3 .blk{height:46px!important}
+ .ol-end .ol-card{padding:14px}
+}
 `;
 let done = false;
 export function injectCss() {
