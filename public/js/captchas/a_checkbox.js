@@ -1,4 +1,4 @@
-import { css, brand } from './a_kit.js';
+import { css, brand, S } from './a_kit.js';
 css('chk', `
 .ac-w{width:min(100%,340px)}
 .ac-row{position:relative;height:84px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
@@ -22,7 +22,7 @@ export default {
   id: 'a_checkbox', tier: 1, title: 'Case à cocher', time: 25000,
   mount(host, api) {
     const { h } = api;
-    const pts = []; let hopped = false, busy = false, raf = 0, tmo = [];
+    const pts = []; let hopped = false, busy = false, raf = 0, tmo = [], warned = false;
     const box = h('button', { class: 'ac-box', type: 'button', 'aria-label': 'Je ne suis pas un robot' });
     const lab = h('div', { class: 'ac-lab' }, 'Je ne suis pas un robot');
     const row = h('div', { class: 'ac-row' }, box, lab);
@@ -66,9 +66,12 @@ export default {
         if (v.ok) {
           box.replaceChildren(h('div', {})); box.firstChild.innerHTML = '<svg class="ac-tick" viewBox="0 0 24 24"><path fill="none" stroke="#34a853" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" d="M4 12.5l5 5L20 6"/></svg>';
           box.style.borderColor = '#34a853'; later(() => api.solve(), 500);
+        } else if (!warned) {
+          warned = true; w.classList.add('ak-shake'); msg.textContent = 'Doute : ' + v.why + ' (Seconde chance, offerte.)'; api.say('Première alerte : ' + v.why + ' Je vous en offre une seconde, c’est la fête.', 'smug'); api.sfx('bad');
+          box.replaceChildren(); box.disabled = false; busy = false; bar.style.width = '0'; pts.length = 0; setTimeout(() => w.classList.remove('ak-shake'), 600);
         } else {
           w.classList.add('bad', 'ak-shake'); box.replaceChildren(h('div', {})); box.firstChild.innerHTML = '<svg class="ac-tick" viewBox="0 0 24 24"><path fill="none" stroke="#d93025" stroke-width="3.5" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>';
-          later(() => api.fail(v.why), 600);
+          S.last = v.why; S.lastT = Date.now(); later(() => api.fail(v.why), 600);
         }
       };
       raf = requestAnimationFrame(loop);

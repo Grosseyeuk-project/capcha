@@ -1,4 +1,4 @@
-import { css, frame } from './a_kit.js';
+import { css, frame, hasRule, coarse } from './a_kit.js';
 css('rot', `
 .ar-st{position:relative;border-radius:4px;overflow:hidden;background:linear-gradient(180deg,#232a3a,#141824);touch-action:none;cursor:grab}
 .ar-st canvas{display:block;width:100%;height:auto}
@@ -19,7 +19,7 @@ const CELLS = [[0, 0, 0, '#e53935'], [1, 0, 0, '#fdd835'], [2, 0, 0, '#43a047'],
 export default {
   id: 'a_rotate', tier: 2, title: 'Rotation 3D', time: 50000,
   mount(host, api) {
-    const { h, THREE } = api, W = 360, H = 180;
+    const { h, THREE } = api, W = 360, H = 210, noUp = hasRule('a_rotate', 'R4');
     // all 24 orientations via BFS with distances
     const dist = new Map([[key(I), 0]]), q = [I]; while (q.length) { const m = q.shift(); for (const mv of MOVES) { const n = mul(mv, m), k = key(n); if (!dist.has(k)) { dist.set(k, dist.get(key(m)) + 1); q.push(n); } } }
     const all = [...dist.keys()].map((k) => k.split(',').map(Number));
@@ -33,12 +33,12 @@ export default {
     const stage = h('div', { class: 'ar-st', tabindex: 0, 'aria-label': 'Zone de rotation : flèches pour pivoter, Q et E pour incliner' }, cv, h('div', { class: 'ar-dv' }), h('span', { class: 'ar-lb', style: { left: '10px' } }, 'Modèle'), h('span', { class: 'ar-lb', style: { right: '10px' } }, 'Votre objet'));
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
-    defs.forEach(([t, i, l]) => bt.append(h('button', { type: 'button', 'aria-label': l, title: l, onclick: () => rot(i) }, t)));
-    const fr = frame(h, { small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Chaque cube a sa couleur, donc une seule pose est la bonne. Par quarts de tour.', body: [stage, bt], onVerify: check });
+    defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; bt.append(h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 4 : ↑ en maintenance' : l, disabled: dis ? '' : null, style: dis ? { opacity: .35, cursor: 'not-allowed', textDecoration: 'line-through' } : {}, onclick: () => rot(i) }, t)); });
+    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Chaque cube a sa couleur, donc une seule pose est la bonne. Par quarts de tour.', body: [stage, bt], onVerify: check });
     host.append(fr.el);
     if (/cheat=1/.test(location.search)) { // BFS path for tests
       const par = new Map([[key(cur), null]]), qq = [cur]; let hit = null;
-      while (qq.length && !hit) { const m = qq.shift(); if (key(m) === key(tgt)) { hit = m; break; } MOVES.forEach((mv, i) => { const n = mul(mv, m), k = key(n); if (!par.has(k)) { par.set(k, [key(m), i]); qq.push(n); } }); }
+      while (qq.length && !hit) { const m = qq.shift(); if (key(m) === key(tgt)) { hit = m; break; } MOVES.forEach((mv, i) => { if (noUp && i === 0) return; const n = mul(mv, m), k = key(n); if (!par.has(k)) { par.set(k, [key(m), i]); qq.push(n); } }); }
       const path = []; let k = key(tgt); while (par.get(k)) { path.unshift(par.get(k)[1]); k = par.get(k)[0]; } host.dataset.answer = path.join(',');
     }
     try {
@@ -60,14 +60,17 @@ export default {
       if (anim) raf = requestAnimationFrame(frame1);
     }
     const kick = () => { if (!raf) raf = requestAnimationFrame(frame1); };
-    function rot(i) { cur = mul(MOVES[i], cur); anim = { a: gP.quaternion.clone(), b: toQ(cur), t0: performance.now() }; api.sfx('tick'); kick(); }
+    function rot(i) { cur = mul(MOVES[i], cur); anim = { a: gP.quaternion.clone(), b: toQ(cur), t0: performance.now() }; api.sfx('tick'); kick(); glow(); }
     kick();
     // drag rotation: every ~44px = one quarter turn
     let dg = null;
     stage.addEventListener('pointerdown', (e) => { dg = { x: e.clientX, y: e.clientY }; stage.setPointerCapture(e.pointerId); });
-    stage.addEventListener('pointermove', (e) => { if (!dg) return; const dx = e.clientX - dg.x, dy = e.clientY - dg.y; if (Math.max(Math.abs(dx), Math.abs(dy)) > 40) { if (Math.abs(dx) > Math.abs(dy)) rot(dx > 0 ? 3 : 2); else rot(dy > 0 ? 1 : 0); dg = { x: e.clientX, y: e.clientY }; } });
+    stage.addEventListener('pointermove', (e) => { if (!dg) return; const dx = e.clientX - dg.x, dy = e.clientY - dg.y; if (Math.max(Math.abs(dx), Math.abs(dy)) > 40) { if (Math.abs(dx) > Math.abs(dy)) rot(dx > 0 ? 3 : 2); else if (dy > 0) rot(1); else if (!noUp) rot(0); else api.say('Le bouton ↑ est en maintenance (règle 4). Essayez ↓ trois fois, c’est pareil, en plus long.', 'smug'); dg = { x: e.clientX, y: e.clientY }; } });
     stage.addEventListener('pointerup', () => { dg = null; }); stage.addEventListener('pointercancel', () => { dg = null; });
-    stage.addEventListener('keydown', (e) => { const k = { ArrowUp: 0, ArrowDown: 1, ArrowLeft: 2, ArrowRight: 3, q: 4, Q: 4, e: 5, E: 5 }[e.key]; if (k != null) { rot(k); e.preventDefault(); } else if (e.key === 'Enter') check(); });
+    stage.addEventListener('keydown', (e) => { const k = { ArrowUp: 0, ArrowDown: 1, ArrowLeft: 2, ArrowRight: 3, q: 4, Q: 4, e: 5, E: 5 }[e.key]; if (k === 0 && noUp) { api.say('Règle 4 : ↑ est en maintenance.', 'smug'); e.preventDefault(); } else if (k != null) { rot(k); e.preventDefault(); } else if (e.key === 'Enter') check(); });
+    const lb = stage.querySelectorAll('.ar-lb')[1];
+    function glow() { if (lb) lb.style.color = distBetween(cur, tgt) === 0 ? '#6cff8f' : ''; if (lb) lb.textContent = distBetween(cur, tgt) === 0 ? 'Votre objet ✓' : 'Votre objet'; }
+    glow();
     function check() {
       const n = distBetween(cur, tgt);
       if (n === 0) { fr.el.classList.add('ak-ok'); return api.solve(); }

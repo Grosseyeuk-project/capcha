@@ -296,7 +296,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 .ch-n { font: 800 1.7rem/1 var(--display); color: var(--yellow); margin-right: 12px; letter-spacing: -.03em; }
 .card-head { justify-content: flex-start; }
 .card-head .ch-title { flex: 1; min-width: 0; }
-.stamp { top: 14px; left: auto; right: 14px; transform: rotate(6deg); padding: 2px 12px; border-width: 4px; background: rgba(246, 241, 228, .9); }
+.stamp { top: 56px; left: auto; right: 14px; transform: rotate(6deg); padding: 2px 12px; border-width: 4px; background: rgba(246, 241, 228, .9); }
 .stamp b { font-size: clamp(1.1rem, 4vw, 1.5rem); }
 .stamp.show { animation: stampc .3s cubic-bezier(.2, 1.4, .4, 1) both; }
 @keyframes stampc { from { transform: rotate(6deg) scale(2.4); opacity: 0; } to { transform: rotate(6deg) scale(1); opacity: 1; } }

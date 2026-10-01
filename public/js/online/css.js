@@ -127,7 +127,7 @@ const CSS = `
 .ol-tbl th{font:700 10px ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ol-dim);text-align:left;padding:4px 6px}
 .ol-tbl td{padding:8px 6px;border-top:1px solid var(--ol-line);white-space:nowrap}
 .ol-tbl tr.me td{background:rgba(91,140,255,.1)}
-.ol-tbl td:nth-child(2){max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.ol-tbl td:nth-child(2){max-width:170px;overflow:hidden;text-overflow:ellipsis}
 .ol-conf{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
 .ol-conf i{position:absolute;top:0;width:9px;height:14px;animation:ol-fall linear forwards}
 @media (max-width:820px){
@@ -203,7 +203,7 @@ const CSS = `
 .ol-tbl th{font-family:var(--mono);color:#7a7767}.ol-tbl td{border-top:1.5px solid rgba(16,32,42,.2);font-family:var(--mono);font-size:12.5px}
 .ol-tbl tr.me td{background:#fff3c4}
 .ol-verdict{display:flex;justify-content:center;margin:2px 0 6px}
-.ol-bigstamp{display:inline-block;font:800 clamp(2rem,9vw,3.6rem)/1 var(--disp);letter-spacing:.06em;padding:4px 22px;border:7px double currentColor;border-radius:12px;transform:rotate(-5deg);background:var(--paper);box-shadow:0 5px 0 #000;animation:ol-stamp .5s .2s cubic-bezier(.2,1.4,.4,1) both}
+.ol-bigstamp{display:inline-block;font:800 clamp(1.5rem,6.4vw,3.4rem)/1 var(--disp);letter-spacing:.06em;padding:4px 22px;border:7px double currentColor;border-radius:12px;transform:rotate(-5deg);background:var(--paper);box-shadow:0 5px 0 #000;animation:ol-stamp .5s .2s cubic-bezier(.2,1.4,.4,1) both}
 .ol-bigstamp.win{color:#0e8a6d}.ol-bigstamp.lose{color:#c8102e}
 @keyframes ol-stamp{from{transform:rotate(-5deg) scale(3.2);opacity:0}to{transform:rotate(-5deg) scale(1);opacity:1}}
 /* Gérard dans les écrans en ligne */
@@ -242,6 +242,23 @@ const CSS = `
  .ol-ovt{top:60px;padding:8px 14px}
  .ol-wrap{padding:10px 12px 28px;gap:10px}
 }
+
+/* r3 */
+.ol-code{gap:10px 14px}.ol-code>div{min-width:0}.ol-code h3{margin-bottom:12px!important}
+.ol-code b{display:inline-block;transform:rotate(-1deg);font-size:clamp(30px,8vw,46px)}
+.ol-toasts{bottom:110px}
+.ol-root:has(.ol-end) .ol-toasts{display:none}
+.ol-pod .av{animation-delay:calc(var(--d)*.4)!important}
+.ol-pod .blk{animation-duration:.4s!important;animation-delay:calc(var(--d)*.35)!important}
+.ol-racing{color:#ff5d6c!important;border-color:#ff5d6c!important;animation:ol-pulse 1.1s infinite}
+.ol-menugrid{margin-top:12px;display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:980px){.ol-wrap.ol-menu{max-width:980px}.ol-menugrid{grid-template-columns:1fr 1fr;align-items:start}.ol-menugrid>div{display:flex;flex-direction:column;gap:14px}}
+.ol-verd{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font:500 13px/1.35 var(--mono)}
+.ol-verd li{padding:6px 10px;border-radius:8px;background:var(--paper2);border:1.5px solid rgba(16,32,42,.25)}
+.ol-verd li.me{background:#fff3c4;border-color:var(--ink)}
+.ol-tag{font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:4px;padding:1px 4px;margin-left:6px;color:#6b6a5c}
+.ol-tag.bot{color:#7a4b00}.ol-tag.ok{color:#0b6a52}.ol-tag.no{color:#a50f26}
+@media (max-width:820px){.ol-rtop .pill{white-space:nowrap}.ol-rtop .ol-live{display:none}.ol-toasts{bottom:100px}.ol-rtop .ol-racing{padding:4px 8px}}
 `;
 let done = false;
 export function injectCss() {

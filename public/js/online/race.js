@@ -36,7 +36,7 @@ export class RaceView {
     this.railEmotes = h_('div', { class: 'ol-emotes' });
     this.rail = h_('aside', { class: 'ol-rail', 'aria-label': 'Classement en direct' }, h_('h3', {}, h_('span', {}, 'Classement en direct'), this.countEl = h_('span', {}, '')), this.rowsEl, this.railEmotes);
     this.mount.replaceChildren(h_('div', { class: 'ol-wrap ol-wide' },
-      h_('div', { class: 'ol-rtop' }, this.rankEl, this.lvlEl, h_('span', { class: 'sp' }), this.pingEl, h_('button', { class: 'ol-ghostbtn', onclick: () => this.leave() }, 'Quitter')),
+      h_('div', { class: 'ol-rtop' }, h_('span', { class: 'pill ol-racing' }, '● Course'), this.rankEl, this.lvlEl, h_('span', { class: 'sp' }), this.pingEl, h_('button', { class: 'ol-ghostbtn', onclick: () => this.leave() }, 'Quitter')),
       this.lastEl,
       h_('div', { class: 'ol-race' }, this.stage, this.rail)));
   }

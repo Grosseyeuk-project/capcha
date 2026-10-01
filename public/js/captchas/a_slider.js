@@ -1,10 +1,10 @@
-import { css, frame } from './a_kit.js';
+import { css, frame, hasRule, coarse } from './a_kit.js';
 css('slider', `
 .as-st{position:relative;width:100%;aspect-ratio:2/1;border-radius:3px;overflow:hidden;background:#cde}
 .as-st canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .as-pc{will-change:transform;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .as-tr{position:relative;height:44px;margin-top:10px;background:#eef0f3;border:1px solid #d5d8dd;border-radius:22px;touch-action:none}
-.as-tr span{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:#7b8089;pointer-events:none;transition:opacity .2s}
+.as-tr span{position:absolute;inset:0;padding-left:50px;display:grid;place-items:center;font-size:12px;color:#7b8089;pointer-events:none;transition:opacity .2s}
 .as-fl{position:absolute;left:0;top:0;bottom:0;border-radius:22px;background:rgba(26,115,232,.18);width:0}
 .as-hd{position:absolute;left:0;top:-1px;width:46px;height:44px;border-radius:50%;background:#fff;border:2px solid #1a73e8;display:grid;place-items:center;cursor:grab;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:box-shadow .15s,background .15s;color:#1a73e8;font-size:18px;font-weight:700;padding:0}
 .as-hd:hover{background:#e8f0fe}.as-hd.drag{cursor:grabbing;background:#1a73e8;color:#fff;box-shadow:0 4px 12px rgba(26,115,232,.5)}
@@ -12,7 +12,7 @@ css('slider', `
 export default {
   id: 'a_slider', tier: 2, title: 'Pièce de puzzle', time: 30000,
   mount(host, api) {
-    const { h } = api, W = 340, H = 170, P = 46, TAB = 8, tol = 5;
+    const { h } = api, W = 340, H = 170, P = 46, TAB = 8, tol = 7;
     const tx = api.int(130, W - P - 18), ty = api.int(30, H - P - 24);
     const scene = document.createElement('canvas'); scene.width = W * 2; scene.height = H * 2; const s = scene.getContext('2d'); s.scale(2, 2);
     const sky = s.createLinearGradient(0, 0, 0, H), hue = api.int(190, 300); sky.addColorStop(0, `hsl(${hue} 70% 62%)`); sky.addColorStop(1, `hsl(${hue - 140} 80% 82%)`); s.fillStyle = sky; s.fillRect(0, 0, W, H);
@@ -31,7 +31,7 @@ export default {
     const hd = h('button', { class: 'as-hd', type: 'button', role: 'slider', 'aria-label': 'Faire glisser la pièce', 'aria-valuemin': 0, 'aria-valuemax': W - P, 'aria-valuenow': 0, 'aria-orientation': 'horizontal' }, '→');
     const fill = h('div', { class: 'as-fl' }), hint = h('span', {}, 'Faites glisser pour compléter le puzzle');
     const tr = h('div', { class: 'as-tr' }, fill, hint, hd);
-    const fr = frame(h, { small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision attendue : ±' + tol + ' px. Un robot ferait ±0. Un humain ±' + tol + '. Soyez humain, mais pas trop.', body: [stage, tr], onVerify: check });
+    const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision attendue : ±' + tol + ' px. Un robot ferait ±0. Un humain ±' + tol + '. Soyez humain, mais pas trop.', body: [stage, tr], onVerify: check });
     host.append(fr.el);
     const cheatOn = /cheat=1/.test(location.search); if (cheatOn) host.dataset.answer = tx;
     function set(v) { const k = stage.clientWidth / W; val = Math.max(0, Math.min(W - P, v)); pc.style.transform = `translateX(${(val - tx) * k}px)`; const trw = tr.clientWidth - 46; hd.style.left = (val / (W - P)) * trw + 'px'; fill.style.width = (val / (W - P)) * trw + 23 + 'px'; hd.setAttribute('aria-valuenow', Math.round(val)); if (val > 4) hint.style.opacity = 0; }

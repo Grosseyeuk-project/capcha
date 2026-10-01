@@ -28,7 +28,7 @@ async function run(id) {
   const curve = async (x0, y0, x1, y1) => { for (let i = 1; i <= 30; i++) { const t = i / 30; await p.mouse.move(x0 + (x1 - x0) * t + Math.sin(t * 7) * 45, y0 + (y1 - y0) * t + Math.sin(t * 5) * 9); await sleep(8); } await p.mouse.move(x1, y1); };
   if (id === 'a_checkbox') {
     await shot('init');
-    await click('.ac-box'); await waitStrike(); await remount(); // teleport
+    await click('.ac-box'); await sleep(3500); await shot('warn'); await click('.ac-box'); await waitStrike(); await remount(); // teleport: first is a free warning
     await p.mouse.move(5, 5); const near = ctr(await box('.ac-box')); await p.mouse.move(near[0] - 50, near[1], { steps: 8 }); await sleep(3200);
     const bb = await box('.ac-box'); console.log('  box hopped to x', Math.round(bb.x));
     const [cx, cy] = ctr(bb); await p.mouse.move(60, cy + 3); await sleep(3000); await p.mouse.move(60, cy, { steps: 2 }); await sleep(4200);
@@ -47,7 +47,7 @@ async function run(id) {
     const a3 = (await ans()).split(',').map(Number); await clickTiles(a3); await shot('sel'); await click('.ak-btn'); await waitSolve();
   } else if (id === 'a_math') {
     await p.fill('.am-n', '3'); await click('.ak-btn'); await waitStrike(); await remount();
-    const a = +(await ans()); await p.fill('.am-n', String(a + 1)); await p.keyboard.press('Enter'); await waitStrike(); await remount();
+    await p.fill('.am-n', 'mille'); await p.keyboard.press('Enter'); await waitStrike(); await remount();
     const a3 = await ans(); await p.fill('.am-n', a3); await shot('typed'); await click('.ak-btn'); await waitSolve();
   } else if (id === 'a_slider') {
     const drag = async (target) => { const hb = await box('.as-hd'); const trw = (await box('.as-tr')).width - 46; const [x, y] = ctr(hb); const dx = target / 340 * 0 + target * trw / (340 - 46); await p.mouse.move(x, y); await p.mouse.down(); await p.mouse.move(x + dx / 2, y + 3, { steps: 6 }); await p.mouse.move(x + dx, y, { steps: 6 }); await p.mouse.up(); };
