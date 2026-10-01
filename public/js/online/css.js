@@ -239,7 +239,7 @@ const CSS = `
  .ol-emotes{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px}.ol-emotes button{flex:none;white-space:nowrap}
  .ol-prow .nm{font-size:10.5px}.ol-prow .lv{font-size:9.5px;text-align:right}.ol-prow .bar{height:5px}.ol-prow .st u{width:6px;height:6px}
  .ol-prow .av{width:18px;height:18px}
- .ol-ovt{top:60px;padding:8px 14px}
+ .ol-ovt{top:150px;padding:8px 14px}
  .ol-wrap{padding:10px 12px 28px;gap:10px}
 }
 
