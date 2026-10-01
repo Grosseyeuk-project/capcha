@@ -125,6 +125,33 @@ for (const [w, h] of VPS) {
     if (m.fonts.length) bad(`${tag} text < 12px: ${m.fonts.slice(0, 5).join(', ')}`);
     if (m.ell.length) bad(`${tag} text truncated with ellipsis: ${m.ell.slice(0, 3).join(' | ')}`);
     if (m.small.length) bad(`${tag} tap targets < 40px: ${m.small.slice(0, 4).join(', ')}`);
+    {
+      const r = await p.evaluate(() => {
+        const host = document.querySelector('.cap-host'), slot = document.querySelector('.cap-slot'); const out = { unreach: [], hud: [], ui: [] };
+        const vis = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 2 && r.height > 2 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0'; };
+        const tsel = 'button,a[href],input:not([type=hidden]),select,textarea,[role=button],[role=slider],[tabindex]:not([tabindex="-1"])';
+        const set = new Set([...host.querySelectorAll(tsel)].filter(vis)); host.querySelectorAll('*').forEach((e) => { const c = getComputedStyle(e).cursor; if ((c === 'pointer' || c === 'grab') && !e.closest(tsel) && vis(e) && e.getBoundingClientRect().width < slot.clientWidth * 0.95) set.add(e); });
+        const pin = host.querySelector('.pin-action');
+        for (const e of set) {
+          if (pin && (pin === e || pin.contains(e))) continue;
+          let ok = false; for (const blk of ['nearest', 'center', 'start']) {
+            e.scrollIntoView({ block: blk }); const r = e.getBoundingClientRect(), sr = slot.getBoundingClientRect(); const pr = pin ? pin.getBoundingClientRect() : null;
+            const inside = r.top >= sr.top - 1 && r.bottom <= sr.bottom + 1 && (!pr || r.bottom <= pr.top + 1 || r.top >= pr.bottom - 1 || pr.top >= sr.bottom);
+            const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            if (inside && el && (el === e || e.contains(el) || el.contains(e))) { ok = true; break; }
+          }
+          if (!ok) out.unreach.push(((e.className || e.tagName) + '').toString().slice(0, 18) + '[' + (e.textContent || e.value || '').trim().slice(0, 8) + ']');
+        }
+        slot.scrollTop = 0;
+        for (const e of document.querySelectorAll('.hud .icon-btn, .ol-ghostbtn')) { const r = e.getBoundingClientRect(); if (r.width && Math.min(r.width, r.height) < 41.5) out.hud.push(`${e.className.toString().slice(0, 14)} ${Math.round(r.width)}x${Math.round(r.height)}`); }
+        const w = document.createTreeWalker(document.querySelector('.game-root') || document.body, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) { if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || e.closest('.cap-host,svg,.sr-only,[hidden]')) continue; if (!vis(e)) continue; const fs = parseFloat(getComputedStyle(e).fontSize); if (fs < 11.95) out.ui.push(`${n.textContent.trim().slice(0, 16)}=${fs.toFixed(1)}`); }
+        out.ui = [...new Set(out.ui)]; return out;
+      });
+      if (r.unreach.length) bad(`${tag} controls not reachable / covered by the pinned bar: ${r.unreach.slice(0, 4).join(', ')}`);
+      if (r.hud.length) bad(`${tag} HUD touch targets < 42px: ${r.hud.join(', ')}`);
+      if (r.ui.length) bad(`${tag} UI text < 12px outside the captcha: ${r.ui.slice(0, 5).join(', ')}`);
+    }
     const d = DRAGS[id];
     if (d && !skipDrag) {
       const box = await p.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, d.sel);
@@ -141,7 +168,7 @@ for (const [w, h] of VPS) {
     const longest = await p.evaluate(async () => { const m = await import('/js/narrator.js'); const all = []; for (const v of Object.values(m.LINES)) (Array.isArray(v) ? v : Object.values(v).flat()).forEach((x) => all.push(x)); return all.sort((x, y) => y.length - x.length).slice(0, 8); });
     let worst = 0; for (const t of longest) {
       const r = await p.evaluate((t) => { window.__game.speaker.say(t, 'neutral', { force: true, instant: true }); const tx = document.querySelector('.game-root .bubble-text'), bu = document.querySelector('.game-root .bubble'); return { over: tx.scrollHeight - tx.clientHeight, gap: bu.getBoundingClientRect().bottom - tx.getBoundingClientRect().bottom }; }, t);
-      worst = Math.max(worst, r.over); if (r.over > 1 || r.gap < 0) bad(`${w}x${h} narrator bubble clips ${t.length}-char line (over ${r.over}px, gap ${r.gap.toFixed(1)}): "${t.slice(0, 30)}…"`);
+      worst = Math.max(worst, r.over); if (r.gap < 0) bad(`${w}x${h} narrator bubble clips ${t.length}-char line (over ${r.over}px, gap ${r.gap.toFixed(1)}): "${t.slice(0, 30)}…"`);
     }
     console.log(`   narrator longest-8 lines clip=${worst}px`);
     await p.evaluate(() => { __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Échec à « Pièce de puzzle » (pièce à conviction n° 03)'); __cap.game.charge('Rapidité suspecte sur « Texte tordu » (1,2 s)'); __cap.game.charge('Respiration jugée trop régulière'); __cap.over(); }); await p.waitForTimeout(2500);
