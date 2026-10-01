@@ -122,9 +122,9 @@ export function startScene(canvas) {
     x.strokeStyle = 'rgba(120,200,210,.35)'; x.lineWidth = 3; for (let i = 1; i < 5; i++) { x.beginPath(); x.moveTo(0, i * 102); x.lineTo(196, i * 102); x.stroke(); }
     x.strokeRect(14, 14, 168, 484); x.fillStyle = 'rgba(150,220,230,.5)'; for (let i = 0; i < 6; i++) for (const bx of [28, 168]) { x.beginPath(); x.arc(bx, 40 + i * 86, 5, 0, 7); x.fill(); }
     x.save(); x.beginPath(); x.rect(196, 0, 60, 512); x.clip(); x.fillStyle = '#ffd23f'; x.fillRect(196, 0, 60, 512); x.fillStyle = '#10202a'; for (let i = -10; i < 24; i++) { x.beginPath(); x.moveTo(190, i * 44); x.lineTo(270, i * 44 - 80); x.lineTo(270, i * 44 - 40); x.lineTo(190, i * 44 + 40); x.fill(); } x.restore();
-    if (flip) { const f = document.createElement('canvas'); f.width = 256; f.height = 512; const y = f.getContext('2d'); y.translate(256, 0); y.scale(-1, 1); y.drawImage(c, 0, 0); const t = new THREE.CanvasTexture(f); t.colorSpace = THREE.SRGBColorSpace; return t; }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
-  const dGeo = new THREE.PlaneGeometry(8.4, 17);
+    if (flip) { const f = document.createElement('canvas'); f.width = 256; f.height = 512; const y = f.getContext('2d'); y.translate(256, 0); y.scale(-1, 1); y.drawImage(c, 0, 0); const t = new THREE.CanvasTexture(f); t.colorSpace = THREE.SRGBColorSpace; t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 2); return t; }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 2); return t; };
+  const dGeo = new THREE.PlaneGeometry(8.4, 36);
   const dL = new THREE.Mesh(dGeo, new THREE.MeshBasicMaterial({ map: doorTex(false), fog: false, side: THREE.DoubleSide })), dR = new THREE.Mesh(dGeo, new THREE.MeshBasicMaterial({ map: doorTex(true), fog: false, side: THREE.DoubleSide })); doors.add(dL, dR);
   const dEdge = new THREE.LineSegments(new THREE.EdgesGeometry(dGeo), new THREE.LineBasicMaterial({ color: 0xffffff, fog: false })); dL.add(dEdge); dR.add(dEdge.clone());
   const coreTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 0, 128, 128, 128); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,244,200,.85)'); g.addColorStop(0.6, 'rgba(255,200,90,.25)'); g.addColorStop(1, 'rgba(255,200,90,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); return t; })();
@@ -205,7 +205,7 @@ export function startScene(canvas) {
       else if (dm === 'closed') { open = 0; }
       doors.visible = dm !== 'hidden';
       const x = 4.2 + open * 13; dL.position.x = -x; dR.position.x = x; glow.material.opacity = Math.min(1, gl); const gs = 0.5 + gl * 1.4; glow.scale.set(gs, gs, 1);
-      rayGroup.rotation.z += dt * 0.25; rayMats.forEach((mt) => { mt.opacity = rayO; }); ring.scale.setScalar(Math.max(0.001, ringS)); ring.material.opacity = ringS > 0 ? Math.max(0, 0.8 - ringS / 40) : 0;
+      rayGroup.rotation.z += dt * 0.25; rayMats.forEach((mt) => { mt.opacity = rayO; }); ring.scale.setScalar(Math.max(0.001, ringS)); ring.material.opacity = ringS > 0 ? Math.max(0, 0.45 - ringS / 60) : 0;
       dEdge.material.color.copy(tint); dR.children[0] && dR.children[0].material.color.copy(tint); }
     cam.fov = (innerWidth < innerHeight ? 85 : 70) + st.tierT * 12 * k; cam.updateProjectionMatrix(); st.tanHalf = Math.tan(cam.fov * Math.PI / 360);
     rays.rotation.z += dt * (0.2 + m);
