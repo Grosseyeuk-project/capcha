@@ -120,7 +120,7 @@ css('live2', `
 .ak-btn:disabled{font-size:12px}
 .ak-lc{padding:4px 7px;gap:4px}
 .ak-st{gap:4px;padding:6px 10px 0;min-height:0}
-.ak-inc{top:auto}
+.ak-inc{top:auto;pointer-events:none}
 @media (min-width:900px){.ak-w{width:min(100%,520px)}.ak-note{font-size:13px}}
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
