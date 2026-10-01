@@ -1,0 +1,11 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Online harness</title><link rel="stylesheet" href="../../css/style.css">
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js"}}</script></head>
+<body><canvas id="bg"></canvas><main id="app"><button id="go" style="margin:40px;padding:14px">Online</button></main>
+<script type="module">
+import './boot.js';
+import { CAPTCHAS } from '../captchas/index.js';
+const n = +new URLSearchParams(location.search).get('n') || 0;
+if (n) { const c = CAPTCHAS[0]; while (CAPTCHAS.length < n) CAPTCHAS.push(c); }
+document.getElementById('go').onclick = () => window.CAPCHA_ONLINE.open();
+</script></body></html>

@@ -1,0 +1,10 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+const p = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+p.on('pageerror', (e) => console.log('pageerror', e.message));
+await p.goto('http://localhost:' + (process.env.PORT || 8083) + '/js/online/harness.html?n=5'); await p.evaluate(() => window.CAPCHA_ONLINE.open());
+console.log('peek', await p.evaluate(() => window.CAPCHA_ONLINE.peek()));
+await p.fill('input[aria-label=Pseudo]', 'Solo'); await p.click('text=Partie rapide'); await p.waitForSelector('.ol-meter'); await p.waitForTimeout(3500);
+await p.screenshot({ path: '/tmp/olshots/q1-fill.png' });
+await p.waitForSelector('.ol-rail', { timeout: 20000 }); await p.waitForTimeout(6000);
+await p.screenshot({ path: '/tmp/olshots/q2-race.png' }); await b.close();

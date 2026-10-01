@@ -39,3 +39,11 @@ Captchas must be keyboard-accessible where reasonable, work 360px→1920px wide,
 
 ## Verification
 `node tools/shot.mjs <scenario>` (shell piece maintains) screenshots the live game with Playwright (chromium at /opt/pw-browsers). Debug URL params: `?level=N` jumps to level N, `?cap=<id>` mounts one captcha alone, `?seed=N`, `?cheat=1` exposes `window.__cap.solve()/fail()`.
+
+## Shell additions
+- **Entry**: no title screen when `?level`, `?cap` or `?autostart` is present (solo starts immediately). `?cheat=1` exposes `window.__cap`: `solve()`, `fail(msg)` (both wait for the captcha to be mounted), `left(ms)` (force remaining time, to test the low-timer state), `win()`, `over()`, `title()`, `start()`, `game`, `bg`. `window.CAPCHA_SHELL = { startSolo, showTitle, bg, game }`.
+- **Levels**: ~0.6 s intro banner before `mount` (timer starts at mount, not before). After `fail(msg)`/timeout the same level is re-mounted after ~1.3 s with a new seed. `solve` event `ms` = time since mount (all stages). `win`/`over` events also carry `{level, rank, stats}`.
+- **Game options**: `new Game({ ..., onReplay, onMenu })`. In `mode:'online'` the Game renders NO end screen (the online piece shows its own); in solo it renders the verdict card. Transitions go through `game.load(opts)` (overridable, e.g. `game.load = () => {}` freezes progression). `game.debugLeft(ms)`, `game.debugEnd('win'|'over')`.
+- **Online hook**: shell does `import('./online/boot.js')`; the title button calls `window.CAPCHA_ONLINE.open({showTitle, startSolo})` when defined (otherwise disabled with a « bientôt » hint). Solo emits DOM events `capcha:event` on `window` (detail = the Game event).
+- **Modules**: `audio.js` exports `sfx(name)` (click, pop, tick, good, bad, whoosh, stamp, strike, blip, heart, alarm, win, lose, confetti, level), `setTension(0..1)`, `startMusic/stopMusic`, `toggleMute/isMuted` (persisted `capcha.mute`, key `M`). `scene.js` exports `bg` (`set({suspicion,pressure,mood})`, `pulse('good'|'bad'|'level')`, `beat()`, `shake()`) and sets CSS var `--tint` on `<html>`. `narrator.js`: `say(key, rng, ctx)` (60+ lines, never repeats back-to-back), `rankFor`.
+- **Captcha host** gets the paper card (`--paper` cream, `--ink`), width ≤ 820 px minus padding; CSS vars `--ink --paper --yellow --red --green --mono --display` are available to captchas.
