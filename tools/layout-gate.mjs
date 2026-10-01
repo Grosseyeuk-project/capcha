@@ -70,7 +70,7 @@ const measure = () => {
     // ignore wrappers whose descendants are the real targets
     if ([...cands].some((o) => o !== e && e.contains(o))) continue;
     let r = e.getBoundingClientRect(); const lab = e.closest('label,button,[role=button]'); if (lab && lab !== e) { const lr = lab.getBoundingClientRect(); if (Math.min(lr.width, lr.height) > Math.min(r.width, r.height)) r = lr; }
-    if (Math.min(r.width, r.height) < 39.5) small.push(`${(e.tagName + '.' + (e.className || '')).toString().slice(0, 22)}[${(e.textContent || '').trim().slice(0, 8)}] ${Math.round(r.width)}x${Math.round(r.height)}`);
+    const lw = e.offsetWidth || r.width, lh = e.offsetHeight || r.height; /* layout size: ignores transient scale animations */ if (Math.min(Math.max(r.width, lw), Math.max(r.height, lh)) < 39.5) small.push(`${(e.tagName + '.' + (e.className || '')).toString().slice(0, 22)}[${(e.textContent || '').trim().slice(0, 8)}] ${Math.round(r.width)}x${Math.round(r.height)}`);
   }
   o.small = [...new Set(small)];
   return o;

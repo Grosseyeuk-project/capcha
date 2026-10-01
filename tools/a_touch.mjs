@@ -1,7 +1,7 @@
 // touch/mobile pass: node tools/a_touch.mjs [--port 8095] [--shots dir]
 import { chromium } from 'playwright-core';
 const a = process.argv.slice(2); const opt = (k, d) => { const i = a.indexOf('--' + k); return i > -1 ? a[i + 1] : d; };
-const port = opt('port', 8095), shots = opt('shots', '/tmp/claude-0/sh');
+const port = opt('port', 8096), shots = opt('shots', '/tmp/claude-0/sh');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ids = (a.filter((x) => x.startsWith('a_')).length ? a.filter((x) => x.startsWith('a_')) : ['a_checkbox', 'a_wavy', 'a_grid', 'a_math', 'a_slider', 'a_bins', 'a_order', 'a_rotate']);

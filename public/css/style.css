@@ -411,7 +411,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .online .hud { grid-template-columns: 1fr auto; padding: 4px 8px 9px; }
   .online .hud .pips { max-width: none; } .online .hud-c { display: block; }
   .online .hud-r .sound { display: none; }
-  .online .card { max-height: calc(100dvh - 150px); }
+  .online .card { max-height: calc(100dvh - 172px); }
 }
 .cap-host { animation: none !important; }
 .speaker.big .bubble-text { min-height: 2.8em; }
@@ -460,3 +460,6 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .72rem; line-height: 1.12; }
   .game-root .avatar { width: 30px; height: 30px; }
 }
+
+.strike.heal { animation: healpop .9s; }
+@keyframes healpop { 0% { box-shadow: 0 0 0 0 var(--green); transform: scale(1.5); border-color: var(--green); } 100% { box-shadow: 0 0 0 14px transparent; transform: none; } }

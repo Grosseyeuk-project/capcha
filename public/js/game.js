@@ -259,6 +259,14 @@ export class Game {
     this.onEvent({ type: 'solve', level: this.level, ms });
     const key = st.streak === 5 ? 'streak5' : st.streak === 3 ? 'streak3' : fast && st.strikes === 0 ? 'solveFast' : ms > c.limit * 0.78 ? 'solveSlow' : 'solve';
     this.narrate(key);
+    // Économie de vies (solo) : un point de suspicion effacé tous les 4 niveaux réussis.
+    if (this.mode === 'solo' && this.strikes > 0 && st.solves % 4 === 0) {
+      this.strikes--; this.charge('Un point de suspicion effacé (erreur administrative)');
+      this.hudRefresh(); this.syncMood(); sfx('good');
+      const el = this.strikeEls[this.strikes]; el.classList.remove('hit', 'heal'); void el.offsetWidth; el.classList.add('heal');
+      const lines = ['Un point de suspicion effacé… par erreur administrative. Ne vous y habituez pas.', 'J’ai effacé une de vos erreurs. Le formulaire était mal rempli. Par moi. C’est confidentiel.', 'Une erreur en moins. Ne cherchez pas à comprendre : moi non plus.'];
+      this.speak(lines[Math.floor(Math.random() * lines.length)], 'worried');
+    }
     this.level++;
     this.later(() => { if (this.level > this.total) { this.finish('win'); return; } this.load({ leave: this.mode === 'solo' }); }, RM() ? 400 : this.mode === 'solo' ? 1100 : 380);
   }

@@ -7,6 +7,7 @@ css('grid', `
 .ag-t .sw{animation:ag-sw 3s ease-in-out infinite}@keyframes ag-sw{50%{transform:rotate(2.5deg)}}
 .ag-t[aria-pressed=true] svg{animation:ag-wg .35s}@keyframes ag-wg{30%{transform:scale(.7) rotate(-4deg)}}
 @media (prefers-reduced-motion:reduce){.ag-t,.ag-t *{animation:none!important}}
+@media (max-width:480px){.ag-t{aspect-ratio:1.3}}
 .ag-g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .ag-t{position:relative;aspect-ratio:1;padding:0;border:0;background:#ddd;cursor:pointer;overflow:hidden;border-radius:2px}
 .ag-t svg{display:block;width:100%;height:100%;transition:transform .18s cubic-bezier(.3,1.5,.5,1)}

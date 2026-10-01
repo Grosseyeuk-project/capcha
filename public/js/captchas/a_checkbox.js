@@ -1,4 +1,4 @@
-import { css, brand, S, resetS } from './a_kit.js';
+import { css, brand, S, resetS, coarse } from './a_kit.js';
 css('chk', `
 .ac-w{width:min(100%,340px)}
 .ac-row{position:relative;height:70px;background:#f9f9f9;border-bottom:1px solid #e3e5e8}
@@ -19,6 +19,9 @@ css('chk', `
 .ac-w.bad .ac-pb i{background:#d93025}
 .ac-ring{position:absolute;left:-6px;top:-6px;width:38px;height:38px;border-radius:50%;pointer-events:none;background:conic-gradient(#1a73e8 calc(var(--p,0)*1turn),transparent 0);-webkit-mask:radial-gradient(circle,transparent 15px,#000 16px);mask:radial-gradient(circle,transparent 15px,#000 16px)}
 .ac-box{touch-action:manipulation;-webkit-user-select:none}
+.ac-box.hint{animation:ac-hint 1.6s ease-in-out infinite}
+@keyframes ac-hint{0%,100%{box-shadow:0 0 0 0 rgba(26,115,232,.45)}50%{box-shadow:0 0 0 9px rgba(26,115,232,0)}}
+@media (prefers-reduced-motion:reduce){.ac-box.hint{animation:none}}
 `);
 export default {
   id: 'a_checkbox', tier: 1, title: 'Case à cocher', time: 25000,
@@ -28,9 +31,9 @@ export default {
     const box = h('button', { class: 'ac-box', type: 'button', 'aria-label': 'Je ne suis pas un robot' });
     const lab = h('div', { class: 'ac-lab' }, 'Je ne suis pas un robot');
     const row = h('div', { class: 'ac-row' }, box, lab);
-    const bar = h('i'); const msg = h('span', {}, 'Analyse : en attente de preuves.');
+    const bar = h('i'); const isTouch = coarse(); const msg = h('span', {}, isTouch ? 'Maintenez la case enfoncée : les robots lâchent vite.' : 'Analyse : en attente de preuves.');
     const w = h('div', { class: 'ak-w ac-w' }, row, h('div', { class: 'ac-strip' }, h('div', { class: 'ac-st' }, msg, h('div', { class: 'ac-pb' }, bar)), brand(h)));
-    host.append(w);
+    host.append(w); if (isTouch) { box.classList.add('hint'); lab.textContent = 'Je ne suis pas un robot (appui long)'; }
     const onMove = (e) => {
       if (e.pointerType !== 'mouse') return;
       const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; for (const c of (evs.length ? evs : [e])) pts.push({ x: c.clientX, y: c.clientY, t: performance.now() }); while (pts.length > 400) pts.shift();
@@ -59,7 +62,7 @@ export default {
     box.addEventListener('pointerdown', (e) => {
       if (!touchy(e) || busy) return;
       const t0 = performance.now(), ring = h('div', { class: 'ac-ring' }); box.append(ring); msg.textContent = 'Maintenez… un robot lâcherait déjà.';
-      const step = () => { const k = Math.min(1, (performance.now() - t0) / 1100); ring.style.setProperty('--p', k); if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
+      const HOLD = ['Mesure du tremblement du pouce…', 'Pouce détecté : 87 % humain, 13 % saucisse.', 'Analyse de la moiteur…']; const step = () => { const k = Math.min(1, (performance.now() - t0) / 1100); ring.style.setProperty('--p', k); msg.textContent = HOLD[Math.min(2, Math.floor(k * 3))]; if (k >= 1) { hold = null; ring.remove(); start({ pointerType: 'touch', detail: 1 }); } else hold.raf = requestAnimationFrame(step); };
       hold = { ring, raf: requestAnimationFrame(step) };
     });
     const rel = () => { if (!hold) return; cancelAnimationFrame(hold.raf); hold.ring.remove(); hold = null; msg.textContent = 'Relâché trop tôt. Un robot, lui, aurait tenu. Réessayez, plus longtemps.'; api.sfx('bad'); w.classList.remove('ak-shake'); void w.offsetWidth; w.classList.add('ak-shake'); };

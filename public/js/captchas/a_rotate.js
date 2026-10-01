@@ -33,7 +33,7 @@ export default {
     const stage = h('div', { class: 'ar-st', tabindex: 0, 'aria-label': 'Zone de rotation : flèches pour pivoter, Q et E pour incliner' }, cv, h('div', { class: 'ar-dv' }), h('span', { class: 'ar-lb', style: { left: '10px' } }, 'Modèle'), h('span', { class: 'ar-lb', style: { right: '10px' } }, 'Votre objet'));
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
-    defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; const bb = h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 4 : ↑ en maintenance' : l, style: dis ? { opacity: .35, cursor: 'not-allowed', textDecoration: 'line-through' } : {}, onclick: () => rot(i) }, t); if (dis) bb.disabled = true; bt.append(bb); });
+    defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; const bb = h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 6 : ↑ en maintenance' : l, style: dis ? { opacity: .35, cursor: 'not-allowed',  } : {}, onclick: () => rot(i) }, t); if (dis) { bb.disabled = true; bb.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>'; } bt.append(bb); });
     const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt], onVerify: check });
     host.append(fr.el);
     const setAnswer = () => { // BFS path for tests
@@ -46,7 +46,7 @@ export default {
       renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); renderer.setPixelRatio(1); renderer.setSize(W * 2, H * 2, false); renderer.setScissorTest(true);
     } catch (e) { stage.append(h('div', { style: { color: '#fff', padding: '60px 10px', textAlign: 'center' } }, 'WebGL indisponible.')); }
     const scene = new THREE.Scene(); scene.add(new THREE.AmbientLight(0xffffff, 1.1)); const dl = new THREE.DirectionalLight(0xffffff, 2.2); dl.position.set(3, 5, 4); scene.add(dl);
-    const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50); cam.position.set(3.6, 3.2, 7.4); cam.lookAt(0, 0, 0);
+    const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50); cam.position.set(3.0, 2.7, 6.0); cam.lookAt(0, 0, 0);
     const geo = new THREE.BoxGeometry(.94, .94, .94), eg = new THREE.EdgesGeometry(geo), mats = [], lm = new THREE.LineBasicMaterial({ color: 0x111111 });
     const mk = () => { const g = new THREE.Group(); const inner = new THREE.Group(); inner.position.set(-.83, -.33, -.17); CELLS.forEach(([x, y, z, c]) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: .45 }); mats.push(m); const b = new THREE.Mesh(geo, m); b.position.set(x, y, z); b.add(new THREE.LineSegments(eg, lm)); inner.add(b); }); g.add(inner); scene.add(g); return g; };
     const gT = mk(), gP = mk();
@@ -66,9 +66,9 @@ export default {
     // drag rotation: every ~44px = one quarter turn
     let dg = null;
     stage.addEventListener('pointerdown', (e) => { dg = { x: e.clientX, y: e.clientY }; stage.setPointerCapture(e.pointerId); });
-    stage.addEventListener('pointermove', (e) => { if (!dg) return; const dx = e.clientX - dg.x, dy = e.clientY - dg.y; if (Math.max(Math.abs(dx), Math.abs(dy)) > 40) { if (Math.abs(dx) > Math.abs(dy)) rot(dx > 0 ? 3 : 2); else if (dy > 0) rot(1); else if (!noUp) rot(0); else api.say('Le bouton ↑ est en maintenance (règle 4). Essayez ↓ trois fois, c’est pareil, en plus long.', 'smug'); dg = { x: e.clientX, y: e.clientY }; } });
+    stage.addEventListener('pointermove', (e) => { if (!dg) return; const dx = e.clientX - dg.x, dy = e.clientY - dg.y; if (Math.max(Math.abs(dx), Math.abs(dy)) > 40) { if (Math.abs(dx) > Math.abs(dy)) rot(dx > 0 ? 3 : 2); else if (dy > 0) rot(1); else if (!noUp) rot(0); else api.say('Le bouton ↑ est en maintenance (règle 6). Essayez ↓ trois fois, c’est pareil, en plus long.', 'smug'); dg = { x: e.clientX, y: e.clientY }; } });
     stage.addEventListener('pointerup', () => { dg = null; }); stage.addEventListener('pointercancel', () => { dg = null; });
-    stage.addEventListener('keydown', (e) => { const k = { ArrowUp: 0, ArrowDown: 1, ArrowLeft: 2, ArrowRight: 3, q: 4, Q: 4, e: 5, E: 5 }[e.key]; if (k === 0 && noUp) { api.say('Règle 4 : ↑ est en maintenance.', 'smug'); e.preventDefault(); } else if (k != null) { rot(k); e.preventDefault(); } else if (e.key === 'Enter') check(); });
+    stage.addEventListener('keydown', (e) => { const k = { ArrowUp: 0, ArrowDown: 1, ArrowLeft: 2, ArrowRight: 3, q: 4, Q: 4, e: 5, E: 5 }[e.key]; if (k === 0 && noUp) { api.say('Règle 6 : ↑ est en maintenance.', 'smug'); e.preventDefault(); } else if (k != null) { rot(k); e.preventDefault(); } else if (e.key === 'Enter') check(); });
     const lb = stage.querySelectorAll('.ar-lb')[1];
     function glow() { if (lb) lb.style.color = distBetween(cur, tgt) === 0 ? '#6cff8f' : ''; if (lb) lb.textContent = distBetween(cur, tgt) === 0 ? 'Votre objet ✓' : 'Votre objet'; }
     glow();

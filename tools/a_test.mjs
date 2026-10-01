@@ -2,7 +2,7 @@
 import { chromium } from 'playwright-core';
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
-const port = opt('port', 8095), W = +opt('w', 1280), H = +opt('h', 800), shots = opt('shots', '');
+const port = opt('port', 8096), W = +opt('w', 1280), H = +opt('h', 800), shots = opt('shots', '');
 const ids = args.filter((a, i) => !a.startsWith('--') && !(i && args[i - 1].startsWith('--') && args[i - 1] !== '--mobile'));
 const ALL = ['a_checkbox', 'a_wavy', 'a_grid', 'a_math', 'a_slider', 'a_bins', 'a_order', 'a_rotate'];
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -17,7 +17,7 @@ async function run(id) {
   await ready();
   await p.evaluate(() => { const g = window.__game; window.__msgs = []; g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m ?? (new Error().stack.split("\n").slice(1,4).join("|") + JSON.stringify(r))); return o(m, ...r); }; });
   const ans = () => p.evaluate(() => document.querySelector('.cap-host').dataset.answer);
-  const box = async (sel) => (await p.locator(sel).first().boundingBox());
+  const box = async (sel) => { await p.locator(sel).first().scrollIntoViewIfNeeded().catch(() => {}); return await p.locator(sel).first().boundingBox(); };
   const ctr = (bb) => [bb.x + bb.width / 2, bb.y + bb.height / 2];
   const state = () => p.evaluate(() => ({ strikes: window.__game.strikes, solves: window.__game.stats.solves, msgs: window.__msgs }));
   const shot = async (n) => shots && p.screenshot({ path: `${shots}/${id}_${n}.png` });
@@ -35,9 +35,9 @@ async function run(id) {
     await p.mouse.move(cx - 120, cy); await p.mouse.move(cx, cy, { steps: 25 }); await p.mouse.click(cx, cy); await sleep(3500); await p.mouse.click(cx, cy); await waitStrike().catch((e) => console.log('  straight test did not fail?', e.message.slice(0, 50)));
     await remount(); const bb2 = await box('.ac-box'); let [x, y] = ctr(bb2); await curve(300, 600, x - 100, y); await shot('approach'); await curve(x - 100, y, x - 30, y + 10); await sleep(700); const bb3 = await box('.ac-box'); console.log('  hop x', Math.round(bb3.x)); const [px, py] = ctr(bb3); await curve(x - 30, y + 10, px - 90, py + 50); await curve(px - 90, py + 50, px, py); x = px; y = py; await shot('mid'); await p.mouse.click(x, y); await sleep(900); await shot('analyse'); await waitSolve();
   } else if (id === 'a_wavy') {
-    await p.fill('.aw-in', 'ZZZZZZZ'); await click('.ak-btn'); await waitStrike(); await remount();
-    const a = await ans(); await p.fill('.aw-in', a.slice(0, -1)); await p.keyboard.press('Enter'); await sleep(500); await shot('almost'); // one letter short -> fail (strike 2)
-    await remount(); const a2 = await ans(); await p.fill('.aw-in', a2.toLowerCase()); await shot('typed'); await click('.ak-btn'); await waitSolve();
+    await p.fill('.aw-in', 'zzzzzzz'); await click('.ak-btn'); await waitStrike(); await remount();
+    const a = await ans(); await p.fill('.aw-in', a.toUpperCase()); await sleep(200); await shot('upper-live'); await click('.ak-btn'); await p.waitForSelector('.ak-inc.warn', { timeout: 10000 }); console.log('  [a_wavy] WARNING banner:', (await p.locator('.ak-inc.warn').innerText()).slice(0, 120), '| strikes', (await state()).strikes); await shot('warn');
+    const a2 = a; await p.fill('.aw-in', a2.toLowerCase()); await shot('typed'); await click('.ak-btn'); await waitSolve();
   } else if (id === 'a_grid') {
     await shot('init');
     const clickTiles = async (idx) => { for (const i of idx) await p.locator('.ag-t').nth(i).click(); };
@@ -46,7 +46,7 @@ async function run(id) {
     const a2 = (await ans()).split(',').map(Number); await clickTiles(a2.slice(1)); await click('.ak-btn'); await waitStrike(); await remount();
     const a3 = (await ans()).split(',').map(Number); await clickTiles(a3); await shot('sel'); await click('.ak-btn'); await waitSolve();
   } else if (id === 'a_math') {
-    await p.fill('.am-n', '3'); await click('.ak-btn'); await waitStrike(); await remount();
+    await p.fill('.am-n', '3'); await sleep(200); await shot('digit-live'); await click('.ak-btn'); await p.waitForSelector('.ak-inc.warn', { timeout: 10000 }); console.log('  [a_math] digit warning, strikes', (await state()).strikes); await p.fill('.am-n', 'MILLE'); await click('.ak-btn'); await sleep(800); console.log('  [a_math] upper warning, strikes', (await state()).strikes); await p.fill('.am-n', 'mille'); await click('.ak-btn'); await waitStrike(); await remount();
     await p.fill('.am-n', 'mille'); await p.keyboard.press('Enter'); await waitStrike(); await remount();
     const a3 = await ans(); await p.fill('.am-n', a3); await shot('typed'); await click('.ak-btn'); await waitSolve();
   } else if (id === 'a_slider') {
