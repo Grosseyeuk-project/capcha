@@ -413,3 +413,7 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
   .online .hud-r .sound { display: none; }
   .online .card { max-height: calc(100dvh - 150px); }
 }
+.cap-host { animation: none !important; }
+.speaker.big .bubble-text { min-height: 2.8em; }
+@media (max-width: 640px) { .speaker.big .bubble-text { min-height: 5.6em; } }
+@media (max-height: 700px) { .speaker.big .bubble-text { min-height: 5.2em; font-size: .9rem; } }
