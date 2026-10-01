@@ -7,7 +7,7 @@ css('math', `
 .am-p em{font-style:normal;font-weight:700;color:#1a3d7c}
 .am-p{position:relative;overflow:hidden}.am-p li{opacity:0;animation:am-in .4s both}
 @keyframes am-in{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
-.am-st{position:absolute;right:8px;top:6px;border:2px solid #c62828;color:#c62828;font:900 9px/1.1 system-ui;letter-spacing:.1em;padding:3px 5px;border-radius:3px;transform:rotate(7deg) scale(1);animation:am-stamp .35s .7s both;text-align:center;opacity:.85}
+.am-st{position:absolute;right:8px;bottom:8px;border:2px solid #c62828;color:#c62828;font:900 9px/1.1 system-ui;letter-spacing:.1em;padding:3px 5px;border-radius:3px;transform:rotate(7deg) scale(1);animation:am-stamp .35s .7s both;text-align:center;opacity:.85}
 @keyframes am-stamp{from{transform:rotate(7deg) scale(2.4);opacity:0}to{transform:rotate(7deg) scale(1);opacity:.85}}
 .am-p em{display:inline-block;animation:am-pulse 2.4s infinite}
 @keyframes am-pulse{50%{transform:scale(1.08)}}

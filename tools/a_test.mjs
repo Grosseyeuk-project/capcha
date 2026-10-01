@@ -32,7 +32,7 @@ async function run(id) {
     await p.mouse.move(5, 5); const near = ctr(await box('.ac-box')); await p.mouse.move(near[0] - 50, near[1], { steps: 8 }); await sleep(3200);
     const bb = await box('.ac-box'); console.log('  box hopped to x', Math.round(bb.x));
     const [cx, cy] = ctr(bb); await p.mouse.move(60, cy + 3); await sleep(3000); await p.mouse.move(60, cy, { steps: 2 }); await sleep(4200);
-    await p.mouse.move(cx - 120, cy); await p.mouse.move(cx, cy, { steps: 25 }); await p.mouse.click(cx, cy); await waitStrike().catch((e) => console.log('  straight test did not fail?', e.message.slice(0, 50)));
+    await p.mouse.move(cx - 120, cy); await p.mouse.move(cx, cy, { steps: 25 }); await p.mouse.click(cx, cy); await sleep(3500); await p.mouse.click(cx, cy); await waitStrike().catch((e) => console.log('  straight test did not fail?', e.message.slice(0, 50)));
     await remount(); const bb2 = await box('.ac-box'); let [x, y] = ctr(bb2); await curve(300, 600, x - 100, y); await shot('approach'); await curve(x - 100, y, x - 30, y + 10); await sleep(700); const bb3 = await box('.ac-box'); console.log('  hop x', Math.round(bb3.x)); const [px, py] = ctr(bb3); await curve(x - 30, y + 10, px - 90, py + 50); await curve(px - 90, py + 50, px, py); x = px; y = py; await shot('mid'); await p.mouse.click(x, y); await sleep(900); await shot('analyse'); await waitSolve();
   } else if (id === 'a_wavy') {
     await p.fill('.aw-in', 'ZZZZZZZ'); await click('.ak-btn'); await waitStrike(); await remount();

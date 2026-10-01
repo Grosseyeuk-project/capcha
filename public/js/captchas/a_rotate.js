@@ -19,7 +19,7 @@ const CELLS = [[0, 0, 0, '#e53935'], [1, 0, 0, '#fdd835'], [2, 0, 0, '#43a047'],
 export default {
   id: 'a_rotate', tier: 2, title: 'Rotation 3D', time: 50000,
   mount(host, api) {
-    const { h, THREE } = api, W = 360, H = 210, noUp = hasRule('a_rotate', 'R4');
+    const { h, THREE } = api, W = 360, H = 190, noUp = hasRule('a_rotate', 'R4');
     // all 24 orientations via BFS with distances
     const dist = new Map([[key(I), 0]]), q = [I]; while (q.length) { const m = q.shift(); for (const mv of MOVES) { const n = mul(mv, m), k = key(n); if (!dist.has(k)) { dist.set(k, dist.get(key(m)) + 1); q.push(n); } } }
     const all = [...dist.keys()].map((k) => k.split(',').map(Number));
