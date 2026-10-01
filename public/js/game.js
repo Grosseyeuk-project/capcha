@@ -35,7 +35,7 @@ export class Game {
 
   start() {
     this.root.replaceChildren(); this.root.classList.add('game-root');
-    document.body.classList.remove('end-open'); this.runT0 = performance.now(); this.ui();
+    document.body.classList.remove('end-open'); bg.reset(); this.runT0 = performance.now(); this.ui();
     startMusic();
     this.act = () => { this.lastAct = performance.now(); };
     ['pointerdown', 'keydown'].forEach((e) => this.card.addEventListener(e, this.act, true));
@@ -118,7 +118,7 @@ export class Game {
     if (!retry) { this.card.classList.remove('struck', 'solved'); this.footDefault = matchMedia('(max-width: 640px) and (max-height: 720px)').matches ? `${pad(this.level)} · ${def.title} · CAPCHA™` : this.footBase; this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; } this.card.dataset.tier = tier;
     const fast = this.mode !== 'solo';
     const delay = retry ? 0 : RM() ? 120 : fast ? 260 : 640;
-    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1].t + ' »')) : null));
+    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title), this.tierNote ? h('span', { class: 'bn-p' }, this.tierNote) : null, this.dossier.length ? h('span', { class: 'bn-d' }, this.dossierLine(), h('i', {}, '« ' + this.dossier[this.dossier.length - 1].t + ' »')) : null));
     if (!retry) { this.banner.className = 'banner show'; this.card.classList.add('entering'); this.host.replaceChildren(); this.host.classList.remove('ready'); }
     if (!retry) { sfx('level'); bg.pulse('level'); }
     // narration
@@ -127,8 +127,10 @@ export class Game {
       else if (tier > this.lastTier && this.lastTier && LINES_TIER(tier)) this.narrate('tier' + tier);
       else if (!first && this.level >= 3 && Math.random() < 0.4 && this.callback()) this.speak(this.callback(), 'smug');
       else if (first || Math.random() < 0.33) this.narrate('level');
+      if (tier !== this.lastTier) { bg.tier(tier); if (first) bg.state.tierT = 0; if (this.lastTier && tier > this.lastTier) this.tierNote = `Palier ${tier} / 5 · la menace augmente`; }
       this.lastTier = tier;
     }
+    this.tierNote = null;
     this.later(() => this.mount(def, seed ?? this.seedFor(this.level)), delay);
   }
 
@@ -284,7 +286,7 @@ export class Game {
   toggleLedger(force) { const o = force ?? !this.ledger.classList.contains('open'); this.ledger.classList.toggle('open', o); this.lbBar.setAttribute('aria-expanded', String(o)); }
   rule(kind, title, text, meta) {
     kind === 'ok' ? this.nOk++ : this.nBad++;
-    this.lbCount.textContent = String(this.nOk + this.nBad);
+    this.lbCount.textContent = String(this.nBad); this.lbCount.hidden = !this.nBad;
     this.lbBar.dataset.kind = kind; this.lbBar.classList.remove('new'); void this.lbBar.offsetWidth; this.lbBar.classList.add('new');
     const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
       h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
@@ -331,13 +333,24 @@ export class Game {
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0');
     this.hudRefresh();
     sfx(win ? 'win' : 'lose');
+    const cine = this.mode === 'solo' && !RM();
+    if (this.mode === 'solo') (win ? bg.win() : bg.over());
     document.body.classList.add('end-open'); this.foot.className = 'card-foot'; this.foot.textContent = this.footDefault; this.stamp.className = 'stamp'; this.srEl.textContent = '';
-    if (win) { confetti(innerWidth / 2, innerHeight / 3, 220); this.later(() => confetti(innerWidth * 0.2, innerHeight * 0.4, 100), 350); this.later(() => confetti(innerWidth * 0.8, innerHeight * 0.4, 100), 600); }
     if (this.mode === 'solo') { const b = loadBest(); if (!b || lvlDone > (b.level ?? 0) || (win && !b.win)) saveBest({ level: lvlDone, total: this.total, rank, win }); }
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
     const sp = new Speaker(); const key = win ? 'win' : 'over';
     const el = endScreen({ kind, dossier: this.dossier, stats: st, rank, total: this.total, speaker: sp, onReplay: this.onReplay, onMenu: this.onMenu });
-    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say((!win && this.callback()) || say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true, instant: true }); }, win ? 500 : 100);
+    const confettiBurst = () => { if (!win) return; confetti(innerWidth / 2, innerHeight / 3, 200); this.later(() => confetti(innerWidth * 0.15, innerHeight * 0.45, 90), 300); this.later(() => confetti(innerWidth * 0.85, innerHeight * 0.45, 90), 550); };
+    let shown = false, slam = null;
+    const show = () => { if (shown) return; shown = true; slam?.remove(); removeEventListener('pointerdown', skip, true); removeEventListener('keydown', skip, true); this.stage.classList.add('dim'); this.root.append(el); if (!cine) confettiBurst(); sp.say((!win && this.callback()) || say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true, instant: true }); };
+    const skip = () => { this.timeouts.forEach(clearTimeout); this.timeouts.clear(); if (!shown) { if (slam) confettiBurst(); show(); } };
+    if (cine) {
+      this.stage.classList.add('dim');
+      // Cinéma : le portail 3D s'ouvre (victoire) ou l'Œil vous verrouille puis le portail claque (défaite) ; le tampon s'abat ; puis la fiche.
+      this.later(() => { slam = h('div', { class: 'slam ' + (win ? 'win' : 'over'), 'aria-hidden': 'true' }, h('b', {}, win ? 'HUMAIN' : 'ROBOT'), h('i', {}, win ? 'accès accordé' : 'accès refusé')); document.body.append(slam); sfx('stamp'); bg.shake(1); bg.pulse(win ? 'good' : 'bad'); this.flash(win ? 'good' : 'bad'); confettiBurst(); }, win ? 1300 : 1250);
+      this.later(show, win ? 3600 : 3000);
+      setTimeout(() => { addEventListener('pointerdown', skip, true); addEventListener('keydown', skip, true); }, 400);
+    } else this.later(show, win ? 500 : 100);
     this.endEl = el; this.endSp = sp;
     this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } });
   }
@@ -355,6 +368,7 @@ export class Game {
   debugEnd(kind) { if (kind === 'win' && !this.stats.solves) { const st = this.stats; this.level = this.total + 1; st.solves = this.total; st.sumMs = this.total * 6200; st.fastest = 2400; st.maxStreak = this.total; } this.finish(kind); }
 
   destroy() {
+    document.querySelectorAll('.slam').forEach((e) => e.remove());
     removeEventListener('keydown', this.onKey); removeEventListener('pointerdown', this.onDown, true); removeEventListener('resize', this.onResize); if (this.onVV) visualViewport.removeEventListener('resize', this.onVV); clearTimeout(this.fitT);
     document.body.classList.remove('end-open');
     cancelAnimationFrame(this.raf); clearInterval(this.idleIv); this.timeouts.forEach(clearTimeout); this.timeouts.clear();

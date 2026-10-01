@@ -93,7 +93,7 @@ function lobby(room) {
       : h('span', { class: 'ol-chip ' + (p.ready ? 'ok' : '') }, p.ready ? 'Prêt' : 'En attente'))));
   const link = location.origin + location.pathname + '?room=' + room.code;
   const copy = h('button', { class: 'ol-ghostbtn', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Lien copié. Envoyez-le à un humain présumé.', 'good'); } catch { toast(link); } } }, 'Copier le lien');
-  const ready = h('button', { class: 'ol-btn ' + (mp?.ready ? 'is-ready' : 'good'), 'aria-pressed': String(!!mp?.ready), disabled: room.state === 'countdown' ? '' : null, onclick: () => { S.net.send({ t: 'ready', v: !mp.ready }); sfx('click'); } }, mp?.ready ? '✓ Vous êtes prêt' : 'Je suis prêt', h('small', {}, mp?.ready ? 'toucher pour annuler' : 'toucher pour confirmer'));
+  const ready = h('button', { class: 'ol-btn ' + (mp?.ready ? 'is-ready' : 'good'), 'aria-pressed': String(!!mp?.ready), disabled: room.state === 'countdown' ? '' : null, onclick: () => { S.net.send({ t: 'ready', v: !mp.ready }); sfx('click'); } }, mp?.ready ? '✓ Vous êtes prêt' : 'Je suis prêt', h('small', {}, room.state === 'countdown' ? 'verrouillé : départ imminent' : mp?.ready ? 'toucher pour annuler' : 'toucher pour confirmer'));
   const kids = [
     topbar(h('button', { class: 'ol-ghostbtn', onclick: leave }, 'Quitter la salle')),
     h('div', { class: 'ol-card' }, h('div', { class: 'ol-code' },
@@ -111,7 +111,7 @@ function lobby(room) {
   }
   const act = h('div', { class: 'ol-row2' }, ready);
   if (!room.quick && isHost) {
-    act.append(h('button', { class: 'ol-btn pri', onclick: () => S.net.send({ t: 'start' }) }, 'Lancer la partie', h('small', {}, `${room.players.filter((p) => p.ready || p.id === S.me || p.bot).length}/${room.players.length} prêts`)));
+    act.append(h('button', { class: 'ol-btn pri', disabled: room.state === 'countdown' ? '' : null, onclick: () => S.net.send({ t: 'start' }) }, 'Lancer la partie', h('small', {}, `${room.players.filter((p) => p.ready || p.id === S.me || p.bot).length}/${room.players.length} prêts`)));
   }
   kids.push(h('div', { class: 'ol-card ol-sticky' }, act));
   if (!room.quick && isHost) kids.push(h('div', { class: 'ol-row2' },

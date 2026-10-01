@@ -41,13 +41,10 @@ async function run(id) {
   } else if (id === 'b_hunt') {
     const king = () => p.evaluate(() => [...document.querySelectorAll('.bh-d')].findIndex((e) => e.querySelector('i')?.textContent === '👑'));
     const realClick = async (i) => { const bb = await p.locator('.bh-d').nth(i).boundingBox(); await p.mouse.click(bb.x + 23, bb.y + 23); };
-    const bad = async () => { const k = await king(); const i = (k + 1) % 13; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), i); };
-    await bad(); await waitStrike('civil'); await remount();
+    const bad = async () => { const k = await king(); const i = (k + 1) % 15; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), i); };
+    await bad(); await sleep(200); console.log('  1 wrong tolerated, strikes:', (await st()).strikes); await bad(); await bad(); await waitStrike('3e erreur (retry, partie gardée)');
     await realClick(await king()); await sleep(900); await shot('r2'); await realClick(await king()); await sleep(900); await shot('r3');
-    // hatted decoy
-    const hat = await p.evaluate(() => [...document.querySelectorAll('.bh-d')].findIndex((e) => e.querySelector('i') && e.querySelector('i').textContent !== '👑'));
-    await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), hat); await waitStrike('chapeau'); await remount();
-    for (let r = 0; r < 3; r++) { await p.evaluate(() => [...document.querySelectorAll('.bh-d')].find((e) => e.querySelector('i')?.textContent === '👑').click()); await sleep(900); }
+    await p.evaluate(() => [...document.querySelectorAll('.bh-d')].find((e) => e.querySelector('i')?.textContent === '👑').click()); await sleep(900);
     await sleep(200); await shot('erratum'); const bareI = +(await ans()).split(',')[1]; await p.evaluate((i) => document.querySelectorAll('.bh-d')[i].click(), bareI); await waitSolve();
   } else if (id === 'b_loading') {
     const when = (cls) => p.evaluate((cls) => new Promise((res) => { const f = () => { const el = document.querySelector('.bl-bar.' + cls); if (el) { document.querySelector('.bl-go').click(); res(el.textContent); } else requestAnimationFrame(f); }; f(); }), cls);

@@ -56,7 +56,7 @@ if (window.CAPCHA_ONLINE?.open) { const o = window.CAPCHA_ONLINE.open; window.CA
 addEventListener('capcha-online-close', () => { setHidden(false); eyeSlot(); });
 let eyeRO = null;
 const eyeSlot = () => { const el = root.querySelector('.eye-slot'); bg.eyeTo(el && el.offsetHeight ? el.getBoundingClientRect() : null); };
-addEventListener('resize', eyeSlot);
+addEventListener('resize', eyeSlot); document.fonts?.ready?.then(() => eyeSlot());
 
 // ?level / ?cap / ?autostart sautent l'écran titre.
 if (q.get('cap')) { const i = CAPTCHAS.findIndex((c) => c.id === q.get('cap')); if (i >= 0) q.set('level', String(i + 1)); }

@@ -2,7 +2,7 @@
 // et un Grand Œil au fond. Réagit à la suspicion (erreurs / progression) et à la pression (chrono).
 import * as THREE from 'three';
 
-const st = { suspicion: 0, pressure: 0, mood: 'neutral', eyeNy: 0.04, eyeNx: 0, eyeScale: 1, flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
+const st = { suspicion: 0, pressure: 0, mood: 'neutral', eyeNy: 0.04, eyeNx: 0, tierBias: 0, tierT: 0, doorMode: 'hidden', doorT: 0, eyeMode: 'normal', eyeLockT: 0, doorFired: false, eyeScale: 1, flash: 0, flashCol: new THREE.Color(0x2de2c0), boost: 0, shake: 0, beat: 0, blink: 0 };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const C_CALM = new THREE.Color(0x2de2c0), C_WARN = new THREE.Color(0xffb02e), C_BAD = new THREE.Color(0xff3b4e);
 const BG = 0x070b0f;
@@ -18,6 +18,11 @@ export const bg = {
     else if (kind === 'level') { st.boost = 0.7; st.flashCol.set(0xffd23f); st.flash = 0.5; }
   },
   beat() { st.beat = 1; },
+  // Moments de cinéma : changement de palier, victoire (le portail s'ouvre), défaite (l'Œil vous verrouille, le portail se ferme).
+  tier(n) { st.tierBias = (Math.max(1, Math.min(5, n)) - 1) / 4; st.tierT = 1; st.flashCol.set(0xffd23f); st.flash = 0.6; st.boost = Math.max(st.boost, 1); },
+  win() { st.doorMode = 'opening'; st.doorT = 0; st.eyeMode = 'closed'; st.flashCol.set(0xffffff); st.boost = 1; },
+  over() { st.eyeMode = 'lock'; st.eyeLockT = 0; st.doorMode = 'wait'; st.doorT = 0; st.doorFired = false; },
+  reset() { st.doorMode = 'hidden'; st.eyeMode = 'normal'; st.tierBias = 0; st.tierT = 0; },
   // place le Grand Œil dans un rectangle d'écran (écran titre) ; null = position par défaut derrière la carte
   eyeTo(rect) { if (!rect) { st.eyeNy = 0.04; st.eyeNx = 0; st.eyeScale = 1; return; } st.eyeNx = (rect.left + rect.width / 2) / innerWidth * 2 - 1; const hh = Math.tan(35 * Math.PI / 180) * 42; st.eyeNy = 1 - (rect.top + rect.height / 2) / innerHeight * 2; st.eyeScale = Math.max(0.25, rect.height / innerHeight * hh / 9); },
   shake(v = 1) { st.shake = Math.max(st.shake, v); }
@@ -105,6 +110,18 @@ export function startScene(canvas) {
   const lidMat = new THREE.MeshBasicMaterial({ color: BG, fog: false });
   const lidT = new THREE.Mesh(lidGeo, lidMat), lidB = new THREE.Mesh(lidGeo, lidMat); lidT.scale.set(1.5, 1, 1); lidB.scale.set(1.5, 1, 1); lidT.position.z = lidB.position.z = 0.3; eye.add(lidT, lidB);
 
+  // veines injectées de sang (apparaissent avec les paliers / la suspicion)
+  const vp = []; for (let i = 0; i < 44; i++) { const a = Math.random() * Math.PI * 2; let rr = 8.6; let x = Math.cos(a) * rr * 1.9, y = Math.sin(a) * rr; for (let j = 0; j < 4; j++) { rr -= 0.9 + Math.random() * 0.8; const a2 = a + (Math.random() - 0.5) * 0.18; const nx = Math.cos(a2) * rr * 1.9, ny = Math.sin(a2) * rr; vp.push(x, y, 0.06, nx, ny, 0.06); x = nx; y = ny; } }
+  const veinGeo = new THREE.BufferGeometry(); veinGeo.setAttribute('position', new THREE.Float32BufferAttribute(vp, 3));
+  const veinMat = new THREE.LineBasicMaterial({ color: 0xff2b3d, transparent: true, opacity: 0, fog: false }); eye.add(new THREE.LineSegments(veinGeo, veinMat));
+  // le Grand Portail (deux battants + lumière)
+  const doors = new THREE.Group(); doors.position.z = -15; doors.visible = false; scene.add(doors);
+  const dMat = new THREE.MeshBasicMaterial({ color: 0x0a141a, fog: false }), dGeo = new THREE.BoxGeometry(7.6, 15, 0.5);
+  const dL = new THREE.Mesh(dGeo, dMat), dR = new THREE.Mesh(dGeo, dMat); doors.add(dL, dR);
+  const dEdge = new THREE.LineSegments(new THREE.EdgesGeometry(dGeo), new THREE.LineBasicMaterial({ color: tint, fog: false })); dL.add(dEdge); dR.add(dEdge.clone());
+  const hazard = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 15), new THREE.MeshBasicMaterial({ color: 0xffd23f, fog: false })); hazard.position.set(3.6, 0, 0.3); dL.add(hazard); const hz2 = hazard.clone(); hz2.position.x = -3.6; dR.add(hz2);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); glow.position.z = -1; doors.add(glow);
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
   addEventListener('pointermove', (e) => { ptr.x = e.clientX / innerWidth * 2 - 1; ptr.y = -(e.clientY / innerHeight * 2 - 1); }, { passive: true });
   let lowPower = (navigator.hardwareConcurrency || 8) <= 4 || innerWidth < 700, degrade = lowPower ? 1 : 0;
@@ -124,16 +141,19 @@ export function startScene(canvas) {
     if (degrade < 2 && !document.hidden) { slowT += Math.min(raw, 0.5); slowN++; if (slowN >= 90) { const fps = slowN / slowT; if (fps < 22) { degrade++; applyDegrade(); } slowT = 0; slowN = 0; } }
     if (degrade >= 2 && (skip ^= 1)) return;
     const dt = Math.min(0.05, raw); last = now; tAcc += dt; frame++;
-    const m = clamp01(Math.max(st.suspicion * 0.9, st.pressure));
+    const lock = st.eyeMode === 'lock';
+    const m = clamp01(Math.max(lock ? 1 : st.suspicion * 0.9, st.pressure) + st.tierBias * 0.35);
+    st.tierT = Math.max(0, st.tierT - dt / 1.3);
     // couleur
     const base = new THREE.Color().copy(C_CALM).lerp(C_WARN, clamp01(m * 2)).lerp(C_BAD, clamp01(m * 2 - 1));
     tint.copy(base).lerp(st.flashCol, st.flash * 0.7);
     st.flash = Math.max(0, st.flash - dt * 2.2); st.boost = Math.max(0, st.boost - dt * 1.4); st.shake = Math.max(0, st.shake - dt * 2.4); st.beat = Math.max(0, st.beat - dt * 5);
     const k = reduced ? 0.2 : 1;
-    const speed = (2.2 + m * 5 + st.boost * 18) * k;
+    let speed = (2.2 + m * 5 + st.boost * 18 + st.tierT * 22) * k;
+    if (st.doorMode === 'closed' || st.doorMode === 'wait') speed *= st.doorMode === 'closed' ? 0.05 : 0.5;
     gates.forEach((g, i) => {
       g.position.z += speed * dt; if (g.position.z > 3) g.position.z -= DEPTH;
-      g.rotation.z = Math.sin(tAcc * 0.6 + i * 0.5) * st.suspicion * 0.22 * k;
+      g.rotation.z = Math.sin(tAcc * 0.6 + i * 0.5) * st.suspicion * 0.22 * k + Math.sin(tAcc * 3 + i * 0.7) * st.tierT * 0.5 * k;
       const s = 1 + st.beat * 0.03 * (1 - (g.position.z + DEPTH) / DEPTH);
       g.scale.set(s, s, 1);
     });
@@ -151,16 +171,30 @@ export function startScene(canvas) {
     pMat.size = 0.11 + st.boost * 0.05;
     beam.position.y = Math.sin(tAcc * (0.5 + m * 1.6)) * 4.6; beamGlow.position.y = beam.position.y;
     // œil
-    const targetLid = st.mood === 'impressed' ? 0 : clamp01(0.08 + st.suspicion * 0.55 + (st.mood === 'angry' ? 0.2 : 0));
-    lid = lerp(lid, targetLid + (st.blink > 0 ? 0.9 : 0), dt * 8);
+    const closed = st.eyeMode === 'closed';
+    const targetLid = closed ? 1 : lock ? 0 : st.tierT > 0.2 ? 0 : st.mood === 'impressed' ? 0 : clamp01(0.08 + st.suspicion * 0.55 + (st.mood === 'angry' ? 0.2 : 0));
+    lid = lerp(lid, Math.min(1, targetLid + (st.blink > 0 && !lock && !closed ? 0.9 : 0)), dt * (closed ? 2.2 : 8));
     if (st.blink > 0) st.blink -= dt; else if (Math.random() < dt * 0.18) st.blink = 0.12;
+    veinMat.opacity = clamp01(st.tierBias * 1.3 + st.suspicion * 0.5 + (lock ? 0.8 : 0)) * 0.85;
     lidT.position.y = 25.5 - lid * 9.5;
     lidB.position.y = -25.5 + lid * 9.5;
     ptr.sx = lerp(ptr.sx, ptr.x, dt * 3); ptr.sy = lerp(ptr.sy, ptr.y, dt * 3);
-    iris.position.x = ptr.sx * 6 + (st.suspicion > 0.6 && !reduced ? Math.sin(tAcc * 23) * 0.15 : 0); iris.position.y = ptr.sy * 2.6;
-    const pt = st.mood === 'impressed' ? 1.5 : 1.1 - st.pressure * 0.5 + st.beat * 0.2;
+    iris.position.x = (lock ? 0 : ptr.sx * 6) + (st.suspicion > 0.6 && !reduced ? Math.sin(tAcc * 23) * 0.15 : 0); iris.position.y = lock ? 0 : ptr.sy * 2.6;
+    const pt = lock ? 0.55 : st.mood === 'impressed' ? 1.5 : 1.1 - st.pressure * 0.5 + st.beat * 0.2;
     pup = lerp(pup, pt, dt * 6); pupil.scale.setScalar(pup);
-    { const ez = -42, hh = Math.tan(cam.fov * Math.PI / 360) * -ez; eye.position.y = lerp(eye.position.y, st.eyeNy * hh, dt * 5); eye.position.x = lerp(eye.position.x, st.eyeNx * hh * cam.aspect, dt * 5); const k2 = lerp(eye.scale.x, st.eyeScale, dt * 5); eye.scale.setScalar(k2); }
+    { const ez = -42, hh = Math.tan(cam.fov * Math.PI / 360) * -ez; const ny = lock ? 0.04 : st.eyeNy, nx = lock ? 0 : st.eyeNx, sc = lock ? 1.75 : st.eyeScale * (1 + st.tierBias * 0.22 + st.tierT * 0.3);
+      eye.position.y = lerp(eye.position.y, ny * hh, dt * 5); eye.position.x = lerp(eye.position.x, nx * hh * cam.aspect, dt * 5); eye.scale.setScalar(lerp(eye.scale.x, sc, dt * (lock ? 3 : 5))); }
+    // portail : victoire (s'ouvre sur la lumière) / défaite (claque)
+    { const dm = st.doorMode; let open = 0, gl = 0;
+      if (dm === 'opening') { st.doorT += dt / 1.8; const e = ease(Math.min(1, st.doorT)); open = e; gl = Math.sin(Math.min(1, st.doorT) * Math.PI) * 0.9 + (st.doorT > 0.5 ? 0.25 * (1 - Math.min(1, st.doorT)) : 0); st.boost = Math.max(st.boost, Math.sin(Math.min(1, st.doorT) * Math.PI) * 1.2); if (st.doorT >= 1) st.doorMode = 'open'; }
+      else if (dm === 'open') { open = 1; gl = 0; }
+      else if (dm === 'wait') { st.eyeLockT += dt; open = 1; if (st.eyeLockT >= 1.0) { st.doorMode = 'closing'; st.doorT = 0; } }
+      else if (dm === 'closing') { st.doorT += dt / 0.28; const e = Math.min(1, st.doorT); open = 1 - e * e; if (e >= 1) { st.doorMode = 'closed'; st.shake = 1; st.flashCol.set(0xff2b3d); st.flash = 1; } }
+      else if (dm === 'closed') { open = 0; }
+      doors.visible = dm !== 'hidden' && !(dm === 'open');
+      const x = 3.9 + open * 12; dL.position.x = -x; dR.position.x = x; glow.material.opacity = gl;
+      if (dm !== 'hidden') dEdge.material.color.copy(tint); }
+    cam.fov = (innerWidth < innerHeight ? 85 : 70) + st.tierT * 12 * k; cam.updateProjectionMatrix();
     rays.rotation.z += dt * (0.2 + m);
     // caméra
     const sh = st.shake * 0.35 * k;

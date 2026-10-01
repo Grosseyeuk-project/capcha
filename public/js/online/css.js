@@ -321,6 +321,13 @@ const CSS = `
 @media (max-width:820px){.ol-bigstamp{font-size:clamp(1.3rem,6vw,2rem);padding:2px 14px;border-width:5px}.ol-verdict{margin:6px 0 22px}}
 
 @media (max-width:820px){.ol-root:has(.ol-race) .ol-wrap{padding-top:3px;gap:6px}}
+
+/* r10 */
+.ol-btn.pri:disabled,.ol-btn.pri:disabled:hover{background:#d8cfb6!important;color:#5a5848!important;box-shadow:0 5px 0 #000;transform:none}
+@media (min-width:1000px){.ol-end .ol-actions{position:static;background:none;padding:6px 0 0}.ol-end .ol-wrap{padding-bottom:40px}}
+.ol-count b{min-height:1em}
+
+.ol-feed{max-height:none!important;overflow:visible!important}.ol-feed p{white-space:normal;overflow-wrap:anywhere}
 `;
 let done = false;
 export function injectCss() {

@@ -60,7 +60,7 @@ css('boss', `
 .bb-face.hurt{animation:bb-hurt .5s}
 @keyframes bb-hurt{20%{transform:translateX(-8px) rotate(-6deg);background:var(--red)}50%{transform:translateX(8px) rotate(6deg)}}
 .bb-hp{flex:1;min-width:0}
-.bb-hp b{display:flex;justify-content:space-between;font:800 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;gap:8px}
+.bb-hp b span:last-child{white-space:nowrap}.bb-hp b{display:flex;justify-content:space-between;font:800 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;gap:8px}
 .bb-bar{height:20px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden}
 .bb-bar i{position:absolute;inset:0;background:repeating-linear-gradient(135deg,var(--red) 0 10px,#ff6677 10px 20px);transform-origin:0 0;transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
 .bb-stage{border:2px solid var(--ink);background:#0d1b24;color:#fff;height:250px;position:relative;overflow:hidden;box-shadow:4px 4px 0 var(--ink)}

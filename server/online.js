@@ -7,7 +7,7 @@ const CFG = {
   MAX_PLAYERS: 8,
   QUICK_TARGET: 4,                       // quick match is topped up with bots to this many players
   FILL_MS: +ENV.OL_FILL_MS || 8000,      // wait before bots fill a quick lobby
-  CD_PRIVATE: 5000, CD_QUICK: 4000,
+  CD_PRIVATE: 3600, CD_QUICK: 3600,
   LAST_CALL_MS: +ENV.OL_LAST_CALL_MS || 15000, // after first finisher
   HUMANS_OUT_MS: 9000,                   // all humans out/done: let bots finish this long
   GRACE_RACE_MS: 15000, GRACE_LOBBY_MS: 4000,

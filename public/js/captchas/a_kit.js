@@ -132,7 +132,7 @@ css('live2', `
 `);
 css('live3', `
 .ak-stamp{position:absolute;right:8px;top:7px;border:2px solid currentColor;color:#fff;font:900 12px/1.1 system-ui;letter-spacing:.06em;padding:3px 6px;border-radius:3px;transform:rotate(-5deg);background:rgba(0,0,0,.28);pointer-events:none;animation:ak-stm .5s cubic-bezier(.2,1.5,.4,1) both,ak-fadeo .5s 3.8s forwards;z-index:2}
-@keyframes ak-stm{from{transform:rotate(-5deg) scale(3);opacity:0}to{transform:rotate(-5deg);opacity:1}}
+@keyframes ak-stm{from{opacity:0;top:-14px}to{opacity:1;top:7px}}
 @keyframes ak-fadeo{to{opacity:0}}
 .ak-lc.new{animation:ak-drop .7s cubic-bezier(.2,1.4,.4,1) both;outline:2px solid #f9ab00;outline-offset:1px}
 @keyframes ak-drop{from{transform:translateY(-26px);opacity:0}to{transform:none;opacity:1}}
@@ -145,6 +145,8 @@ css('live3', `
 .ak-zap{position:absolute;z-index:9;pointer-events:none;font:900 12px/1 system-ui;color:#fff;background:#d93025;border-radius:4px;padding:3px 6px;animation:ak-zp .8s ease-out both}
 @keyframes ak-zp{from{transform:translateY(0) rotate(-6deg) scale(.6);opacity:1}to{transform:translateY(-26px) rotate(4deg) scale(1.2);opacity:0}}
 .ak-wob{animation:ak-shake .35s}
+.cap-host .ak-w .ak-st{flex-wrap:wrap!important;overflow:visible!important}
+.cap-host .ak-w .ak-st>*{flex:none}
 .ak-lc[hidden],.ak-drain[hidden],.ak-more[hidden]{display:none!important}
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
