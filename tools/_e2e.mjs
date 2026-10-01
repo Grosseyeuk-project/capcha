@@ -1,0 +1,23 @@
+import { chromium } from 'playwright-core';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
+const mk = async (w,h,n) => { const p = await (await b.newContext({ viewport: { width: w, height: h } })).newPage(); p.on('pageerror', e=>console.log(`[${n} pageerror]`, e.message)); p.on('console', m=>m.type()==='error'&&!/CERT|404/.test(m.text())&&console.log(`[${n}]`, m.text())); await p.goto('http://localhost:8081/?cheat=1'); await p.waitForTimeout(1500); await p.click('.btn.ghost'); await p.waitForTimeout(800); return p; };
+const A = await mk(1280,800,'A'), B = await mk(390,800,'B');
+const O='/tmp/claude-0/e_';
+await A.fill('input[aria-label=Pseudo]','Alice'); await B.fill('input[aria-label=Pseudo]','Bob');
+await A.click('text=Créer une salle'); await A.waitForSelector('.ol-code b'); const code=await A.textContent('.ol-code b');
+await B.fill('input[aria-label="Code de salle"]',code); await B.click('text=Rejoindre'); await B.waitForSelector('.ol-code b');
+await A.click('text=+ Ajouter un bot'); await A.click('text=+ Ajouter un bot'); await B.click('text=Je suis prêt'); await sleep(600);
+await B.screenshot({path:O+'lobbyB.png'});
+await A.click('text=Lancer la partie');
+await A.waitForSelector('.ol-rail',{timeout:12000}); await B.waitForSelector('.ol-rail',{timeout:12000}); await sleep(1500);
+const solve=(p)=>p.evaluate(()=>window.CAPCHA_ONLINE.game?.cur?.api.solve());
+const fail=(p)=>p.evaluate(()=>window.CAPCHA_ONLINE.game?.cur?.api.fail('La case cochée était la mauvaise, selon le règlement.'));
+await solve(A); await sleep(900); await solve(A); await sleep(900); await fail(B); await sleep(400);
+await A.screenshot({path:O+'raceA.png'}); await B.screenshot({path:O+'raceB.png'});
+let t=Date.now(); let done=false;
+for (let i=0;i<120 && !done;i++){ await solve(A); await solve(B); await sleep(700); done = !!(await A.$('.ol-podium')); }
+console.log('podium reached', done, (Date.now()-t)/1000);
+await sleep(3500);
+await A.screenshot({path:O+'endA.png'}); await B.screenshot({path:O+'endB.png'});
+await b.close();

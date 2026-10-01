@@ -51,8 +51,12 @@ export class Game {
       h('div', { class: 'hud-r' }, h('div', { class: 'strikes', role: 'img', 'aria-label': 'Erreurs : 0 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Erreurs'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
     this.strikesBox = this.hud.querySelector('.strikes');
     this.speaker = new Speaker();
-    this.ledger = h('ol', { class: 'ledger', 'aria-label': 'Registre des vérifications' }, h('li', { class: 'rule-head', 'aria-hidden': 'true' }, 'Registre de conformité'));
-    this.ruleN = 0;
+    this.nOk = 0; this.nBad = 0;
+    this.lbText = h('span', { class: 'lb-text' }, 'Registre de conformité : aucune règle encore.');
+    this.lbCount = h('span', { class: 'lb-count', 'aria-hidden': 'true' });
+    this.lbBar = h('button', { class: 'ledger-bar', type: 'button', 'aria-expanded': 'false', onclick: () => this.toggleLedger() }, h('span', { class: 'lb-ic', 'aria-hidden': 'true' }, '§'), this.lbText, this.lbCount, h('span', { class: 'lb-more', 'aria-hidden': 'true' }, '▴'));
+    this.list = h('ol', { class: 'ledger-list', 'aria-label': 'Registre des vérifications' }, h('li', { class: 'rule-head', 'aria-hidden': 'true' }, 'Registre de conformité'));
+    this.ledger = h('section', { class: 'ledger' + (this.mode === 'solo' ? ' ledger-wide' : ''), 'aria-label': 'Registre de conformité' }, this.lbBar, this.list);
     this.stamp = h('div', { class: 'stamp', 'aria-hidden': 'true' });
     this.cardHead = h('div', { class: 'card-head' }, h('span', { class: 'ch-title' }, this.levelTitle), h('span', { class: 'threat', 'aria-hidden': 'true' }));
     this.host = h('div', { class: 'cap-slot' });
@@ -66,7 +70,7 @@ export class Game {
     this.root.append(this.stage, this.flashEl);
     this.card.append(this.banner);
   }
-  speak(t, mood = 'neutral') { this.sayTok++; this.speaker.say(t, mood); }
+  speak(t, mood = 'neutral', force = false) { this.sayTok++; this.speaker.say(t, mood, { force }); }
   narrate(key, extra) { const t = say(key, Math.random, { ...this.ctx(), ...extra }); this.speak(t, moodFor(key, this.ctx())); return t; }
   syncMood() {
     const susp = clamp01(this.strikes / 3 * 0.7 + this.progress * 0.3);
@@ -84,22 +88,22 @@ export class Game {
   }
 
   beginLevel({ retry = false, seed, first = false } = {}) {
-    this.destroyCur(); this.phase = 'intro'; this.stamp.className = 'stamp';
+    this.destroyCur(); this.phase = 'intro'; if (!retry) this.stamp.className = 'stamp';
     const def = CAPTCHAS[this.level - 1];
     if (!def) { this.finish('win'); return; }
     this.stats.reached = Math.max(this.stats.reached, this.level);
     this.hudRefresh(); this.syncMood();
     this.root.dataset.pressure = 'low'; this.root.style.setProperty('--pressure', '0'); this.clock.textContent = '--';
     const tier = def.tier || 1;
-    this.card.classList.remove('struck', 'solved'); this.card.dataset.tier = tier;
-    const delay = RM() ? 120 : retry ? 360 : 640;
-    this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title)));
-    this.banner.className = 'banner show'; this.card.classList.add('entering');
-    this.host.replaceChildren(); this.host.classList.remove('ready');
+    if (!retry) this.card.classList.remove('struck', 'solved'); this.card.dataset.tier = tier;
+    const fast = this.mode !== 'solo';
+    const delay = retry ? 0 : RM() ? 120 : fast ? 260 : 640;
+    if (!retry) this.banner.replaceChildren(h('div', { class: 'bn-in' }, h('span', { class: 'bn-k' }, retry ? 'Nouvel essai' : 'Vérification'), h('span', { class: 'bn-n' }, retry ? `n° ${pad(this.level)}` : pad(this.level)), h('span', { class: 'bn-t' }, def.title)));
+    if (!retry) { this.banner.className = 'banner show'; this.card.classList.add('entering'); this.host.replaceChildren(); this.host.classList.remove('ready'); }
     if (!retry) { sfx('level'); bg.pulse('level'); }
     // narration
     if (!retry) {
-      if (first && this.level === this.startLevel && this.startLevel === 1) this.narrate('begin');
+      if (first && this.level === 1 && this.strikes === 0 && !this.stats.solves) this.narrate('begin');
       else if (tier > this.lastTier && this.lastTier && LINES_TIER(tier)) this.narrate('tier' + tier);
       else if (first || Math.random() < 0.33) this.narrate('level');
       this.lastTier = tier;
@@ -108,7 +112,7 @@ export class Game {
   }
 
   mount(def, seed) {
-    this.card.classList.remove('entering'); this.banner.className = 'banner';
+    this.card.classList.remove('entering', 'struck', 'solved'); this.banner.className = 'banner'; this.stamp.className = 'stamp';
     const rng = mulberry32(seed);
     this.host.classList.add('ready');
     const host = h('div', { class: 'cap-host' }); this.host.replaceChildren(host);
@@ -180,17 +184,23 @@ export class Game {
     this.root.style.setProperty('--pressure', '0'); this.root.dataset.pressure = 'low'; setTension(this.susp * 0.5); bg.set({ pressure: 0 });
     this.rule('ok', `Règle ${pad(this.level)} respectée`, c.def.title, fmtSec(ms));
     this.onEvent({ type: 'solve', level: this.level, ms });
-    const key = st.streak === 5 ? 'streak5' : st.streak === 3 ? 'streak3' : fast ? 'solveFast' : ms > c.limit * 0.78 ? 'solveSlow' : 'solve';
+    const key = st.streak === 5 ? 'streak5' : st.streak === 3 ? 'streak3' : fast && st.strikes === 0 ? 'solveFast' : ms > c.limit * 0.78 ? 'solveSlow' : 'solve';
     this.narrate(key);
     this.level++;
-    this.later(() => { if (this.level > this.total) { this.finish('win'); return; } this.load({ leave: true }); }, RM() ? 400 : 1000);
+    this.later(() => { if (this.level > this.total) { this.finish('win'); return; } this.load({ leave: this.mode === 'solo' }); }, RM() ? 400 : this.mode === 'solo' ? 1100 : 380);
   }
 
+  toggleLedger(force) { const o = force ?? !this.ledger.classList.contains('open'); this.ledger.classList.toggle('open', o); this.lbBar.setAttribute('aria-expanded', String(o)); }
   rule(kind, title, text, meta) {
+    kind === 'ok' ? this.nOk++ : this.nBad++;
+    this.lbText.textContent = (kind === 'ok' ? '✓ ' : '✕ ') + (kind === 'ok' ? `${text} — validée en ${meta}` : text);
+    this.lbBar.dataset.kind = kind; this.lbCount.textContent = `✓${this.nOk} ✕${this.nBad}`;
+    this.lbBar.classList.remove('new'); void this.lbBar.offsetWidth; this.lbBar.classList.add('new');
     const li = h('li', { class: 'rule ' + kind }, h('span', { class: 'rule-ic', 'aria-hidden': 'true' }, kind === 'ok' ? '✓' : '✕'),
       h('div', { class: 'rule-b' }, h('b', {}, title), text ? h('span', {}, text) : null), meta ? h('em', {}, meta) : null);
-    const head = this.ledger.firstChild; head.after(li);
-    while (this.ledger.childElementCount > 9) this.ledger.lastChild.remove();
+    this.list.firstChild.after(li);
+    const cap = this.mode === 'solo' ? 9 : 3;
+    while (this.list.childElementCount > cap) this.list.lastChild.remove();
     return li;
   }
   flash(kind) { const f = this.flashEl; f.className = 'flash'; void f.offsetWidth; f.className = 'flash ' + kind; }
@@ -204,13 +214,12 @@ export class Game {
     this.card.classList.add('struck');
     this.stamp.className = 'stamp bad show'; this.stamp.innerHTML = ''; this.stamp.append(h('b', {}, timeout ? 'TEMPS ÉCOULÉ' : 'REFUSÉ'), h('i', {}, `erreur ${this.strikes}/3`));
     const over = this.strikes >= 3;
-    const line = timeout ? say('timeout', Math.random, this.ctx()) : (msg && msg !== 'cheat') ? msg : say(this.strikes === 1 ? 'strike1' : 'strike2', Math.random, this.ctx());
     const why = timeout ? 'Le chronomètre a expiré avant votre réponse.' : (msg && msg !== 'cheat' ? msg : 'Réponse incorrecte : elle ne respecte pas la règle affichée.');
     this.rule('bad', `Règle ${pad(this.level)} enfreinte`, why, `erreur ${this.strikes}/3`);
-    this.speak(line, timeout ? moodFor('timeout', this.ctx()) : this.strikes >= 2 ? 'angry' : 'smug');
-    // petite réplique de Gérard en plus quand le captcha a donné sa propre explication
-    const tok = this.sayTok;
-    if (msg && !over && !timeout) this.later(() => { if (tok === this.sayTok && this.phase !== 'ended') this.narrate(this.strikes === 1 ? 'strike1' : 'strike2'); }, 2800 + line.length * 22);
+    if (!over) {
+      const key = timeout ? 'timeout' : this.strikes === 1 ? 'strike1' : 'strike2';
+      this.speak(say(key, Math.random, this.ctx()), timeout ? moodFor('timeout', this.ctx()) : this.strikes >= 2 ? 'angry' : 'smug', true);
+    }
     this.onEvent({ type: 'strike', strikes: this.strikes });
     if (over) { this.phase = 'ended'; if (this.cur) this.cur.done = true; this.later(() => { this.destroyCur(); this.finish('over'); }, RM() ? 600 : 1500); }
   }
@@ -235,7 +244,7 @@ export class Game {
     if (this.mode !== 'solo') { this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } }); return; } // en ligne : l'orchestrateur affiche ses propres écrans
     const sp = new Speaker(); const key = win ? 'win' : 'over';
     const el = endScreen({ kind, stats: st, rank, total: this.total, speaker: sp, onReplay: this.onReplay, onMenu: this.onMenu });
-    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say(say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug'); }, win ? 500 : 100);
+    this.later(() => { this.stage.classList.add('dim'); this.root.append(el); sp.say(say(key, Math.random, this.ctx()), win ? 'impressed' : 'smug', { force: true }); }, win ? 500 : 100);
     this.endEl = el; this.endSp = sp;
     this.onEvent({ type: kind, level: this.level, rank, stats: { ...st } });
   }
@@ -250,7 +259,7 @@ export class Game {
 
   // --- debug / cheat (utilisé par window.__cap) ---
   debugLeft(ms) { const c = this.cur; if (c) c.t0 = performance.now() - (c.limit - ms); }
-  debugEnd(kind) { if (kind === 'win') { this.level = this.total + 1; this.stats.solves = this.total; } this.finish(kind); }
+  debugEnd(kind) { if (kind === 'win' && !this.stats.solves) { const st = this.stats; this.level = this.total + 1; st.solves = this.total; st.sumMs = this.total * 6200; st.fastest = 2400; st.maxStreak = this.total; } this.finish(kind); }
 
   destroy() {
     document.body.classList.remove('end-open');

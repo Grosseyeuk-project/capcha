@@ -120,9 +120,11 @@ export class Speaker {
     this.tok = 0; this.full = ''; this.timer = 0;
   }
   skip() { if (this.typing) { clearTimeout(this.timer); this.finish(); } }
-  finish() { this.text.textContent = this.full; this.typing = false; this.el.classList.remove('talking'); this.w.talk(false); this.bubble.classList.remove('typing'); }
-  say(text, mood = 'neutral', { instant = false } = {}) {
-    clearTimeout(this.timer); this.tok++;
+  finish() { const pend = this.pending; this.pending = null; if (pend) { const my = this.tok; setTimeout(() => { if (my === this.tok && !this.typing) this.say(pend[0], pend[1], { force: true }); }, 900); }
+    this.text.textContent = this.full; this.typing = false; this.el.classList.remove('talking'); this.w.talk(false); this.bubble.classList.remove('typing'); }
+  say(text, mood = 'neutral', { instant = false, force = false } = {}) {
+    if (this.typing && !force) { this.pending = [text, mood]; return; }
+    this.pending = null; clearTimeout(this.timer); this.tok++;
     this.full = text; this.w.mood(mood); this.el.dataset.mood = mood; this.live.textContent = text;
     this.bubble.classList.remove('pop'); void this.bubble.offsetWidth; this.bubble.classList.add('pop');
     if (instant || reducedMotion()) { this.finish(); return; }

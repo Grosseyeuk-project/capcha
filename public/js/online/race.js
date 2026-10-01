@@ -162,6 +162,7 @@ export class RaceView {
       r.rk.textContent = p.rank; r.lv.textContent = p.status === 'done' ? '✓ fini' : `${Math.min(total, e.solved + (p.status === 'racing' ? 1 : 0))}/${total}`;
       r.fill.style.width = (p.status === 'done' ? 100 : e.solved / total * 100) + '%';
       [...r.st.children].forEach((u, i) => u.classList.toggle('x', i < e.strikes));
+      r.el.classList.toggle('hide-m', p.rank > 3 && p.id !== this.me);
       r.el.classList.toggle('out', p.status === 'out'); r.el.classList.toggle('done', p.status === 'done'); r.el.classList.toggle('off', !p.connected && !p.bot && p.status !== 'out');
       this.rowsEl.append(r.el);
     }

@@ -56,8 +56,8 @@ export const LINES = {
   solveFast: [
     'Déjà ? Vous avez triché. Je ne sais pas comment, mais je le sens.',
     'Trop rapide. Les robots sont rapides. Je ne dis rien. Je note.',
-    'Record de vitesse. Je vais devoir vérifier que vous n’êtes pas deux dans le même manteau.',
-    'Quatre secondes. Mon dernier stagiaire en a mis quarante. Il est parti élever des chèvres.'
+    'Vitesse suspecte. Je vais devoir vérifier que vous n’êtes pas deux dans le même manteau.',
+    'À peine le temps de cligner. Mon dernier stagiaire était dix fois plus lent. Il est parti élever des chèvres.'
   ],
   solveSlow: [
     'Vous avez pris votre temps. Le café était bon, au moins ?',
