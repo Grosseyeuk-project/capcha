@@ -51,7 +51,7 @@ export default {
     function mv(i, to) {
       place[i] = to; selected = -1; api.sfx('pop'); render();
       if (hasRule('a_bins', 'R4') && !flipDone && place.filter((x) => x !== 'p').length >= 3) {
-        flipDone = true; flipped = true; binH.style.order = 1; binR.style.order = 0; fr.banner('Inversion syndicale : les deux bacs ont changé de côté (les cartes déjà classées les suivent). Vérifiez les étiquettes.', 'rule', 0); api.say('Inversion syndicale. Les bacs ont changé de côté. Les étiquettes, elles, ne mentent pas.', 'smug'); api.sfx('whoosh');
+        flipDone = true; flipped = true; binH.style.order = 1; binR.style.order = 0; fr.banner('Inversion syndicale : les deux bacs ont changé de côté (les cartes déjà classées les suivent). Vérifiez les étiquettes.', 'rule', 0); api.sfx('whoosh');
         [binH, binR].forEach((b) => { b.animate([{ transform: 'rotateY(90deg)' }, { transform: 'none' }], { duration: 350 }); });
       }
     }

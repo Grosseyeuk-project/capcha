@@ -36,18 +36,19 @@ export default {
     });
     function maybeFlip() {
       if (!FLIP || flipped) return; flipped = true; desc = !desc; truth = [...truth].reverse();
+      if (sc) { sc.lastChild.textContent = 'sens : ' + (desc ? 'lourd → léger' : 'léger → lourd'); sc.className = 'ak-lc bad'; }
       cap.textContent = (desc ? 'Sens : du plus lourd (en haut) au plus léger.' : 'Sens : du plus léger (en haut) au plus lourd.'); cap.animate([{ background: '#ffe8a1' }, { background: 'transparent' }], { duration: 1200 }); fr.el.querySelector('.ak-head small').textContent = desc ? 'Du plus lourd (en haut) au plus léger' : 'Du plus léger (en haut) au plus lourd';
       fr.banner('Rectificatif : sens inversé. ' + (desc ? 'Le plus lourd en haut.' : 'Le plus léger en haut.'), 'rule', 4500); api.say('Rectificatif. J’ai inversé le sens du classement. Relisez le haut de la carte.', 'smug'); api.sfx('whoosh');
       if (/cheat=1/.test(location.search)) host.dataset.answer = truth.map((t) => t[0]).join('|');
     }
     function inv() { if (!ic) return; let n = 0; for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) if (truth.indexOf(ord[i]) > truth.indexOf(ord[j])) n++; ic.className = 'ak-lc ' + (n === 0 ? 'ok' : 'warn'); ic.lastChild.textContent = 'paires inversées : ' + n; }
-    let ic = null;
+    let ic = null, sc = null;
     function layout(skip) { setTimeout(inv, 0); ord.forEach((it, i) => { const r = rows.get(it); if (it !== skip) r.style.top = i * RH + 'px'; r._nb.textContent = WORDS ? numWords(i + 1) : i + 1; r._up.disabled = i === 0; r._dn.disabled = i === N - 1; }); }
     function move(it, d) { const i = ord.indexOf(it), j = i + d; if (j < 0 || j >= N) return; ord.splice(i, 1); ord.splice(j, 0, it); layout(); api.sfx('click'); rows.get(it).focus(); }
     layout();
     const cap = h('p', { class: 'ao-cap' }, (desc ? 'Sens : du plus lourd (en haut) au plus léger.' : 'Sens : du plus léger (en haut) au plus lourd.') + ' Poignée ⋮⋮ ou ▲▼.');
     const fr = frame(h, { api, id: 'a_order', small: desc ? 'Du plus lourd (en haut) au plus léger' : 'Du plus léger (en haut) au plus lourd', title: 'Classez par poids', body: [cap, list], onVerify: check });
-    ic = fr.addChip('paires inversées : ?', 'warn'); inv(); host.append(fr.el);
+    sc = fr.addChip('sens : ' + (desc ? 'lourd → léger' : 'léger → lourd'), 'info'); ic = fr.addChip('paires inversées : ?', 'warn'); inv(); host.append(fr.el);
     if (/cheat=1/.test(location.search)) host.dataset.answer = truth.map((t) => t[0]).join('|');
     function check() {
       const bad = ord.findIndex((x, i) => x !== truth[i]);

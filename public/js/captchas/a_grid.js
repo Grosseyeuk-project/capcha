@@ -1,4 +1,4 @@
-import { css, frame, hasRule, coarse } from './a_kit.js';
+import { css, frame, hasRule, coarse, logEntry } from './a_kit.js';
 css('grid', `
 .ag-t{animation:ag-in .4s both}@keyframes ag-in{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
 .ag-t .sp{animation:ag-sp 2.2s linear infinite}@keyframes ag-sp{to{transform:rotate(360deg)}}
@@ -63,7 +63,7 @@ export default {
     function check() {
       if (!ruleOn) { clearTimeout(rt); ruleOn = true; fr.banner(RULE, 'rule', 0); }
       const T = new Set(truth()), bad = [...sel].filter((i) => !T.has(i)), miss = [...T].filter((i) => !sel.has(i));
-      if (!bad.length && !miss.length) { fr.el.classList.add('ak-ok'); return api.solve(); }
+      if (!bad.length && !miss.length) { fr.el.classList.add('ak-ok'); logEntry('a_grid', { val: T.size, noun: M.target }); return api.solve(); }
       fr.shake();
       let m;
       if (bad.length) { m = red.has(bad[0]) ? (isFeu ? 'Ce feu est rouge. Le rectificatif de la direction (bannière bleue) les a suspendus. Il fallait lire la bannière, elle était bleue.' : 'Ce vélo est rouge. Le rectificatif de la direction (bannière bleue) les a réquisitionnés. La bannière était bleue, pourtant.') : M.hit[order[bad[0]]] + (bad.length > 1 ? ` (Et ${bad.length - 1} autre${bad.length > 2 ? 's' : ''} du même acabit.)` : '') + (miss.length ? ` Vous en avez aussi oublié ${miss.length}.` : ''); }

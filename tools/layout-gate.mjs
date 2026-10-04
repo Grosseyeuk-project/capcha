@@ -51,7 +51,8 @@ const TEXT_OVERLAP = (rootSel) => {
   const root = document.querySelector(rootSel); if (!root) return ['no ' + rootSel];
   const items = []; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = w.nextNode(); n; n = w.nextNode()) { if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || e.closest('svg,script,style,.sr-only,[aria-hidden="true"]')) continue; const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity < 0.5) continue;
-    const rg = document.createRange(); rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.width > 4 && r.height > 4) items.push({ e, r, t: n.textContent.trim().slice(0, 16) }); }
+    const rg = document.createRange(); rg.selectNodeContents(n); const clip = e.closest('.vc-body, .cap-slot, .ol-root'); const cr = clip ? clip.getBoundingClientRect() : null;
+    for (const r0 of rg.getClientRects()) { let r = r0; if (cr) { const L = Math.max(r.left, cr.left), T = Math.max(r.top, cr.top), R = Math.min(r.right, cr.right), B = Math.min(r.bottom, cr.bottom); if (R - L < 4 || B - T < 4) continue; r = { left: L, top: T, right: R, bottom: B, width: R - L, height: B - T }; } if (r.width > 4 && r.height > 4) items.push({ e, r, t: n.textContent.trim().slice(0, 16) }); } }
   const out = [];
   for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) { const A = items[i], B = items[j]; if (A.e === B.e || A.e.contains(B.e) || B.e.contains(A.e)) continue;
     const ix = Math.min(A.r.right, B.r.right) - Math.max(A.r.left, B.r.left), iy = Math.min(A.r.bottom, B.r.bottom) - Math.max(A.r.top, B.r.top); if (ix > 3 && iy > 3 && ix * iy > 14) out.push(`"${A.t}" x "${B.t}"`); }

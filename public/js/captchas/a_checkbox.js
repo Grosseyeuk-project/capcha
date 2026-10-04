@@ -1,4 +1,4 @@
-import { css, brand, S, resetS, coarse } from './a_kit.js';
+import { css, brand, S, resetS, coarse, logEntry } from './a_kit.js';
 css('chk', `
 .ac-w{width:min(100%,340px)}
 @media (min-width:900px){.ac-w{width:min(100%,440px)}}
@@ -92,7 +92,7 @@ export default {
         msg.textContent = v.ok ? v.why : 'Comportement suspect. Dossier transmis.';
         if (v.ok) {
           box.replaceChildren(h('div', {})); box.firstChild.innerHTML = '<svg class="ac-tick" viewBox="0 0 24 24"><path fill="none" stroke="#34a853" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" d="M4 12.5l5 5L20 6"/></svg>';
-          box.style.borderColor = '#34a853'; later(() => api.solve(), 500);
+          box.style.borderColor = '#34a853'; later(() => { logEntry('a_checkbox', {}); api.solve(); }, 500);
         } else if (!warned) {
           warned = true; w.classList.add('ak-shake'); msg.textContent = 'Doute : ' + v.why + ' (Seconde chance, offerte.)'; api.say('Première alerte : ' + v.why + ' Je vous en offre une seconde, c’est la fête.', 'smug'); api.sfx('bad');
           box.replaceChildren(); box.disabled = false; busy = false; bar.style.width = '0'; pts.length = 0; setTimeout(() => w.classList.remove('ak-shake'), 600);

@@ -41,17 +41,21 @@ export const lvOf = (id) => Math.max(0, ORDER.indexOf(id));
 export const rulesFor = (id) => RULES.filter((r) => ORDER.indexOf(r.after) < ORDER.indexOf(id));
 export const hasRule = (id, k) => rulesFor(id).some((r) => r.k === k);
 // shared across captchas for the page's lifetime; reset by the first card
-export const S = { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} };
-export function dossier(h, api) {
-  const pan = h('div', { class: 'ak-dosp', hidden: '' }); let paid = false;
-  const btn = h('button', { class: 'ak-dos', type: 'button', onclick: () => {
-    if (!pan.hidden) { pan.hidden = true; return; }
-    if (!paid) { paid = true; api.timer(Math.max(3000, S.left - 3000)); api.sfx('bad'); }
-    pan.innerHTML = ''; pan.append(h('b', {}, 'DOSSIER (−3 s)'), h('br'), 'Carte 2 · texte tordu : ' + (S.word ? S.word.toLowerCase() : '(introuvable)'), h('br'), 'Carte 4 · calcul : ' + (S.mathWords || '(introuvable)')); pan.hidden = false;
-  } }, 'Consulter le dossier (−3 s)');
-  return { btn, pan };
-}
-export const resetS = () => { delete S.word; delete S.mathWords; delete S.mathVal; return Object.assign(S, { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} }); };
+export const S = { entries: [], pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} };
+// ---- Dossier: persistent list of the player's earlier answers, judged live against the CURRENT rules ----
+export const canon = (e, rules) => {
+  const has = (k) => rules.some((r) => r.k === k); let t = e.base;
+  if (e.kind === 'count') t = has('R2') ? `${numWords(e.val)} ${e.noun}` : `${e.val} ${e.noun}`;
+  if (e.kind === 'num') t = has('R2') ? numWords(e.val) : String(e.val);
+  if (has('R4') && e.kind === 'num' && t.length > 12) t = roman(e.val).toLowerCase();
+  if (e.kind === 'word' && has('R6')) t = e.base.slice(0, 6);
+  if (has('R1')) t = t.toLowerCase();
+  return t;
+};
+const DEFAULTS = { a_checkbox: { kind: 'plain', label: 'case', base: 'Case cochée' }, a_wavy: { kind: 'word', label: 'texte tordu' }, a_grid: { kind: 'count', label: 'images', val: 3, noun: 'vélos' }, a_math: { kind: 'num', label: 'calcul' }, a_slider: { kind: 'plain', label: 'puzzle', base: 'Pièce replacée' }, a_bins: { kind: 'plain', label: 'tri', base: 'Tri validé' }, a_order: { kind: 'plain', label: 'classement', base: 'Classement validé' } };
+export function logEntry(id, e) { S.entries = S.entries.filter((x) => x.id !== id); const d = { ...DEFAULTS[id], ...e, id }; if (d.kind === 'word' && !d.base) d.base = (S.word || 'puzzle').toLowerCase(); if (d.kind === 'num') { d.val = d.val ?? S.mathVal ?? 42; d.base = String(d.val); } d.text = canon(d, rulesFor(id)); S.entries.push(d); S.entries.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id)); }
+function ensureEntries(id) { for (const pid of ORDER.slice(0, ORDER.indexOf(id))) if (!S.entries.some((x) => x.id === pid)) logEntry(pid, {}); }
+export const resetS = () => { S.entries = []; delete S.word; delete S.mathWords; delete S.mathVal; return Object.assign(S, { pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} }); };
 const REL = { a_wavy: ['R1'], a_math: ['R1', 'R2'], a_slider: ['R1', 'R3'], a_bins: ['R1', 'R2', 'R3', 'R4'], a_order: ['R1', 'R2', 'R3', 'R5'], a_rotate: ['R1', 'R3', 'R6'] };
 const RULESAY = { R1: 'Nouvelle règle : tout ce que vous tapez, en minuscules. Je ne crie pas, donc vous non plus.', R2: 'Nouvelle règle : plus un seul chiffre. Les nombres, en toutes lettres. Je les épelle très bien, moi.', R3: 'Nouvelle règle : « Vérifier » se débloque après deux secondes. Respirez. C’est un ordre.', R4: 'Nouvelle règle : les bacs de tri peuvent déménager. Gardez un œil dessus.', R5: 'Nouvelle règle : le sens d’un classement est révocable. Par moi. Quand je veux.', R6: 'Nouvelle règle : le bouton ↑ est en panne, et une seule pose est suspecte. Il en faut deux.' };
 export const roman = (n) => { const m = [[100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let r = ''; for (const [v, t] of m) while (n >= v) { r += t; n -= v; } return r; };
@@ -164,7 +168,17 @@ css('live4', `
 .ak-dos{appearance:none;border:1px solid #c9ccd1;background:#fff;color:#1a3d7c;border-radius:6px;font:700 12px/1.1 system-ui;padding:0 10px;min-height:44px;cursor:pointer}
 .ak-dos:hover{background:#e8f0fe}
 .ak-dosp{flex-basis:100%;font:600 12px/1.4 ui-monospace,Menlo,monospace;background:#fffbe6;border:1px dashed #d4b106;border-radius:4px;padding:6px 8px;color:#614700}
-.ag-cap,.ab-cap,.ao-cap{font-size:12px;line-height:1.35;color:#3c4043;margin:0 0 8px}
+.ag-cap,.ab-cap,.ao-cap{font-size:12px;line-height:1.35;color:#202124;margin:0 0 8px}
+`);
+css('dz', `
+.ak-dz{display:flex;align-items:center;gap:4px;padding:6px 10px 0;flex-wrap:wrap}
+.ak-dl{font:700 12px/1 system-ui;color:#5f6368;margin-right:2px}
+.ak-dc{appearance:none;min-width:40px;height:40px;border-radius:50%;border:2px solid #34a853;background:#e6f4ea;color:#137333;font:800 12px/1 system-ui;cursor:pointer;padding:0 4px}
+.ak-dc.bad{border-color:#d93025;background:#fce8e6;color:#c5221f;animation:ak-shake .5s 2}
+.ak-dd{margin:6px 10px 0;padding:8px;border:1px solid #c9ccd1;border-radius:6px;background:#f8f9fa;display:flex;flex-direction:column;gap:6px;color:#202124;font-size:12px;line-height:1.35}
+.ak-dt.bad{color:#c5221f;font-weight:600}
+.ak-dfix{height:44px;border:2px solid #c9ccd1;border-radius:4px;font:700 15px ui-monospace,Menlo,monospace;padding:0 8px;background:#fff;color:#202124}.ak-dfix:focus{outline:0;border-color:#1a73e8}
+.ak-dd[hidden]{display:none!important}
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
 const BRAND2 = ['Confidentialité · Conditions', 'Confidentialité · Conditions', 'Confidentialité · Conditions', 'Vie privée (non) · Conditions', 'Vie privée (non) · Conditions', 'Données revendues', 'Aucune confidentialité', 'Non remboursable'];
@@ -196,27 +210,53 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     if (S.pen) st.append(h('span', { class: 'ak-pen', title: 'Chaque infraction passée coûte 5 s sur les cartes suivantes.' }, 'Pénalités −' + S.pen * 5 + ' s'));
     if (MOCK[lv]) st.append(h('button', { class: 'ak-mock', type: 'button', onclick: () => api && api.say(MOCKSAY[lv], 'smug') }, h('i', {}, MOCK[lv][0]), h('span', {}, MOCK[lv][1])));
   }
+  // dossier strip
+  ensureEntries(id);
+  const ents = S.entries.filter((x) => ORDER.indexOf(x.id) < lv);
+  const bad2 = () => ents.filter((e) => e.text !== canon(e, rules));
+  let dz = null, dd = null; const dcs = [];
+  const causeOf = (e) => { const act = [...rules].reverse(); for (const r of act) if (e.text === canon(e, rules.filter((x) => x.k !== r.k))) return r; return null; };
+  function refresh() {
+    const reds = bad2(); dcs.forEach(([e, c]) => { const ok = e.text === canon(e, rules); c.className = 'ak-dc ' + (ok ? 'ok' : 'bad'); });
+    el.dataset.dfix = JSON.stringify(Object.fromEntries(reds.map((e) => [ents.indexOf(e) + 1, canon(e, rules)])));
+    if (typeof setLock === 'function') setLock();
+  }
+  function openEntry(e) {
+    const n = ents.indexOf(e) + 1; dd.hidden = false; dd.innerHTML = '';
+    const ok = e.text === canon(e, rules), r = ok ? null : causeOf(e);
+    dd.append(h('div', { class: 'ak-dt' }, h('b', {}, roman(n) + ' · ' + e.label + ' : '), '« ' + e.text + ' »', ok ? '  conforme' : ''));
+    if (!ok) {
+      dd.append(h('div', { class: 'ak-dt bad' }, r ? `${r.k} (${r.t}) : cette entrée n’est plus conforme. Réécrivez-la.` : 'Cette entrée n’est plus conforme. Réécrivez-la.'));
+      const inp = h('input', { class: 'ak-dfix', type: 'text', value: e.text, autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', 'aria-label': 'Corriger l’entrée ' + roman(n), oninput: () => { const v = inp.value.trim(); if (v === canon(e, rules)) { e.text = v; api && api.sfx('good'); dd.hidden = true; refresh(); const nx = bad2()[0]; if (nx) openEntry(nx); } else inp.classList.toggle('ak-viol', v !== v.toLowerCase() && rules.some((x) => x.k === 'R1')); } });
+      dd.append(inp);
+    }
+  }
+  if (ents.length) {
+    dz = h('div', { class: 'ak-dz' }, h('span', { class: 'ak-dl' }, 'Dossier'));
+    ents.forEach((e, i) => { const c = h('button', { class: 'ak-dc ok', type: 'button', title: e.label, 'data-n': i + 1, 'aria-label': 'Entrée ' + roman(i + 1) + ' ' + e.label, onclick: () => { if (!dd.hidden && dd.dataset.n == i + 1) { dd.hidden = true; return; } dd.dataset.n = i + 1; openEntry(e); } }, roman(i + 1)); dcs.push([e, c]); dz.append(c); });
+    dd = h('div', { class: 'ak-dd', hidden: '' });
+  }
   const newRules = rules.filter(isNew); if (newRules.length && st) st.prepend(h('span', { class: 'ak-newtag' }, 'NOUVELLE RÈGLE'));
   const foot = h('div', { class: 'ak-foot' }, h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, extra, brand(h, lv)), btn);
   const el = h('div', { class: 'ak-w', role: 'group', 'aria-label': title, 'data-lv': lv },
-    head, st, list, noteEl, h('div', { class: 'ak-body' }, body), foot);
+    head, st, dz, dd, list, noteEl, h('div', { class: 'ak-body' }, body), foot);
   let inc = null;
   const drain = () => { if (dt || !api) return; dt = setInterval(() => { if (!el.isConnected || !bad.size) { clearInterval(dt); dt = 0; return; } if (drained >= 5) return; drained++; api.timer(Math.max(3000, S.left - 1000)); if (drainEl) { drainEl.hidden = false; drainEl.textContent = '⏱ −1 s/s : −' + drained + ' s'; } api.sfx('tick'); }, 1000); };
   const banner = (m, kind, ms = 4500) => { inc?.remove(); const me = inc = h('div', { class: 'ak-inc ' + (kind || ''), role: 'alert', title: 'Toucher pour fermer', onclick: () => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); } }, m); me.style.top = head.offsetHeight + 'px'; me.style.bottom = 'auto'; el.append(me); setTimeout(() => { me.classList.add('gone'); setTimeout(() => me.remove(), 450); }, ms || 9000); };
   if (api) {
     const f = api.fail; api.fail = (m, o) => { S.last = m || ''; S.lastT = Date.now(); S.lastId = id; return f(m, o); };
-    const so = api.solve; api.solve = () => { S.last = ''; return so(); };
+    const so = api.solve; api.solve = () => { S.last = ''; if (!S.entries.some((x) => x.id === id)) logEntry(id, {}); return so(); };
     api.onTick((l) => { S.left = l; });
     if (newRules.length) setTimeout(() => el.isConnected && api.say(RULESAY[newRules[0].k], 'smug'), 700);
     const T = TIMES[id]; if (S.pen && T) api.timer(Math.max(12000, T - S.pen * 5000));
     const A = { a_math: S.upper ? 'À la carte 2, vous aviez écrit en majuscules. C’est dans le dossier. Ici : en lettres, en minuscules, avec humilité.' : '', a_slider: S.straight ? 'Pour mémoire : à la carte 1, votre trajectoire était trop rectiligne. Ici, on glisse avec un léger tremblement de culpabilité.' : '' }[id] || (S.pen && lv >= 5 ? `Pénalité cumulée : −${S.pen * 5} s. Chaque infraction se paie sur les cartes suivantes. Je n’invente rien.` : '');
     if (A) setTimeout(() => el.isConnected && api.say(A, 'smug'), 1400);
   }
-  if (patient) {
-    const labs = ['Respirez…', 'Encore un peu…'];
-    btn.disabled = true; let n = 2; btn.textContent = labs[0];
-    const t = setInterval(() => { if (!el.isConnected) return clearInterval(t); n--; if (n <= 0) { btn.disabled = false; btn.textContent = verify; chips.R3 && (chips.R3.className = 'ak-lc ok'); clearInterval(t); } else btn.textContent = labs[1]; }, 1000);
-  }
+  let patLocked = !!patient, patN = 2; const labs = ['Respirez…', 'Encore un peu…'];
+  function setLock() { const reds = bad2().length; btn.disabled = patLocked || reds > 0; btn.textContent = reds ? 'Corrigez le dossier' : patLocked ? labs[patN > 1 ? 0 : 1] : verify; }
+  if (patient) { const t = setInterval(() => { if (!el.isConnected) return clearInterval(t); patN--; if (patN <= 0) { patLocked = false; chips.R3 && (chips.R3.className = 'ak-lc ok'); clearInterval(t); } setLock(); }, 1000); }
+  setLock(); refresh();
+  { const rs = bad2(); if (rs.length) { setTimeout(() => { if (!el.isConnected) return; openEntry(rs[0]); const r = causeOf(rs[0]); api && api.say(`${r ? r.k : 'Une règle'} : l’entrée ${roman(ents.indexOf(rs[0]) + 1)} du dossier (« ${rs[0].text} ») n’est plus conforme. Corrigez-la avant de continuer. Le dossier est juge, jury et bureaucrate.`, 'smug'); api && api.sfx('bad'); }, 900); } }
   return { el, btn, noteEl, banner, rule: (k, state) => { const c = chips[k]; if (c) { c.className = 'ak-lc ' + state; if (state === 'bad') { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); } } if (state === 'bad' && (k === 'R1' || k === 'R2')) { bad.add(k); drain(); } else bad.delete(k); },
     addChip: (text, state) => { const c = h('span', { class: 'ak-lc ' + (state || 'bad') }, h('i'), text); (drainEl ? st.insertBefore(c, drainEl) : (st || el).append(c)); return c; }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
 }

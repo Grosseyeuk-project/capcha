@@ -12,8 +12,9 @@ async function run(id) {
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && !/404/.test(m.text()) && errs.push(m.text()));
   await p.goto(`http://localhost:${port}/?cap=${id}&cheat=1`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  const fixDossier = async () => { await sleep(1300); const m = await p.evaluate(() => JSON.parse(document.querySelector('.ak-w')?.dataset.dfix || '{}')); for (const [n, v] of Object.entries(m)) { console.log('  dossier fix', n, '->', v); await p.locator(`.ak-dc[data-n="${n}"]`).click({ force: true }); await p.locator('.ak-dfix').fill(v); await sleep(250); } };
   const slow = () => p.evaluate(() => { if (!window.__slow) window.__slow = setInterval(() => { const c = window.__game.cur; if (c && !c.done) c.limit = 1e9; }, 40); }).catch(() => {});
-  const ready = async () => { await p.waitForFunction((id) => window.__game && window.__game.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 45000 }); await sleep(300); await slow(); };
+  const ready = async () => { await p.waitForFunction((id) => window.__game && window.__game.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 45000 }); await sleep(300); await slow(); await fixDossier(); };
   await ready();
   await p.evaluate(() => { const g = window.__game; window.__msgs = []; g.__hooked = 1; const o = g.strike.bind(g); g.strike = (m, ...r) => { window.__msgs.push(m ?? (new Error().stack.split("\n").slice(1,4).join("|") + JSON.stringify(r))); return o(m, ...r); }; });
   const ans = () => p.evaluate(() => document.querySelector('.cap-host').dataset.answer);

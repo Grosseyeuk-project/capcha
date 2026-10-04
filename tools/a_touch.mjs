@@ -12,6 +12,7 @@ for (const id of ids) {
   await p.waitForFunction((id) => window.__game?.phase === 'play' && window.__game.cur?.def.id === id && document.querySelector('.cap-host')?.children.length, id, { timeout: 60000 });
   await p.evaluate(() => setInterval(() => { const c = window.__game.cur; if (c && !c.done) c.limit = 1e9; }, 40)); await sleep(2600);
   const cdp = await ctx.newCDPSession(p);
+  { const m = await p.evaluate(() => JSON.parse(document.querySelector('.ak-w')?.dataset.dfix || '{}')); for (const [n, v] of Object.entries(m)) { await p.locator(`.ak-dc[data-n="${n}"]`).evaluate((e) => e.scrollIntoView({ block: 'center' })); await sleep(300); const bb = await p.locator(`.ak-dc[data-n="${n}"]`).boundingBox(); await p.touchscreen.tap(bb.x + bb.width / 2, bb.y + bb.height / 2); await sleep(300); await p.locator('.ak-dfix').fill(v); await sleep(250); } }
   const tap = async (sel, n = 0) => { await p.locator(sel).nth(n).evaluate((e) => e.scrollIntoView({ block: 'center' })); const bb = await p.locator(sel).nth(n).boundingBox(); await p.touchscreen.tap(bb.x + bb.width / 2, bb.y + bb.height / 2); await sleep(150); };
   const ans = () => p.evaluate(() => document.querySelector('.cap-host').dataset.answer);
   await p.screenshot({ path: `${shots}/m_${id}.png` });

@@ -1,4 +1,4 @@
-import { css, frame, hasRule, coarse, S, roman, numWords, ruleHit, zap, dossier } from './a_kit.js';
+import { css, frame, hasRule, coarse } from './a_kit.js';
 css('rot', `
 .ar-st{position:relative;border-radius:4px;overflow:hidden;background:linear-gradient(180deg,#232a3a,#141824);touch-action:none;cursor:grab}
 .ar-st canvas{display:block;width:100%;height:auto}
@@ -38,11 +38,7 @@ export default {
     const bt = h('div', { class: 'ar-bt' });
     const defs = [['↑', 0, 'Basculer vers le haut'], ['↓', 1, 'Basculer vers le bas'], ['←', 2, 'Tourner à gauche'], ['→', 3, 'Tourner à droite'], ['↺', 4, 'Incliner à gauche'], ['↻', 5, 'Incliner à droite']];
     defs.forEach(([t, i, l]) => { const dis = noUp && i === 0; const bb = h('button', { type: 'button', 'aria-label': l, title: dis ? 'Règle 6 : ↑ en maintenance' : l, style: dis ? { opacity: .35, cursor: 'not-allowed',  } : {}, onclick: () => rot(i) }, t); if (dis) { bb.disabled = true; bb.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>'; } bt.append(bb); });
-    const mv0 = S.mathVal ?? 42, romanAns = roman(mv0).toLowerCase();
-    const redoMsg = h('span', { class: 'ar-rm' }, two ? 'Un rectificatif est en préparation…' : 'Aucun rectificatif. Profitez-en.');
-    const redoIn = h('input', { class: 'ar-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Résultat en chiffres romains', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
-    const dos = dossier(h, api); const redo = h('div', { class: 'ar-rd' }, redoMsg, redoIn, dos.btn, dos.pan);
-    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt, two ? redo : null], onVerify: check });
+    const fr = frame(h, { api, id: 'a_rotate', small: 'Faites pivoter l’objet de droite', title: 'Même orientation', note: 'Un cube, une couleur, une seule pose. Quarts de tour.', body: [stage, bt], onVerify: check });
     host.append(fr.el);
     const setAnswer = () => { // BFS path for tests
       const par = new Map([[key(cur), null]]), qq = [cur]; let hit = null;
@@ -84,14 +80,8 @@ export default {
       const n = distBetween(cur, tgt);
       if (n === 0 && two && round === 1) {
         round = 2; api.sfx('good'); const old = key(tgt); do tgt = api.pick(all); while (key(tgt) === old || distBetween(cur, tgt) < 2);
-        gT.quaternion.copy(toQ(tgt)); kick(); glow(); if (/cheat=1/.test(location.search)) { setAnswer(); host.dataset.redo = romanAns; }
-        redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 4 invalidée (règle 2 : lettres interdites aux calculs). Retapez le résultat de la carte 4 en chiffres romains, minuscules :'; fr.addChip('R★ pièce 4 annulée', 'bad');
+        gT.quaternion.copy(toQ(tgt)); kick(); glow(); if (/cheat=1/.test(location.search)) { setAnswer();  }
         fr.banner('Pose 1/2 validée. Une seule pose est suspecte : le modèle a changé, recommencez.', 'rule', 0); api.say('Une seule pose, c’est suspect. Le modèle vient de changer. Recommencez.', 'smug'); fr.shake(); return;
-      }
-      if (n === 0 && two) {
-        const rv = redoIn.value.trim();
-        if (rv && rv !== rv.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : les chiffres romains aussi se tapent en minuscules.');
-        if (rv !== romanAns) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! La pièce 4 était à refaire en chiffres romains. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas le résultat de la carte 4 en romains (C = 100, L = 50, X = 10, V = 5, I = 1). Mémoire, ou dossier (−3 s).`); }
       }
       if (n === 0) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake();

@@ -1,4 +1,4 @@
-import { css, frame, S, ruleHit, hasRule, coarse, zap, dossier } from './a_kit.js';
+import { css, frame, S, ruleHit, hasRule, coarse, zap } from './a_kit.js';
 css('slider', `
 .as-st{position:relative;width:100%;aspect-ratio:340/142;border-radius:3px;overflow:hidden;background:#cde}
 .as-st canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
@@ -40,21 +40,16 @@ export default {
     const hd = h('button', { class: 'as-hd', type: 'button', role: 'slider', 'aria-label': 'Faire glisser la pièce', 'aria-valuemin': 0, 'aria-valuemax': W - P, 'aria-valuenow': 0, 'aria-orientation': 'horizontal' }, '→');
     const fill = h('div', { class: 'as-fl' }), hint = h('span', {}, 'Faites glisser pour compléter le puzzle');
     const tr = h('div', { class: 'as-tr' }, fill, hint, hd);
-    const wordRev = [...(S.word || 'PUZZLE')].reverse().join('').toLowerCase();
-    const redoMsg = h('span', { class: 'as-rm' }, 'Le greffier prépare un rectificatif…');
-    const redoIn = h('input', { class: 'as-ri', type: 'text', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', disabled: '', 'aria-label': 'Mot retapé à l’envers', placeholder: '…', oninput: () => { const b = /[A-ZÀ-Ý]/.test(redoIn.value); redoIn.classList.toggle('ak-viol', b); if (b) zap(h, redoIn, 'MAJUSCULE !'); fr.rule('R1', b ? 'bad' : 'ok'); } });
-    const dos = dossier(h, api); const redo = h('div', { class: 'as-rd' }, redoMsg, redoIn, dos.btn, dos.pan);
     let twisted = false, tmr = 0;
     function twist() {
       if (twisted) return; twisted = true; clearTimeout(tmr);
       const old = tx; do tx = api.int(110, W - P - 18); while (Math.abs(tx - old) < 50); paint(); set(val);
       stage.animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 500 });
-      redo.classList.add('on'); redoIn.disabled = false; redoMsg.textContent = 'Pièce 2 annulée. Retapez à l’envers, en minuscules, le mot de la carte 2 :';
-      fr.addChip('R★ pièce 2 annulée', 'bad'); fr.banner('Rectificatif : travaux sur le puzzle, le trou a bougé. Et votre réponse à la pièce 2 est annulée : retapez le mot à l’envers, en minuscules.', 'warn', 8000); api.say('Rectificatif de dernière minute. Le trou a déménagé, et la pièce 2 est invalidée. Je suis désolé. Non, en fait.', 'smug'); api.sfx('whoosh');
-      if (/cheat=1/.test(location.search)) { host.dataset.answer = tx; host.dataset.redo = wordRev; }
+      fr.banner('Rectificatif : travaux sur le puzzle, le trou a bougé.', 'warn', 4500); api.say('Rectificatif de dernière minute. Le trou a déménagé. Les travaux, que voulez-vous.', 'smug'); api.sfx('whoosh');
+      if (/cheat=1/.test(location.search)) { host.dataset.answer = tx; }
     }
     tmr = setTimeout(twist, 9000);
-    const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision : ±' + tol + ' px. Un robot ferait ±0. Soyez humain, pas trop.', body: [stage, tr, redo], onVerify: check });
+    const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision : ±' + tol + ' px. Un robot ferait ±0. Soyez humain, pas trop.', body: [stage, tr], onVerify: check });
     fr.el.style.maxWidth = '400px'; host.append(fr.el);
     const cheatOn = /cheat=1/.test(location.search); if (cheatOn) host.dataset.answer = tx;
     function set(v) { const k = stage.clientWidth / W; val = Math.max(0, Math.min(W - P, v)); pc.style.transform = `translateX(${(val - tx) * k}px)`; const trw = tr.clientWidth - 46; hd.style.left = (val / (W - P)) * trw + 'px'; fill.style.width = (val / (W - P)) * trw + 23 + 'px'; hd.setAttribute('aria-valuenow', Math.round(val)); if (val > 4) hint.style.opacity = 0; }
@@ -68,10 +63,7 @@ export default {
     tr.addEventListener('pointerdown', (e) => { if (e.target === hd) return; const r = tr.getBoundingClientRect(); set((e.clientX - r.left - 23) / (r.width - 46) * (W - P)); });
     function check() {
       if (!twisted) twist();
-      const rv = redoIn.value.trim();
-      if (rv && rv !== rv.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : minuscules, même à l’envers.');
       const d = val - tx;
-      if (Math.abs(d) <= tol && rv.normalize('NFD').replace(/[\u0300-\u036f]/g, '') !== wordRev) { fr.shake(); return api.fail(!rv ? 'Le rectificatif ! Il fallait retaper à l’envers le mot de la carte 2. Les rectificatifs, on les lit.' : `« ${rv} » n’est pas le mot de la carte 2 à l’envers. Ayez la mémoire ou payez le dossier (−3 s).`); }
       if (Math.abs(d) <= tol) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); const a = Math.round(Math.abs(d));
       let m;
