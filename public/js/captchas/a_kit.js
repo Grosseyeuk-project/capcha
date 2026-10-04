@@ -44,7 +44,7 @@ export const hasRule = (id, k) => rulesFor(id).some((r) => r.k === k);
 export const S = { entries: [], pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} };
 // ---- Dossier: persistent list of the player's earlier answers, judged live against the CURRENT rules ----
 export const canon = (e, rules) => {
-  const has = (k) => rules.some((r) => r.k === k); let t = e.base;
+  const has = (k) => rules.some((r) => r.k === k); let t = String(e.base ?? e.label ?? '');
   if (e.kind === 'count') t = has('R2') ? `${numWords(e.val)} ${e.noun}` : `${e.val} ${e.noun}`;
   if (e.kind === 'num') t = has('R2') ? numWords(e.val) : String(e.val);
   if (has('R4') && e.kind === 'num' && t.length > 12) t = roman(e.val).toLowerCase();
