@@ -1,4 +1,4 @@
-import { css, frame, numWords, hasRule, coarse, ruleHit, zap, S } from './a_kit.js';
+import { css, frame, numWords, coarse, S } from './a_kit.js';
 css('math', `
 .am-p{background:#f6f7f9;border:1px dashed #c9ccd1;border-radius:4px;padding:10px 12px 10px 12px;font-size:14px;line-height:1.5}
 .am-p ol{margin:6px 0 0;padding-left:20px}
@@ -11,49 +11,33 @@ css('math', `
 @keyframes am-stamp{from{transform:rotate(7deg) scale(2.4);opacity:0}to{transform:rotate(7deg) scale(1);opacity:.85}}
 .am-p em{display:inline-block;animation:am-pulse 2.4s infinite}
 @keyframes am-pulse{50%{transform:scale(1.08)}}
+.am-big{text-align:center;padding:16px 12px}.am-q{font-size:14px;color:#5f6368}.am-e{font:800 40px/1.2 ui-monospace,Menlo,monospace;color:#1a3d7c;margin:4px 0}.am-big .am-st{position:absolute;right:6px;bottom:4px;float:none;margin:0}
 .am-r{display:flex;align-items:center;gap:8px;margin-top:10px}
 .am-r label{font-weight:600;font-size:13px;flex:1}
 .am-n{width:128px;height:42px;border:2px solid #c9ccd1;border-radius:3px;font:700 20px ui-monospace,Menlo,monospace;text-align:center;outline:0;transition:border-color .15s,box-shadow .15s;background:#fff;color:#202124;user-select:text;-webkit-user-select:text;-moz-appearance:textfield}
 .am-n:focus{border-color:#1a73e8;box-shadow:0 0 0 3px rgba(26,115,232,.2)}
 `);
 export default {
-  id: 'a_math', tier: 1, title: 'Calcul mental', time: 40000,
+  id: 'a_math', tier: 1, title: 'Calcul mental', time: 25000,
   mount(host, api) {
-    const { h } = api; const a = api.int(4, 19), b = api.int(3, 15), c = api.int(2, 4), d = api.int(2, 12);
-    const v1 = a + b, v2 = v1 * c, v3 = v2 - d; S.mathVal = v3; S.mathWords = numWords(v3);
-    const steps = [`Pensez au nombre <em>${numWords(a)}</em>.`, `Ajoutez-lui <em>${numWords(b)}</em>.`, `Multipliez le résultat par <em>${numWords(c)}</em>.`, `Retirez-en <em>${numWords(d)}</em>.`];
-    const wrong = { prio: a + b * c - d, noMul: v1 - d, noSub: v2, add: a + b + c - d, sub: v3 + 2 * d };
-    const p = h('div', { class: 'am-p' }, h('div', {}, 'Exécutez ces ordres dans l’ordre, comme à la mairie :'));
-    const ol = h('ol'); steps.forEach((s, i) => { const li = h('li'); li.style.animationDelay = .25 + i * .3 + 's'; li.innerHTML = s; ol.append(li); }); p.append(ol, h('div', { class: 'am-st' }, 'CALCULATRICE', h('br'), 'CONFISQUÉE'));
-    let fr; const inp = h('input', { class: 'am-n', id: 'am-n', type: 'text', inputmode: 'numeric', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', 'aria-label': 'Résultat en chiffres', placeholder: '?', oninput: () => { if (!fr) return; const d = WORDS && /\d/.test(inp.value), u = /[A-ZÀ-Ý]/.test(inp.value); inp.classList.toggle('ak-viol', d || u); if (d) zap(h, inp, 'UN CHIFFRE ?!'); else if (u) zap(h, inp, 'MAJUSCULE !'); fr.rule('R2', d ? 'bad' : 'ok'); fr.rule('R1', u ? 'bad' : 'ok'); }, onkeydown: (e) => { if (e.key === 'Enter') check(); } });
-    const WORDS = hasRule('a_math', 'R2');
-    if (WORDS) { inp.placeholder = 'en lettres'; inp.style.width = '200px'; inp.style.fontSize = '15px'; inp.removeAttribute('inputmode'); }
-    fr = frame(h, { api, id: 'a_math', small: WORDS ? 'Répondez en toutes lettres (règle 2)' : 'Répondez en chiffres', title: 'Quel est le résultat ?', note: 'Chaque opération s’applique au résultat précédent. Pas de priorité, pas de parenthèses, pas de pitié.', body: [p, h('div', { class: 'am-r' }, h('label', { for: 'am-n' }, 'Résultat final'), inp)], onVerify: check });
+    const { h } = api;
+    const two = api.rng() < .5; let a, b, c, v, expr;
+    if (two) { a = api.int(6, 12); b = api.int(2, 5); c = api.int(2, 6); v = a - b + c; expr = `${a} − ${b} + ${c}`; } else { a = api.int(3, 9); b = api.int(3, 9); v = a + b; expr = `${a} + ${b}`; }
+    S.mathVal = v; S.mathWords = numWords(v);
+    const p = h('div', { class: 'am-p am-big' }, h('div', { class: 'am-q' }, 'Combien font'), h('div', { class: 'am-e' }, expr + ' ?'));
+    const inp = h('input', { class: 'am-n', id: 'am-n', type: 'text', inputmode: 'numeric', autocomplete: 'off', autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false', 'aria-label': 'Résultat', placeholder: '?', onkeydown: (e) => { if (e.key === 'Enter') check(); } });
+    const fr = frame(h, { api, id: 'a_math', small: 'Répondez avec un nombre', title: 'Quel est le résultat ?', body: [p, h('div', { class: 'am-r' }, h('label', { for: 'am-n' }, 'Résultat'), inp)], onVerify: check });
     host.append(fr.el); if (!coarse()) setTimeout(() => inp.focus(), 50);
-    if (/cheat=1/.test(location.search)) host.dataset.answer = WORDS ? numWords(v3) : v3;
-    function checkWords() {
-      const raw = inp.value.trim(), n = (x) => String(x ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-\s]+/g, ' ').trim();
-      if (/\d/.test(raw)) return void ruleHit(api, fr, 'R2', 'Un chiffre ! Règle 2 : les nombres s’écrivent en toutes lettres. Elle est affichée en direct : elle a viré au rouge pendant que vous tapiez.');
-      if (raw !== raw.toLowerCase()) return void ruleHit(api, fr, 'R1', 'Règle 1 : minuscules. Vous criez vos réponses, comme un robot en colère.');
-      if (n(raw) === n(numWords(v3))) { fr.el.classList.add('ak-ok'); return api.solve(); }
-      fr.shake();
-      const k = Object.entries({ [wrong.prio]: 'la priorité des opérateurs', [wrong.noMul]: 'l’oubli de la multiplication', [wrong.noSub]: 'l’oubli de la soustraction' }).find(([w]) => n(numWords(+w)) === n(raw));
-      api.fail(!raw ? 'Réponse vide. Zéro point, mais zéro effort : c’est cohérent.' : k ? 'Bon calcul… pour ' + k[1] + '. Ici, on suit les ordres dans l’ordre, comme à la mairie.' : `« ${raw} » ? Je n’ai pas d’explication. Trois calculatrices (confisquées) ne vous suivent pas non plus.`);
-    }
+    if (/cheat=1/.test(location.search)) host.dataset.answer = String(v);
+    const norm = (x) => String(x ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-\s]+/g, ' ').trim();
     function check() {
-      if (WORDS) return checkWords();
-      const s = inp.value.trim().replace(/\s/g, ''); const v = Number(s);
-      if (s !== '' && /^-?\d+$/.test(s) && v === v3) { fr.el.classList.add('ak-ok'); return api.solve(); }
+      const raw = inp.value.trim(); const n = Number(raw.replace(',', '.'));
+      if ((raw !== '' && n === v) || (raw && norm(raw) === norm(numWords(v)))) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); let m;
-      if (s === '') m = 'Réponse vide. Zéro point, mais zéro effort : c’est cohérent.';
-      else if (!/^-?\d+$/.test(s)) m = `« ${s} » n’est pas un nombre en chiffres. On vous a demandé des chiffres, pas de la poésie.`;
-      else if (v === wrong.prio) m = 'Vous avez appliqué la priorité des opérateurs. Ici on suit les ordres dans l’ordre, comme à la mairie.';
-      else if (v === wrong.noMul) m = 'Vous avez oublié de multiplier. Je ne vous juge pas. Si, un peu.';
-      else if (v === wrong.noSub) m = 'Vous avez oublié de retirer à la fin. Les derniers ordres sont aussi des ordres.';
-      else if (v === wrong.sub) m = 'Vous avez ajouté au lieu de retirer. Optimiste, mais faux.';
-      else if (Math.abs(v - v3) === 1) m = 'À une unité près. Les robots font mieux, et les poètes aussi.';
-      else if (v < 0 && v3 >= 0) m = 'Un résultat négatif ? À ce stade, c’est votre moral qui parle.';
-      else m = `${v} ? Je n’ai pas d’explication. J’ai essayé, avec trois calculatrices : aucune ne vous suit.`;
+      if (!raw) m = 'Réponse vide. Zéro point, mais zéro effort : c’est cohérent.';
+      else if (Number.isFinite(n) && Math.abs(n - v) === 1) m = 'À une unité près. Les robots font mieux, et les poètes aussi.';
+      else if (Number.isFinite(n)) m = `${raw} ? Non. J’ai vérifié avec les doigts, et même eux ne vous suivent pas.`;
+      else m = `« ${raw} » n’est pas un nombre. On vous demande un résultat, pas de la poésie.`;
       api.fail(m);
     }
     return { destroy() {} };

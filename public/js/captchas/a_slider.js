@@ -40,29 +40,20 @@ export default {
     const hd = h('button', { class: 'as-hd', type: 'button', role: 'slider', 'aria-label': 'Faire glisser la pièce', 'aria-valuemin': 0, 'aria-valuemax': W - P, 'aria-valuenow': 0, 'aria-orientation': 'horizontal' }, '→');
     const fill = h('div', { class: 'as-fl' }), hint = h('span', {}, 'Faites glisser pour compléter le puzzle');
     const tr = h('div', { class: 'as-tr' }, fill, hint, hd);
-    let twisted = false, tmr = 0;
-    function twist() {
-      if (twisted) return; twisted = true; clearTimeout(tmr);
-      const old = tx; do tx = api.int(110, W - P - 18); while (Math.abs(tx - old) < 50); paint(); set(val);
-      stage.animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 500 });
-      fr.banner('Rectificatif : travaux sur le puzzle, le trou a bougé.', 'warn', 4500); api.say('Rectificatif de dernière minute. Le trou a déménagé. Les travaux, que voulez-vous.', 'smug'); api.sfx('whoosh');
-      if (/cheat=1/.test(location.search)) { host.dataset.answer = tx; }
-    }
-    tmr = setTimeout(twist, 9000);
-    const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Précision : ±' + tol + ' px. Un robot ferait ±0. Soyez humain, pas trop.', body: [stage, tr], onVerify: check });
+    let tmr = 0;
+    const fr = frame(h, { api, id: 'a_slider', small: 'Complétez l’image', title: 'Replacez la pièce', note: 'Faites glisser la pièce jusqu’au trou, puis vérifiez.', body: [stage, tr], onVerify: check });
     fr.el.style.maxWidth = '400px'; host.append(fr.el);
     const cheatOn = /cheat=1/.test(location.search); if (cheatOn) host.dataset.answer = tx;
     function set(v) { const k = stage.clientWidth / W; val = Math.max(0, Math.min(W - P, v)); pc.style.transform = `translateX(${(val - tx) * k}px)`; const trw = tr.clientWidth - 46; hd.style.left = (val / (W - P)) * trw + 'px'; fill.style.width = (val / (W - P)) * trw + 23 + 'px'; hd.setAttribute('aria-valuenow', Math.round(val)); if (val > 4) hint.style.opacity = 0; }
     set(0);
     let drag = null;
     hd.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, v: val }; hd.setPointerCapture(e.pointerId); hd.classList.add('drag'); api.sfx('tick'); });
-    hd.addEventListener('pointermove', (e) => { if (!drag) return; if (!twisted && Math.abs(e.clientX - drag.x) > 14) twist(); const trw = tr.clientWidth - 46; set(drag.v + (e.clientX - drag.x) / trw * (W - P)); });
+    hd.addEventListener('pointermove', (e) => { if (!drag) return; const trw = tr.clientWidth - 46; set(drag.v + (e.clientX - drag.x) / trw * (W - P)); });
     const up = () => { drag = null; hd.classList.remove('drag'); };
     hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up);
     hd.addEventListener('keydown', (e) => { const st = e.shiftKey ? 12 : 2; if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { set(val + st); e.preventDefault(); } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { set(val - st); e.preventDefault(); } else if (e.key === 'Enter') check(); });
     tr.addEventListener('pointerdown', (e) => { if (e.target === hd) return; const r = tr.getBoundingClientRect(); set((e.clientX - r.left - 23) / (r.width - 46) * (W - P)); });
     function check() {
-      if (!twisted) twist();
       const d = val - tx;
       if (Math.abs(d) <= tol) { fr.el.classList.add('ak-ok'); return api.solve(); }
       fr.shake(); const a = Math.round(Math.abs(d));

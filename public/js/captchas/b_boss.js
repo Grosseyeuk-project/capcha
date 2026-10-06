@@ -104,23 +104,20 @@ export default {
     // ---- phase 1: l'œil (et son reflet quand le boss inverse le monde) ----
     function p1() {
       phase = 1; clear(); busy = false; let hits = 0, inv = false, ghosts = []; const NH = 4; const W = () => stage.clientWidth, H = () => stage.clientHeight;
-      setRule('Phase 1/3 · 18 s par coup', 'Cliquez l’œil 👁️ ×' + NH + ', pas les 🧿. Monde ', h('b', {}, 'inversé'), ' : visez le ', h('b', {}, 'reflet'), '.');
+      setRule('Phase 1/3 · 20 s par coup', 'Cliquez l’œil 👁️ ' + NH + ' fois. Ne touchez pas les 🧿 (−1 progrès). Rien ne change en cours de route.');
       const lab = h('div', { class: 'bb-s' }, `Œil : 0/${NH}`); stage.append(lab);
       const mkOrb = (e, real) => { const el = h('button', { class: 'bb-orb', type: 'button', 'aria-label': real ? 'œil du boss' : 'leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); if (!inv) hit(real, el); }, onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); hit(real, el); } } }, h('s', {}, e)); if (real) el.style.zIndex = 4; stage.append(el); const a = api.rng() * 6.28; return { el, real, e, x: 20 + api.rng() * 200, y: 20 + api.rng() * 100, vx: Math.cos(a), vy: Math.sin(a) * 0.7 }; };
       let orbs = []; const coarse = matchMedia('(pointer:coarse)').matches; const sp = (k) => (api.reducedMotion || coarse ? 0.62 : 1) * (170 + k * 100);
-      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); api.timer(18000); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
+      const spawn = () => { orbs.forEach((o) => o.el.remove()); orbs = [mkOrb('👁️', true)]; for (let k = 0; k < Math.min(3, hits + 1); k++) orbs.push(mkOrb('🧿', false)); api.timer(20000); if (/cheat=1/.test(location.search)) host.dataset.answer = 'click .bb-orb[aria-label="œil du boss"]'; };
       const endInv = () => { inv = false; stage.classList.remove('inv'); ghosts.forEach((g) => g.el.remove()); ghosts = []; orbs.forEach((o) => o.el.classList.remove('dim')); };
-      const startInv = () => { inv = true; stage.classList.add('inv'); orbs.forEach((o) => { o.el.classList.add('dim'); const g = h('button', { class: 'bb-orb ghost', type: 'button', 'aria-label': o.real ? 'reflet de l’œil' : 'reflet de leurre', onpointerdown: (ev) => { ev.preventDefault(); ev.stopPropagation(); hit(o.real, o.el); } }, h('s', {}, o.e)); stage.append(g); ghosts.push({ el: g, o }); }); api.say('Monde inversé ! Les reflets bougent à l’opposé : visez le reflet de l’œil, il compte comme l’œil.', 'smug'); };
       function hit(real, el) {
         if (busy) return;
         if (!real) { shake(root); api.sfx('bad'); hits = Math.max(0, hits - 1); lab.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH)); api.say('C’était un leurre 🧿. Le boss a l’œil, vous avez eu l’œil de verre. Un point perdu, pas une vie.', 'smug'); endInv(); busy = true; T(() => { busy = false; spawn(); }, 350); return; }
         busy = true; hits++; api.sfx('pop'); el.classList.add('boom'); endInv(); lab.textContent = `Œil : ${hits}/${NH}`; hp(100 - Math.round(hits * 60 / NH));
         if (hits >= NH) { T(p2, 450); return; }
-        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); if (hits >= 1) T(mirror, 2500); }, 400);
+        api.say(hits === 1 ? 'Aïe. Bon. L’œil se réfugie parmi des leurres.' : hits === 2 ? 'Ça fait mal. Pas à moi, à l’orgueil du CAPCHA.' : 'Dernier coup. Il accélère. Il pleure presque.', 'worried'); T(() => { busy = false; spawn(); }, 400);
       }
       spawn(); let last = performance.now();
-      const mirror = () => { if (busy || inv) return; const w = warn('⚠ Monde inversé dans 1 s'); api.sfx('bad'); T(() => { w.remove(); if (!busy && !inv) startInv(); }, 1000); };
-      T(mirror, 3000);
       cleanup = () => { endInv(); root.querySelectorAll('.bb-warn').forEach((x) => x.remove()); };
       const loop = (t) => { raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (t - last) / 1000); last = t; const w = W(), hh = H();
         orbs.forEach((o) => { const s = sp(hits); o.x += o.vx * s * dt; o.y += o.vy * s * dt; if (o.x < 0) { o.x = 0; o.vx = Math.abs(o.vx); } if (o.x > w - 54) { o.x = w - 54; o.vx = -Math.abs(o.vx); } if (o.y < 0) { o.y = 0; o.vy = Math.abs(o.vy); } if (o.y > hh - 54) { o.y = hh - 54; o.vy = -Math.abs(o.vy); } o.el.style.transform = `translate(${o.x}px,${o.y}px)`; });
@@ -130,7 +127,7 @@ export default {
     // ---- phase 2: synchronisation (valeurs calibrées : tools/balance.mjs) ----
     function p2() {
       phase = 2; clear(); api.timer(60000); busy = false; face.dataset.m = '1'; let hits = 0, floorH = 0, ph = 0, last = performance.now(), zc = 0.5, dc = -1; const NH = 5, ZW = [0.165, 0.148, 0.13, 0.113, 0.095], V = [0.65, 0.67, 0.70, 0.72, 0.74]; CK.phase = 2;
-      setRule('Phase 2/3 · 60 s', h('b', {}, 'STOP'), ' (bouton, Espace, toucher) dans la ', h('b', {}, 'zone verte'), ' ×' + NH + '. Rouge = piège. Erreur : −1 progrès.');
+      setRule('Phase 2/3 · 60 s', h('b', {}, 'STOP'), ' (bouton, Espace, toucher) dans la ', h('b', {}, 'zone verte'), ' ×' + NH + '. Zone rouge = piège. Dès le 4e coup, un tunnel cache le curseur. Erreur : −1 progrès.');
       const lab = h('div', { class: 'bb-s' }, `Synchro : 0/${NH}`);
       const zone = h('div', { class: 'bb-zone' }), dz = h('div', { class: 'bb-zone bb-dec' }), beam = h('div', { class: 'bb-beam' }), tun = h('div', { class: 'bb-tun' }, '▒ tunnel ▒');
       const track = h('div', { class: 'bb-track' }, zone, dz, tun, beam);
@@ -180,7 +177,7 @@ export default {
       const next = () => { api.sfx('good'); step++; hp([15, 9, 4][step - 1]); if (step >= 3) { win(); return; } T(stepIn, 700); };
       // 1 : arithmétique de robot (trois questions, priorités d'opérations)
       function stepA() {
-        api.timer(45000); lab.textContent = 'Chef d’accusation 1/3 · 45 s'; setRule('Charge n° 1 — Robotisme présumé', 'Un robot calcule vite. Répondez aux ', h('b', {}, '3 questions'), ' (attention aux priorités d’opérations). Une erreur ne coûte rien, sauf du temps.');
+        api.timer(60000); lab.textContent = 'Chef d’accusation 1/3 · 60 s'; setRule('Charge n° 1 — Robotisme présumé', 'Un robot calcule vite. Répondez aux ', h('b', {}, '3 questions'), ' (attention aux priorités d’opérations). Une erreur ne coûte rien, sauf du temps.');
         const a1 = api.int(12, 19), b1 = api.int(3, 9), n2 = api.int(90, 120), p2_ = api.int(3, 9), q2 = api.int(3, 9), x3 = api.int(4, 15), y3 = api.int(4, 15), z3 = api.int(3, 7);
         const Q = [[`${a1} × ${b1}`, a1 * b1], [`${n2} − ${p2_} × ${q2}`, n2 - p2_ * q2], [`(${x3} + ${y3}) × ${z3}`, (x3 + y3) * z3]]; let qi = 0;
         const qEl = h('div', { class: 'bb-phrase' }), prog = h('div', { class: 'bb-echo' });
@@ -193,7 +190,7 @@ export default {
       }
       // 2 : mot de passe à énigmes, grignoté par le boss
       function stepB() {
-        api.timer(50000); lab.textContent = 'Chef d’accusation 2/3 · 50 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Réfléchissez : elles se contredisent presque. Le boss en ', h('b', {}, 'grignote la fin'), ' toutes les 10 s.');
+        api.timer(70000); lab.textContent = 'Chef d’accusation 2/3 · 70 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Réfléchissez : elles se contredisent presque. Rien ne change en cours de route.');
         const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Contient le résultat de 7 × 8', (p) => p.includes('56')], ['Contient une couleur du drapeau français', (p) => /bleu|blanc|rouge/i.test(p)], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
         const ul = h('div', { class: 'bb-rl' }, mk.map(([t]) => h('span', {}, t)));
         const inp = h('input', { type: 'text', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe…', ...nofix, oninput: ck, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
@@ -201,12 +198,12 @@ export default {
         body.append(ul, h('div', { class: 'bb-row' }, inp, sub));
         function ck() { const p = inp.value; mk.forEach(([, f], i) => ul.children[i].classList.toggle('ok', f(p))); if (/cheat=1/.test(location.search)) host.dataset.answer = 'Blanc56xxxxxxx'; return mk.every(([, f]) => f(p)); }
         function go() { if (busy) return; if (ck()) { busy = true; next(); } else { shake(root); api.sfx('bad'); api.say('Une règle manque encore. Regardez les rouges. Oui, « bleu » et « rouge » ont un « e ».', 'smug'); } }
-        const bite = setInterval(() => { if (busy || !inp.value) return; inp.value = [...inp.value].slice(0, -1).join(''); inp.classList.remove('chomp'); void inp.offsetWidth; inp.classList.add('chomp'); api.sfx('bad'); ck(); }, 10000);
-        cleanup = () => clearInterval(bite); ck(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
+        ck();
+        setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
       }
       // 3 : la phrase à l'envers (ticks seulement)
       function stepC() {
-        api.timer(34000); lab.textContent = 'Chef d’accusation 3/3 · 34 s'; const phrase = api.pick(PHRASES), rev = [...phrase].reverse().join('');
+        api.timer(55000); lab.textContent = 'Chef d’accusation 3/3 · 55 s'; const phrase = api.pick(PHRASES), rev = [...phrase].reverse().join('');
         setRule('Charge n° 3 — Dactylographie à l’envers', 'Retapez la phrase ', h('b', {}, 'à l’envers'), ', lettre par lettre (dernière lettre d’abord). Les cases vertes vous disent si votre frappe est bonne, pas laquelle.');
         const ph = h('div', { class: 'bb-phrase' }, phrase), echo = h('div', { class: 'bb-echo', 'aria-hidden': 'true' });
         const inp = h('input', { type: 'text', 'aria-label': 'Votre saisie', placeholder: 'Tapez ici…', ...nofix, oninput: render, onkeydown: (e) => { if (e.key === 'Enter') go(); } });

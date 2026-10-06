@@ -23,10 +23,9 @@ export default {
     const fill = h('i', {}), pct = h('b', {}, '0 %'), bar = h('div', { class: 'bl-bar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100 }, fill, pct);
     const flag = h('span', { class: 'bl-flag' }, ''), logEl = h('div', { class: 'bl-log', 'aria-hidden': 'true' });
     const btn = h('button', { class: 'bk-btn bl-go', type: 'button', onclick: click }, 'Continuer');
-    const cancel = h('button', { class: 'bk-btn bl-go bl-cancel', type: 'button', style: { display: 'none' }, onclick: () => { if (busy) return; shake(box); api.fail('Vous avez cliqué sur « Annuler » : 99 % de votre humanité à la poubelle. Les boutons ont changé de place, c’était écrit nulle part.'); } }, 'Annuler');
-    const btns = h('div', { class: 'bl-btns' }, btn, cancel);
+    const btns = h('div', { class: 'bl-btns' }, btn);
     const pips = h('div', { class: 'bk-pips' }, [0, 1].map(() => h('i', {})));
-    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Attendez… puis cliquez'), 'Cliquez sur « Continuer » quand l’installation est ', h('b', {}, 'vraiment'), ' terminée (barre ', h('b', {}, 'verte'), '). Surveillez aussi vos boutons.'));
+    const rule = h('div', { class: 'bk-rule' }, h('div', {}, h('small', {}, 'Consigne (elle ne changera pas)'), 'Cliquez sur « Continuer » uniquement quand la barre est ', h('b', {}, 'VERTE'), ' (PRÊT). Barre jaune = fausse alerte : ne cliquez pas. Deux fois.'));
     const box = h('div', { class: 'bl-box' }, h('div', { class: 'bl-title' }, 'Installation de votre humanité', h('span', {}, 'v' + api.int(2, 9) + '.' + api.int(0, 9) + '.' + api.int(0, 9))), bar, h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('span', { class: 'bk-meta' }, 'Ne fermez pas cette fenêtre'), flag), logEl, btns);
     const root = h('div', { class: 'bk' }, rule, box, h('div', { class: 'bk-meta' }, h('span', {}, 'Étape ' + 1 + '/2'), pips)); host.append(root);
     const metaStep = root.querySelector('.bk-meta span');
@@ -47,12 +46,12 @@ export default {
       return { v: 0, kind: 'move' };
     }
     function prep() { let prev = 0; segs.forEach((s) => { if (s.kind === 'hold') s.to = prev; prev = s.to; }); }
-    function begin(n) { stage = n; busy = false; cancel.style.display = n ? '' : 'none'; btn.style.order = 0; cancel.style.order = 1; swapped = false; build(n === 0 ? 2 : 1); prep(); t0 = performance.now(); api.timer(n ? 26000 : 24000); pips.children[0].classList.toggle('on', n > 0); metaStep.textContent = `Étape ${n + 1}/2`; }
+    function begin(n) { stage = n; busy = false; build(n === 0 ? 2 : 1); prep(); t0 = performance.now(); api.timer(n ? 40000 : 36000); pips.children[0].classList.toggle('on', n > 0); metaStep.textContent = `Étape ${n + 1}/2`; }
     function click() {
       if (busy) return; const s = sample((performance.now() - t0) / 1000);
       if (s.kind === 'real') {
         busy = true; api.sfx('good'); if (stage === 1) { pips.children[1].classList.add('on'); setTimeout(() => alive && api.solve(), 250); return; }
-        api.say('Étape un terminée. L’étape deux est exactement comme la première, mais méchante.', 'smug'); flag.textContent = 'OK ✓';
+        api.say('Étape un terminée. L’étape deux : même consigne, mais la barre fait semblant une fois.', 'smug'); flag.textContent = 'OK ✓';
         setTimeout(() => { if (alive) begin(1); }, 800); return;
       }
       shake(box); const p = Math.round(s.v);
@@ -64,7 +63,7 @@ export default {
     begin(0);
     let raf;
     const loop = (now) => {
-      raf = requestAnimationFrame(loop); const s = sample((now - t0) / 1000); curKind = s.kind; if (stage === 1 && lastKind !== s.kind && ((lastKind === 'fake') || (lastKind === 'move' && s.kind === 'hold'))) { swapped = !swapped; btn.style.order = swapped ? 1 : 0; cancel.style.order = swapped ? 0 : 1; api.sfx('whoosh'); } lastKind = s.kind;
+      raf = requestAnimationFrame(loop); const s = sample((now - t0) / 1000); curKind = s.kind; lastKind = s.kind;
       fill.style.transform = `scaleX(${s.v / 100})`; const p = Math.round(s.v); pct.textContent = s.kind === 'fake' ? '100 % (estimation)' : s.kind === 'real' ? '100 % — PRÊT' : p + ' %';
       bar.setAttribute('aria-valuenow', p); bar.classList.toggle('fake', s.kind === 'fake'); bar.classList.toggle('real', s.kind === 'real');
       btn.classList.toggle('ready', s.kind === 'real'); if (!busy) flag.textContent = s.kind === 'real' ? 'MAINTENANT' : s.kind === 'fake' ? 'menteur' : '';

@@ -39,29 +39,25 @@ const GR = ['#8bc34a', '#9e9e9e', '#bcaaa4', '#78909c'];
 const MODES = {
   feu: { target: 'feux tricolores', yes: ['feu'], nameOf: { feu: 'un feu tricolore', lampadaire: 'un lampadaire', stop: 'un panneau stop', bus: 'un abribus et un bus', arbre: 'un arbre', maison: 'une maison', voiture: 'une voiture' }, decoys: ['lampadaire', 'stop', 'bus', 'arbre', 'maison', 'voiture'], note: 'Un feu tricolore possède trois lumières. Un lampadaire n’en a qu’une et aucune autorité.',
     hit: { lampadaire: 'Ceci est un lampadaire. Une seule lumière, zéro pouvoir sur la circulation.', stop: 'Un panneau stop n’est pas un feu tricolore. Il est juste plus direct.', bus: 'L’abribus ne régule rien, il fait juste attendre. Ce n’est pas un feu.', arbre: 'C’est un arbre. Il est vert en permanence, ce qui ne suffit pas.', maison: 'Une maison. Même éclairée, elle n’a jamais arrêté personne.', voiture: 'Une voiture n’est pas un feu. Elle les grille, c’est même son rôle.' } },
-  velo: { target: 'vélos', yes: ['velo'], nameOf: { velo: 'un vélo', monocycle: 'un monocycle', tricycle: 'un tricycle', voiture: 'une voiture', bus: 'un bus', arbre: 'un arbre', maison: 'une maison' }, decoys: ['monocycle', 'tricycle', 'voiture', 'arbre', 'maison', 'lampadaire'], note: 'Définition officielle : un vélo possède exactement deux roues. Ni plus, ni moins, ni quiche.',
-    hit: { monocycle: 'Ceci est un monocycle. Une roue. Un vélo en a deux, c’est dans la définition, pas une opinion.', tricycle: 'Trois roues : un tricycle. Mignon, mais nous avons dit deux.', voiture: 'Une voiture a quatre roues et un toit. Un vélo, ni l’un ni l’autre.', arbre: 'Un arbre. Zéro roue. C’est même assez impressionnant, comme erreur.', maison: 'Une maison. Elle ne bouge pas, ou alors vous avez un très gros problème.', lampadaire: 'Un lampadaire n’a pas de roues. Ni de pédales. Ni d’avenir sportif.' } }
+  velo: { target: 'vélos', yes: ['velo'], nameOf: { velo: 'un vélo', monocycle: 'un monocycle', tricycle: 'un tricycle', voiture: 'une voiture', bus: 'un bus', arbre: 'un arbre', maison: 'une maison' }, decoys: ['voiture', 'bus', 'arbre', 'maison', 'lampadaire', 'stop'], note: 'Définition officielle : un vélo possède exactement deux roues. Ni plus, ni moins, ni quiche.',
+    hit: { bus: 'Un bus. Plus gros, plus de roues, moins de pédales : pas un vélo.', stop: 'Un panneau stop n’a pas de roues. Il arrête les vélos, il n’en est pas un.', monocycle: 'Ceci est un monocycle. Une roue. Un vélo en a deux, c’est dans la définition, pas une opinion.', tricycle: 'Trois roues : un tricycle. Mignon, mais nous avons dit deux.', voiture: 'Une voiture a quatre roues et un toit. Un vélo, ni l’un ni l’autre.', arbre: 'Un arbre. Zéro roue. C’est même assez impressionnant, comme erreur.', maison: 'Une maison. Elle ne bouge pas, ou alors vous avez un très gros problème.', lampadaire: 'Un lampadaire n’a pas de roues. Ni de pédales. Ni d’avenir sportif.' } }
 };
 export default {
   id: 'a_grid', tier: 1, title: 'Grille d’images', time: 35000,
   mount(host, api) {
     const { h } = api, M = MODES[api.rng() < .5 ? 'feu' : 'velo'];
     const nYes = api.int(3, 4), keys = [...Array(nYes).fill(M.yes[0]), ...api.shuffle(M.decoys).slice(0, 9 - nYes)], order = api.shuffle(keys);
-    const yesIdx = order.map((k, i) => M.yes.includes(k) ? i : -1).filter((i) => i >= 0), redFlags = api.shuffle([true, false, false, api.rng() < .5]).slice(0, yesIdx.length), red = new Set(yesIdx.filter((_, n) => redFlags[n]));
-    if (!red.size) red.add(yesIdx[0]); if (yesIdx.length - red.size < 2) red.delete([...red][0]);
+    const yesIdx = order.map((k, i) => M.yes.includes(k) ? i : -1).filter((i) => i >= 0), red = new Set();
     const isFeu = M.yes[0] === 'feu'; let ruleOn = false; const sel = new Set(), tiles = order.map((k, i) => {
-      const sky = api.pick(SKY), t = h('button', { class: 'ag-t', style: { animationDelay: i * 45 + 'ms' }, type: 'button', 'aria-pressed': 'false', 'aria-label': 'Image ' + (i + 1), onclick: () => { if (!ruleOn) { clearTimeout(rt); armRule(); } const on = !sel.has(i); on ? sel.add(i) : sel.delete(i); t.setAttribute('aria-pressed', on); api.sfx('click'); } });
-      t.innerHTML = S(M.yes.includes(k) ? (isFeu ? ART.feu(api.rng, red.has(i) ? 0 : api.pick([1, 2])) : ART.velo(api.rng, red.has(i) ? '#c0392b' : api.pick(['#1565c0', '#2e7d32', '#6a1b9a']))) : ART[k](api.rng), sky, api.pick(GR)).replace('id="sk"', `id="sk${i}"`).replace('url(#sk)', `url(#sk${i})`); return t;
+      const sky = api.pick(SKY), t = h('button', { class: 'ag-t', style: { animationDelay: i * 45 + 'ms' }, type: 'button', 'aria-pressed': 'false', 'aria-label': 'Image ' + (i + 1), onclick: () => { const on = !sel.has(i); on ? sel.add(i) : sel.delete(i); t.setAttribute('aria-pressed', on); api.sfx('click'); } });
+      t.innerHTML = S(M.yes.includes(k) ? (isFeu ? ART.feu(api.rng) : ART.velo(api.rng, api.pick(['#c0392b', '#1565c0', '#2e7d32']))) : ART[k](api.rng), sky, api.pick(GR)).replace('id="sk"', `id="sk${i}"`).replace('url(#sk)', `url(#sk${i})`); return t;
     });
-    const fr = frame(h, { api, id: 'a_grid', small: 'Sélectionnez toutes les images avec des', title: M.target, body: [h('p', { class: 'ag-cap' }, M.note), h('div', { class: 'ag-g' }, tiles)], onVerify: check });
+    const fr = frame(h, { api, id: 'a_grid', small: 'Sélectionnez toutes les images avec des', title: M.target, body: [h('p', { class: 'ag-cap' }, 'Cliquez sur toutes les images qui en contiennent, puis vérifiez.'), h('div', { class: 'ag-g' }, tiles)], onVerify: check });
     fr.el.style.width = 'min(100%,340px)'; fr.el.classList.add('ag-w2'); host.append(fr.el);
     const truth = () => yesIdx.filter((i) => !ruleOn || !red.has(i));
-    const RULE = isFeu ? 'Rectificatif de la direction : les feux rouges sont suspendus. Plus aucun feu rouge ne compte.' : 'Rectificatif de la direction : les vélos rouges sont réquisitionnés. Plus aucun vélo rouge ne compte.';
-    let rt = 0; function armRule() { rt = setTimeout(() => { if (ruleOn) return; ruleOn = true; fr.banner(RULE, 'rule', 0); api.say(RULE, 'smug'); api.sfx('whoosh'); if (/cheat=1/.test(location.search)) host.dataset.answer = truth().join(','); }, 900); }
-    rt = setTimeout(() => { armRule(); }, 6000);
-    if (/cheat=1/.test(location.search)) host.dataset.answer = yesIdx.filter((i) => !red.has(i)).join(',');
+    let rt = 0;
+    if (/cheat=1/.test(location.search)) host.dataset.answer = yesIdx.join(',');
     function check() {
-      if (!ruleOn) { clearTimeout(rt); ruleOn = true; fr.banner(RULE, 'rule', 0); }
       const T = new Set(truth()), bad = [...sel].filter((i) => !T.has(i)), miss = [...T].filter((i) => !sel.has(i));
       if (!bad.length && !miss.length) { fr.el.classList.add('ak-ok'); logEntry('a_grid', { val: T.size, noun: M.target }); return api.solve(); }
       fr.shake();

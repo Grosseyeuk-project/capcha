@@ -58,10 +58,10 @@ const PRIMES = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 
 const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 const PANIC = (n) => [`AAAH ! La règle ${n} vient de sauter ! Qui a touché à la règle ${n} ?!`, `Non non non. La règle ${n} était verte il y a une seconde. Je l’aimais bien.`, `Règle ${n} cassée. Ce n’est pas ma faute. C’est un peu la vôtre.`, `Cascade ! La règle ${n} a lâché. Respirez. Réparez.`, `La règle ${n} s’effondre. Je prépare un formulaire de réclamation.`];
 export default {
-  id: 'b_pwd', tier: 5, title: 'Mot de passe (version bureaucratique)', time: 60000,
+  id: 'b_pwd', tier: 5, title: 'Mot de passe (version bureaucratique)', time: 90000,
   mount(host, api) {
     const { h } = api; let alive = true, solved = false;
-    const word = api.pick(WORDS), L = api.pick([56, 57, 58, 60]);
+    const word = api.pick(WORDS), L = api.pick([42, 44, 45, 46]);
     const T0 = performance.now(); const moonNow = () => MOONS[Math.floor((performance.now() - T0) / 15000) % 8];
     let capWord = ''; while (capWord.length < 5) { const c = CAPL[api.int(0, CAPL.length - 1)]; if (c !== capWord[capWord.length - 1]) capWord += c; }
     const len = (s) => [...s].length;
@@ -69,10 +69,10 @@ export default {
     const cv = h('canvas', { class: 'bp-cap', width: 240, height: 60, role: 'img', 'aria-label': 'Captcha : ' + capWord.split('').join(' ') });
     { const g = cv.getContext('2d'); g.fillStyle = '#f6f1e4'; g.fillRect(0, 0, 240, 60); for (let i = 0; i < 7; i++) { g.strokeStyle = `hsla(${api.int(0, 360)},60%,45%,.6)`; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0, api.int(5, 55)); g.bezierCurveTo(80, api.int(0, 60), 160, api.int(0, 60), 240, api.int(5, 55)); g.stroke(); }
       for (let i = 0; i < capWord.length; i++) { g.save(); g.translate(28 + i * 42, 34 + Math.sin(i * 1.7) * 7); g.rotate((api.rng() - .5) * .7); g.fillStyle = '#10202a'; g.font = '700 34px "IBM Plex Mono",monospace'; g.textAlign = 'center'; g.fillText(capWord[i], 0, 0); g.restore(); } }
-    const clockEl = h('span', { class: 'bp-clock' }, hhmm()), moonEl = h('span', { class: 'bp-moon' }, moonNow()), ateEl = h('span', { class: 'bp-clock' }, '0');
+    
     const hasPrime = (p) => { for (let i = 0; i < p.length - 1; i++) if (/\d\d/.test(p.slice(i, i + 2)) && PRIMES.has(+p.slice(i, i + 2))) return true; return false; };
-    let ate = 0, hatched = false, eggT = 0, fireOn = false, burnt = 0, foyers = 0, fireDone = false, reignite = 0;
-    const wormPos = (p) => { const cs = [...p], k = cs.indexOf('🐛'); return k < 0 ? -1 : k / cs.length; };
+    let hatched = false, eggT = 0, fireOn = false, burnt = 0, foyers = 0, fireDone = false, reignite = 0, fireStart = 0;
+
     const dsum = (p) => [...p].reduce((a, c) => a + (c >= '0' && c <= '9' ? +c : 0), 0);
     const rules = [
       { t: ['Au moins ', h('b', {}, '8 caractères'), '. Tout le monde sait que « 1234 » est trop court.'], f: (p) => len(p) >= 8, s: 'Huit caractères. On commence doucement.' },
@@ -82,24 +82,21 @@ export default {
       { t: ['Deux chiffres consécutifs formant un ', h('b', {}, 'nombre premier'), ' (13, 47, 71…). Les maths, ça sert.'], f: hasPrime, s: 'Un nombre premier. Allez, je suis gentil, il y en a 21.' },
       { t: ['Doit contenir un ', h('b', {}, 'mois de l’année'), ' (en français, c’est la loi).'], f: (p) => MONTHS.some((m) => p.toLowerCase().includes(m)) },
       { t: ['Doit contenir le mot « ', h('b', {}, word), ' ». Ne demandez pas.'], f: (p) => p.toLowerCase().includes(word), s: 'Ce mot a été tiré au sort. Par moi. Avec amour.' },
-      { t: ['Doit contenir ', h('b', {}, 'la lune d’en ce moment'), ' : ', moonEl, ', et ', h('b', {}, 'aucune autre'), '. Elle change toutes les 15 s (bouton 🌕).'], f: (p) => { const m = p.match(MOON_RE) || []; return m.length === 1 && m[0] === moonNow(); }, s: 'La lune change de phase. Vous, non. C’est le problème.', id: 'moon' },
+      { t: ['Doit contenir une ', h('b', {}, 'lune 🌙'), ' (bouton 🌙 : votre clavier n’en a pas, nous le savons).'], f: (p) => p.includes('🌙'), s: 'Je n’ai pas à justifier la lune.' },
       { t: ['Un ', h('b', {}, 'captcha à l’intérieur du mot de passe'), '. Oui. Recopiez les 5 lettres, en minuscules : ', h('br', {}), cv], f: (p) => p.includes(capWord), s: 'Un captcha dans un captcha. Je suis très fier de celui-là.' },
       { t: ['Ne doit ', h('b', {}, 'jamais'), ' contenir la lettre « ', h('b', {}, 'e'), ' » (sans accent). Supprimez-la partout. Même dans ce que vous venez d’écrire.'], f: (p) => !/e/i.test(p), s: 'Supprimer les « e » de « mois », par exemple. J’adore ce moment.' },
       { t: ['Doit contenir ', h('b', {}, 'Gérard'), '. Il se sent seul. (Bouton « Gérard » pour les claviers sans é.)'], f: (p) => p.includes('Gérard'), s: 'Gérard est là, il vous regarde.' },
-      { t: ['Doit contenir l’', h('b', {}, 'heure actuelle'), ' au format HH:MM : il est ', clockEl, '. Oui, elle change. Chaque minute. Je n’y suis pour rien.'], f: (p) => p.includes(hhmm()), s: 'L’heure. Elle passe. Comme votre temps de réponse.' },
-      { t: ['Doit contenir ', h('b', {}, 'Albert 🐛'), ', le ver de compagnie de Gérard. Il mange le caractère à sa droite toutes les 9 s, et meurt si rien à manger pendant 45 s.'], f: (p) => p.includes('🐛'), s: 'Albert a faim. Il mange ce qu’il a à droite. Je ne le contrôle plus.' },
-      { t: ['Doit contenir le ', h('b', {}, 'nombre de repas d’Albert'), ' jusqu’ici, précédé de la lettre R (R0, R1…) : ', ateEl, '. Il grossit, vous mettez à jour.'], f: (p) => p.includes('R' + ate), s: 'Albert tient un registre. Moi aussi. Je note tout.' },
+      { t: ['Doit contenir le ', h('b', {}, 'nombre de lettres'), ' du mot « BUREAUCRATIE » (je vous laisse compter).'], f: (p) => p.includes('12'), s: 'Je vous laisse compter. B-U-R-E-A… Bon courage.' },
       { t: ['Doit faire ', h('b', {}, 'exactement ' + L + ' caractères'), '. Ni plus, ni moins. Les emojis comptent pour un.'], f: (p) => len(p) === L, s: 'Exactement. Pas environ. Exactement.' },
-      { t: ['Albert doit rester ', h('b', {}, 'à l’abri'), ' : jamais dans le dernier cinquième du mot de passe. Il lui faut de quoi manger.'], f: (p) => { const w = wormPos(p); return w >= 0 && w < 0.8; }, s: 'Albert veut du confort. Un ver exigeant, c’est le pire.' },
-      { t: ['Confirmez en le ', h('b', {}, 'retapant'), ' dans la seconde case (ou « copier »). Ensuite, elle se synchronise toute seule. Nous sommes humains.'], f: (p, c) => p.length > 0 && c === p, s: 'Une seconde case. Elle se mettra à jour toute seule, c’est mon cadeau.' },
+      { id: 'conf', t: ['Confirmez en le ', h('b', {}, 'retapant'), ' dans la seconde case (ou « copier »). Ensuite, elle se synchronise toute seule. Nous sommes humains.'], f: (p, c) => p.length > 0 && c === p, s: 'Une seconde case. Elle se mettra à jour toute seule, c’est mon cadeau.' },
       { t: [h('b', {}, 'Jamais trois caractères identiques'), ' de suite. « xxx » est un cri de détresse.'], f: (p) => !/(.)\1\1/u.test(p) },
       { t: ['Gérard a pondu : le mot de passe doit contenir un ', h('b', {}, 'œuf 🥚'), '. Il éclot tout seul au bout de 20 s passées dedans. Ne le perdez pas.'], f: (p) => p.includes('🥚') || p.includes('🐔'), s: 'Gérard a pondu. Je ne pose pas de questions. Il fait ça quand il stresse.', id: 'egg' },
       { t: ['L’œuf a éclos : c’est une ', h('b', {}, 'poule 🐔'), '. Elle doit être entourée de graines : ', h('b', {}, '🌱🐔🌱'), ' (boutons 🌱 et 🐔).'], f: (p) => p.includes('🌱🐔🌱'), when: () => hatched, s: 'C’est une poule. Évidemment que c’est une poule. Donnez-lui des graines.' },
-      { t: ['🔥 ', h('b', {}, 'INCENDIE'), ' ! Le mot de passe brûle, un caractère par seconde. ', h('b', {}, '3 foyers'), ' successifs : chaque fois, éteignez-le (bouton 🧯, ou effacez les 🔥). Il repart ailleurs 4 s plus tard.'], f: (p) => fireDone && !p.includes('🔥'), s: 'Au feu ! Ce n’est pas dans la procédure. Faites quelque chose !', id: 'fire' },
-      { t: ['Dernière règle : la ', h('b', {}, 'somme de tous les chiffres'), ' doit être un ', h('b', {}, 'multiple de 7'), ' (0 compte). Ajoutez ou changez un chiffre. Vite, ça brûle encore.'], f: (p) => dsum(p) % 7 === 0, live: (p) => `Σ chiffres = ${dsum(p)}`, s: 'La dernière. Je vous le jure. Cette fois, c’est la dernière.' },
+      { t: ['🔥 ', h('b', {}, 'INCENDIE'), ' : dans 5 secondes, un feu se déclare dans le mot de passe et brûle un caractère toutes les 2 s. ', h('b', {}, '2 foyers'), ' successifs : éteignez-le chaque fois (bouton 🧯, ou effacez les 🔥). Il repart 6 s après le premier.'], f: (p) => fireDone && !p.includes('🔥'), s: 'Au feu ! Ce n’est pas dans la procédure. Faites quelque chose !', id: 'fire' },
+      { t: ['Dernière règle : la ', h('b', {}, 'somme de tous les chiffres'), ' doit être un ', h('b', {}, 'multiple de 7'), ' (0 compte). Ajoutez ou changez un chiffre.'], f: (p) => dsum(p) % 7 === 0, live: (p) => `Σ chiffres = ${dsum(p)}`, s: 'La dernière. Je vous le jure. Cette fois, c’est la dernière.' },
     ];
     const IDX = (id) => rules.findIndex((r) => r.id === id);
-    const WORM = 13, CONF = 16;
+    const CONF = IDX('conf');
     let synced = false, graceUntil = 0;
     const input = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', placeholder: 'Choisissez un mot de passe…', 'aria-label': 'Mot de passe', maxlength: 100, oninput: () => setPw(input.value) });
     const confirm = h('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: 'Confirmez…', 'aria-label': 'Confirmation du mot de passe', disabled: true, maxlength: 100, oninput: () => { synced = confirm.value === input.value; update(); } });
@@ -108,7 +105,7 @@ export default {
     const confWrap = h('div', { class: 'bp-field', style: { display: 'none' } }, confirm, cp);
     const field = h('div', { class: 'bp-field' }, input);
     const chipBtn = (c, label, fn) => h('button', { class: 'bp-chip', type: 'button', 'aria-label': label || c, title: label || c, onclick: () => { setPw(fn ? fn(input.value) : input.value + c); input.focus(); api.sfx('click'); } }, c);
-    const chips = h('div', { class: 'bp-chips' }, h('span', {}, 'Clavier d’urgence'), ...['!', '?', '#', '@', '*', 'é'].map((c) => chipBtn(c)), chipBtn('Gérard', 'Gérard'), chipBtn('🌕', 'lune actuelle (remplace les autres)', (v) => v.replace(MOON_RE, '') + moonNow()), chipBtn('🐛', 'ver'), chipBtn('🕒', 'heure actuelle', (v) => v + hhmm()), chipBtn('🥚', 'œuf'), chipBtn('🌱', 'graine'), chipBtn('🐔', 'poule'), chipBtn('🧯', 'éteindre le feu', (v) => v.replace(/🔥/g, '')));
+    const chips = h('div', { class: 'bp-chips' }, h('span', {}, 'Clavier d’urgence'), ...['!', '?', '#', '@', '*', 'é'].map((c) => chipBtn(c)), chipBtn('Gérard', 'Gérard'), chipBtn('🌙', 'lune'), chipBtn('🥚', 'œuf'), chipBtn('🌱', 'graine'), chipBtn('🐔', 'poule'), chipBtn('🧯', 'éteindre le feu', (v) => v.replace(/🔥/g, '')));
     const worm = h('span', { class: 'bp-worm' }, ''), cnt = h('b', {}, '0 car.');
     const cur = h('div', { class: 'bp-cur', 'aria-live': 'polite' });
     const view = h('div', { class: 'bp-view', 'aria-hidden': 'true' });
@@ -117,17 +114,17 @@ export default {
     const prog = h('span', { class: 'bk-meta' });
     const root = h('div', { class: 'bk' }, cur, h('div', { class: 'bp-in' }, field, confWrap, chips, h('div', { class: 'bp-stat' }, worm, cnt), view), list, h('div', { class: 'bp-foot' }, prog, btn));
     host.append(root);
-    let revealed = 0; const rows = []; let lastJab = 0, wormOn = false, starve = 0, tickN = 0, revealTO = 0;
+    let revealed = 0; const rows = []; let lastJab = 0, revealTO = 0;
     function reveal() {
       const n = revealed; const row = h('div', { class: 'bp-r', role: 'listitem' }, h('i', {}, '✗'), h('div', {}, h('small', {}, 'Règle ' + (n + 1) + '/' + rules.length), h('span', {}, ...rules[n].t)));
-      rows.push({ row, was: false }); list.prepend(row); list.scrollTop = 0; revealed++; api.sfx('pop'); api.timer(rules[n].id === 'fire' ? 75000 : n > 11 ? 55000 : 40000);
+      rows.push({ row, was: false }); list.prepend(row); list.scrollTop = 0; revealed++; api.sfx('pop'); api.timer(rules[n].id === 'fire' ? 90000 : 60000);
       if (n === CONF) { confWrap.style.display = ''; confirm.disabled = false; }
-      if (n === WORM) { wormOn = true; tickN = 0; view.classList.add('on'); }
-      if (rules[n].id === 'fire') { fireOn = true; foyers = 0; { const c0 = [...input.value]; c0.splice(Math.floor(c0.length * 0.35), 0, '🔥'); setPw(c0.join('')); } api.sfx('alarm'); }
+      if (rules[n].id === 'egg') view.classList.add('on');
+      if (rules[n].id === 'fire') { view.classList.add('on'); fireStart = setTimeout(() => { if (!alive) return; fireOn = true; foyers = 0; const c0 = [...input.value]; c0.splice(Math.floor(c0.length * 0.35), 0, '🔥'); setPw(c0.join('')); api.sfx('alarm'); api.say('Le feu est déclaré ! Annoncé, prévu, et pourtant.', 'worried'); }, 5000); }
       if (rules[n].s) api.say(rules[n].s, n >= 12 ? 'smug' : 'neutral');
     }
     function renderView() {
-      if (!wormOn) return; const cs = [...input.value];
+      if (!view.classList.contains('on')) return; const cs = [...input.value];
       view.replaceChildren(...cs.map((c) => h('span', { class: c === '🐛' ? 'w' : c === '🔥' ? 'f' : c === '🥚' || c === '🐔' || c === '🌱' ? 'g' : MOON_RE.test(c) ? 'c' : '' }, c)));
       MOON_RE.lastIndex = 0;
     }
@@ -144,49 +141,38 @@ export default {
       const live = revealed && rules[revealed - 1].live ? ' · ' + rules[revealed - 1].live(p) : '';
       const bad = []; rows.forEach((r, i) => { if (!rules[i].f(p, c)) bad.push(i); }); const show = bad.slice(-3).reverse();
       const clone = (i) => h('span', {}, ...rules[i].t.filter((x) => !(x.tagName === 'CANVAS' || x.tagName === 'BR')).map((x) => (x.cloneNode ? x.cloneNode(true) : x)));
-      if (show.length) cur.replaceChildren(...show.map((i) => h('div', { class: 'bp-cr' }, h('small', {}, 'RÈGLE ' + (i + 1)), clone(i)))); else cur.replaceChildren(h('small', {}, 'OK'), h('span', {}, revealed === rules.length ? 'Tout est conforme. Cliquez vite (5 s de grâce).' : nxt && nxt.when && !nxt.when() ? 'Gérard prépare quelque chose…' : 'Une règle arrive…'));
+      if (show.length) cur.replaceChildren(...show.map((i) => h('div', { class: 'bp-cr' }, h('small', {}, 'RÈGLE ' + (i + 1)), clone(i)))); else cur.replaceChildren(h('small', {}, 'OK'), h('span', {}, revealed === rules.length ? 'Tout est conforme. Validez quand vous voulez.' : nxt && nxt.when && !nxt.when() ? 'Gérard prépare quelque chose…' : 'Une règle arrive…'));
       if (live) cnt.textContent += live;
-      if (all && !btn.dataset.rdy) { btn.dataset.rdy = 1; api.sfx('good'); api.say('Tout est conforme. Cliquez vite : la lune bouge, Albert mange.', 'impressed'); } else if (!all) delete btn.dataset.rdy;
+      if (all && !btn.dataset.rdy) { btn.dataset.rdy = 1; api.sfx('good'); api.say('Tout est conforme. Cliquez quand vous voulez.', 'impressed'); } else if (!all) delete btn.dataset.rdy;
       renderView();
     }
-    let ext = 0; api.onTick((ms) => { if (ms < 1500 && revealed >= 20 && ext < 2 && !solved) { ext++; api.timer(60000); api.say('Prolongation accordée par Gérard. Une seule. Enfin, deux. Ne le répétez pas.', 'impressed'); } });
-    let lastMoon = moonNow();
+    let ext = 0; api.onTick((ms) => { if (ms < 1500 && revealed >= rules.length - 3 && ext < 2 && !solved) { ext++; api.timer(60000); api.say('Prolongation accordée par Gérard. Ne le répétez pas.', 'impressed'); } });
     const iv = setInterval(() => {
-      if (!alive || solved) return; clockEl.textContent = hhmm(); const m = moonNow(); moonEl.textContent = m; ateEl.textContent = String(ate);
-      if (m !== lastMoon) { lastMoon = m; const mi = IDX('moon'); if (revealed > mi && rows[mi]) { rows[mi].row.classList.remove('fl'); void rows[mi].row.offsetWidth; rows[mi].row.classList.add('fl'); api.sfx('whoosh'); } }
-      let p = input.value;
+      if (!alive || solved) return; let p = input.value;
       if (p.includes('🥚') && revealed > IDX('egg') && !hatched) { eggT++; if (eggT >= 20) { hatched = true; p = p.replace('🥚', '🐔'); setPw(p); api.sfx('confetti'); api.say('L’œuf éclot ! C’est… une poule. Gérard pleure de joie. Moi aussi, un peu.', 'impressed'); } }
-      if (wormOn && p.includes('🐛')) {
-        tickN++;
-        if (tickN % 9 === 0 && !(btn.dataset.rdy)) {
-          const cs = [...p]; const k = cs.indexOf('🐛');
-          if (k < cs.length - 1) { const eaten = cs[k + 1]; cs.splice(k + 1, 1); starve = 0; ate++; ateEl.textContent = String(ate); api.sfx('bad'); field.classList.remove('chomp'); void field.offsetWidth; field.classList.add('chomp'); api.say(ate % 2 ? `Albert a mangé « ${eaten} ». Ça ne le dérange pas, lui.` : `Repas n° ${ate}. Il a pris « ${eaten} ». Vérifiez votre compteur.`, 'smug'); setPw(cs.join('')); p = input.value; }
-          else { starve++; if (starve >= 5) { setPw(p.replace('🐛', '💀')); starve = 0; api.say('Albert est mort de faim. Gérard est en deuil. Vous pouvez en reprendre un.', 'angry'); api.sfx('bad'); } }
-        }
-        const sec = 9 - (tickN % 9); worm.className = 'bp-worm' + (starve ? ' hungry' : ''); worm.textContent = starve ? `🐛 affamé ${starve}/5` : `🐛 repas dans ${sec} s · ${ate} repas`;
-      } else if (wormOn) { worm.textContent = '🐛 absent'; worm.className = 'bp-worm hungry'; }
-      if (fireOn || (fireDone === false && foyers > 0)) worm.textContent += ` · 🔥 foyer ${Math.min(3, foyers + 1)}/3`;
-      if (p.includes('🥚') && !hatched && revealed > IDX('egg')) worm.textContent += ` · 🥚 éclot dans ${Math.max(0, 20 - eggT)} s`;
+      worm.className = 'bp-worm'; worm.textContent = '';
+      if (p.includes('🥚') && !hatched && revealed > IDX('egg')) worm.textContent = `🥚 éclot dans ${Math.max(0, 20 - eggT)} s`;
+      if (fireOn || fireStart) worm.textContent += (worm.textContent ? ' · ' : '') + (fireOn ? `🔥 foyer ${Math.min(2, foyers + 1)}/2` : fireDone ? '' : '🔥 départ de feu imminent');
       update();
     }, 1000);
     // l'incendie progresse plus vite que le reste
     const fiv = setInterval(() => {
-      if (!alive || solved || !fireOn) return; const cs = [...input.value]; const k = cs.lastIndexOf('🔥'); if (k < 0) { if (!reignite) { foyers++; if (foyers >= 3) { fireOn = false; fireDone = true; api.say('Le dernier foyer est éteint. Les pompiers vous remercient. Moi, un peu.', 'impressed'); api.sfx('good'); update(); } else { api.say(`Foyer ${foyers}/3 éteint… ça couve. Il repart dans 4 s.`, 'worried'); reignite = setTimeout(() => { reignite = 0; if (!alive) return; const c2 = [...input.value]; const at = Math.min(c2.length, 2 + Math.floor(api.rng() * Math.max(1, c2.length - 8))); c2.splice(at, 0, '🔥'); setPw(c2.join('')); api.sfx('alarm'); api.say('Il repart ! Là, au milieu !', 'angry'); }, 4000); } } return; }
+      if (!alive || solved || !fireOn) return; const cs = [...input.value]; const k = cs.lastIndexOf('🔥'); if (k < 0) { if (!reignite) { foyers++; if (foyers >= 2) { fireOn = false; fireDone = true; api.say('Le dernier foyer est éteint. Les pompiers vous remercient. Moi, un peu.', 'impressed'); api.sfx('good'); update(); } else { api.say(`Foyer ${foyers}/2 éteint… ça couve. Il repart dans 6 s.`, 'worried'); reignite = setTimeout(() => { reignite = 0; if (!alive) return; const c2 = [...input.value]; const at = Math.min(c2.length, 2 + Math.floor(api.rng() * Math.max(1, c2.length - 8))); c2.splice(at, 0, '🔥'); setPw(c2.join('')); api.sfx('alarm'); api.say('Il repart ! Là, au milieu !', 'angry'); }, 6000); } } return; }
       if (k < cs.length - 1) { const lost = cs[k + 1]; cs[k + 1] = '🔥'; burnt++; api.sfx('tick'); setPw(cs.join('')); if (burnt % 3 === 1) api.say(`Le feu a avalé « ${lost} ». Il a bon appétit.`, 'worried'); }
-    }, 1000);
+    }, 2000);
     function submit() { if (solved || btn.disabled) return; solved = true; api.solve(); }
     update();
     let sy = 0;
     if (/cheat=1/.test(location.search)) {
       const build = () => {
-        const mid = 'Gérard' + capWord + word + '!mars' + moonNow() + '13R' + ate + hhmm() + (hatched ? '🌱🐔🌱' : '🥚');
-        const make = (d) => { const base = mid + (d === null ? '' : String(d)) + '🐛'; const padN = Math.max(0, L - len(base)); let f = ''; for (let i = 0; i < padN; i++) f += i % 2 ? 'y' : 'x'; return base + f; };
+        const mid = 'Gérard' + capWord + word + '!mars🌙12' + '13';
+        const make = (d) => { const base = mid + (d === null ? '' : String(d)) + (hatched ? '🌱🐔🌱' : '🥚'); const padN = Math.max(0, L - len(base)); let f = ''; for (let i = 0; i < padN; i++) f += i % 2 ? 'y' : 'x'; return base + f; };
         const sum = dsum(make(null)); const d = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => (sum + x) % 7 === 0);
         return make(d);
       };
       const sync = () => { host.dataset.answer = build(); }; sync(); sy = setInterval(sync, 300);
     }
     setTimeout(() => alive && input.focus({ preventScroll: true }), 50);
-    return { destroy() { alive = false; clearInterval(iv); clearInterval(fiv); clearTimeout(revealTO); clearTimeout(reignite); clearInterval(sy); } };
+    return { destroy() { alive = false; clearInterval(iv); clearInterval(fiv); clearTimeout(revealTO); clearTimeout(reignite); clearTimeout(fireStart); clearInterval(sy); } };
   }
 };

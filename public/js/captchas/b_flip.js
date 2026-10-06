@@ -9,72 +9,37 @@ css('flip', `
 .bf-t.lock{background:#ddd6c1;opacity:.7;cursor:default}
 .bf-t.pop{animation:bf-pop .35s both}
 @keyframes bf-pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:none;opacity:1}}
-.bf-rule b.no{background:var(--red);color:#fff;padding:0 5px;box-shadow:2px 2px 0 var(--ink)}
+
 `);
-const CATS = ['🐱'], OTH = ['🐶', '🐭', '🐰', '🦊', '🐻', '🐼', '🐸', '🐵', '🐷', '🐮', '🐔', '🐧'];
+const OTH = ['🐶', '🐭', '🐰', '🦊', '🐻', '🐼', '🐸', '🐵', '🐷', '🐮', '🐔', '🐧', '🐯', '🦁'];
+// 🐯 et 🦁 : de gros félins, mais pas des chats (l'énoncé le dit)
 export default {
-  id: 'b_flip', tier: 3, title: 'Cliquez… enfin non', time: 22000,
+  id: 'b_flip', tier: 3, title: 'Cliquez les chats', time: 40000,
   mount(host, api) {
     const { h } = api; let stage = 0, alive = true, busy = false; const tm = [];
-    // stages: 0 chats / 1 PAS chats (erratum) / 2 chiens puis demi-tour -> chats
-    const rule = h('div', { class: 'bk-rule bf-rule', role: 'status', 'aria-live': 'polite' });
+    const NR = 3;
+    const rule = h('div', { class: 'bk-rule bf-rule', role: 'status', 'aria-live': 'polite' }, h('div', {}, h('small', {}, 'Consigne (elle ne changera pas)'), 'Cliquez sur tous les ', h('b', {}, 'chats 🐱'), '. Les tigres et les lions ne sont pas des chats : ils sont juste très grands.'));
     const grid = h('div', { class: 'bf-grid' });
     const pips = h('div', { class: 'bk-pips' }, [0, 1, 2].map(() => h('i', {})));
     const count = h('span', {}, '');
-    const meta = h('div', { class: 'bk-meta' }, h('span', {}, 'Dossier n° ' + pad2(api.int(10, 99)) + '/B'), count, pips);
+    const meta = h('div', { class: 'bk-meta' }, h('span', {}, 'Dossier n° ' + String(api.int(10, 99)) + '/B'), count, pips);
     const root = h('div', { class: 'bk' }, rule, grid, meta); host.append(root);
-    let tiles = [], mode = 'cat', flipped = false, need = 0, got = 0;
-    const R = (small, html) => { rule.className = 'bk-rule bf-rule flip'; rule.replaceChildren(h('div', {}, h('small', {}, small), ...html)); };
-    const setCount = () => { count.textContent = `${got}/${need} validés`; };
-    function build(kinds) { // kinds: array of 12 emoji
-      grid.replaceChildren(); tiles = kinds.map((e, i) => {
-        const b = h('button', { class: 'bf-t pop', type: 'button', 'aria-label': e === '🐱' ? 'chat' : e === '🐶' ? 'chien' : 'autre animal', style: { animationDelay: i * 25 + 'ms' }, onclick: () => hit(i) }, e);
-        grid.append(b); return { b, e, on: false };
-      });
+    let tiles = [], need = 0, got = 0;
+    const setCount = () => { count.textContent = `Tableau ${stage + 1}/${NR} · ${got}/${need} chats`; };
+    function build(n) {
+      const nc = [3, 4, 5][n]; const others = api.shuffle(OTH).slice(0, 12 - nc); const list = api.shuffle([...Array(nc).fill('🐱'), ...others]);
+      grid.replaceChildren(); tiles = list.map((e, i) => { const b = h('button', { class: 'bf-t pop', type: 'button', 'aria-label': e === '🐱' ? 'chat' : 'pas un chat', style: { animationDelay: i * 25 + 'ms' }, onclick: () => hit(i) }, e); grid.append(b); return { b, e, on: false }; });
+      need = nc; got = 0;
     }
-    const isTarget = (e) => mode === 'cat' ? e === '🐱' : mode === 'notcat' ? e !== '🐱' : mode === 'dog' ? e === '🐶' : false;
-    function layout(nTargetKind, nT) { // build board with nT target emoji
-      let list = [];
-      if (nTargetKind === 'cat') { list = [...Array(nT).fill('🐱'), ...api.shuffle(OTH).slice(0, 12 - nT)]; }
-      else if (nTargetKind === 'notcat') { const m = 12 - nT; list = [...Array(m).fill(0).map(() => '🐱'), ...api.shuffle(OTH.filter((x) => x !== '🐶').concat(['🐶'])).slice(0, 12 - m)]; }
-      return api.shuffle(list);
-    }
-    function start(n) {
-      stage = n; busy = false; got = 0; flipped = false; api.timer(n === 2 ? 26000 : 20000);
-      [...pips.children].forEach((p, i) => p.classList.toggle('on', i < n));
-      if (n === 0) { mode = 'cat'; need = api.int(3, 4); build(layout('cat', need)); R('Consigne n° 1', ['Cliquez sur tous les ', h('b', {}, 'chats'), ' 🐱']); }
-      else if (n === 1) {
-        mode = 'notcat'; build(layout('cat', api.int(3, 4)));
-        need = tiles.filter((t) => t.e !== '🐱').length;
-        R('Erratum n° 1', ['En fait, cliquez sur ceux qui ', h('b', { class: 'no' }, 'NE SONT PAS'), ' des chats.']); api.say('Un erratum. Oui, nous en avons. Lisez.', 'smug'); api.sfx('whoosh');
-      } else {
-        mode = 'dog'; const nd = 4; build(api.shuffle([...Array(nd).fill('🐶'), ...Array(3).fill('🐱'), ...api.shuffle(OTH.filter((x) => x !== '🐶')).slice(0, 5)]));
-        need = nd; R('Consigne n° 3', ['Cliquez sur tous les ', h('b', {}, 'chiens'), ' 🐶']);
-      }
-      setCount();
-    }
-    function done() {
-      busy = true; api.sfx('good');
-      if (stage === 2) { tm.push(setTimeout(() => alive && api.solve(), 350)); return; }
-      tm.push(setTimeout(() => { if (alive) start(stage + 1); }, 650));
-    }
+    function start(n) { stage = n; busy = false; api.timer(30000); [...pips.children].forEach((p, i) => p.classList.toggle('on', i < n)); build(n); setCount(); if (n) api.say(`Tableau ${n + 1}. Même consigne : les chats. Il y en a plus, c’est tout.`, 'smug'); }
     function hit(i) {
-      if (busy) return; const t = tiles[i]; if (t.on || t.lock) return;
-      if (mode === 'cat' && t.e !== '🐱') { if (flipped) { shake(root); return api.fail(t.e === '🐶' ? 'Un chien. Je viens de dire « les CHATS ». Oui, j’ai changé d’avis. Non, vous n’aviez pas le droit de ne pas suivre.' : 'Ni chat ni chien. Un figurant. Il fallait suivre l’erratum, pas improviser.'); } shake(root); return api.fail(`Ceci est ${t.e === '🐶' ? 'un chien' : 'un animal'}. Vous avez cliqué sur ${t.e}. Le chat, lui, a des moustaches et du mépris.`); }
-      if (mode === 'notcat' && t.e === '🐱') { shake(root); return api.fail('C’est un chat. Il était écrit « NE SONT PAS ». En majuscules. Pour vous.'); }
-      if (mode === 'dog' && t.e !== '🐶') { shake(root); return api.fail(flipped ? 'Un chien. Mais enfin, je venais de corriger : « les CHATS ». Suivez le dossier.' : `Pas un chien (${t.e}). Les chiens sont ceux qui vous aiment, vous.`); }
-      if (mode === 'cat' && flipped) {}
+      if (busy) return; const t = tiles[i]; if (t.on) return;
+      if (t.e !== '🐱') { shake(root); const big = t.e === '🐯' || t.e === '🦁'; return api.fail(big ? `Ça ressemble à un chat, mais c’est ${t.e === '🐯' ? 'un tigre' : 'un lion'}. L’énoncé le disait. Les moustaches ne font pas le chat.` : `${t.e} n’est pas un chat. Le chat, lui, a des moustaches et du mépris.`); }
       t.on = true; t.b.classList.add('ok'); got++; api.sfx('pop'); setCount();
-      if (stage === 2 && !flipped && got === 2) { // demi-tour
-        flipped = true; mode = 'cat'; tiles.forEach((x) => { if (x.on) { x.lock = true; x.b.classList.add('lock'); } });
-        got = 0; need = tiles.filter((x) => x.e === '🐱').length; setCount(); api.timer(14000);
-        R('Rectificatif n° 3', ['Pardon, mauvais dossier. Cliquez plutôt sur les ', h('b', {}, 'CHATS'), '. Les chiens déjà cliqués sont ', h('b', { class: 'no' }, 'perdus'), '.']); api.say('Les deux chiens déjà cliqués ? Désormais, ils sont des pièces à conviction.', 'smug'); api.sfx('bad');
-        return;
-      }
-      if (got >= need) done();
+      if (got >= need) { busy = true; api.sfx('good'); if (stage >= NR - 1) { pips.children[2].classList.add('on'); tm.push(setTimeout(() => alive && api.solve(), 350)); } else tm.push(setTimeout(() => alive && start(stage + 1), 700)); }
     }
     start(0);
-    if (/cheat=1/.test(location.search)) host.dataset.answer = 'dynamic';
+    if (/cheat=1/.test(location.search)) host.dataset.answer = 'cats';
     return { destroy() { alive = false; tm.forEach(clearTimeout); } };
   }
 };

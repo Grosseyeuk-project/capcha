@@ -28,25 +28,24 @@ export default {
     const lit = (i, on) => pads[i].classList.toggle('lit', on);
     function setRule(small, ...k) { rule.replaceChildren(h('div', {}, h('small', {}, small), ...k)); }
     function begin(n) {
-      stage = n; pos = 0; accept = false; const len = n === 0 ? 5 : 6;
+      stage = n; pos = 0; accept = false; const len = n === 0 ? 4 : 6;
       seq = []; for (let i = 0; i < len; i++) { let v; do { v = api.int(0, 3); } while (i && v === seq[i - 1] && api.rng() < 0.7); seq.push(v); }
-      if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify(n === 0 ? seq : [...seq].reverse());
+      if (/cheat=1/.test(location.search)) host.dataset.answer = JSON.stringify(seq);
       dots.replaceChildren(...seq.map(() => h('i', {})));
-      if (n === 0) setRule('Phase 1', 'Regardez la séquence, puis ', h('b', {}, 'répétez-la'), ' (clic ou touches 1-4).');
-      else setRule('Phase 2 — mise à jour', 'Même chose, mais ', h('b', {}, 'À L’ENVERS'), ', les pads vont ', h('b', {}, 'changer de place'), ' et les flashs ', h('b', {}, 'gris'), ' sont des leurres : ignorez-les. Oui, c’est méchant.');
+      setRule(n === 0 ? 'Consigne (elle ne changera pas)' : 'Séquence 2/2 — même consigne', 'Regardez la séquence, puis ', h('b', {}, 'répétez-la'), ' dans le même ordre (clic, toucher ou touches 1-4). ' + (n ? 'Elle est un peu plus longue.' : 'Quatre signaux.'));
       pads.forEach((p) => { p.disabled = true; p.style.order = ''; }); state.className = 'bm-state'; state.textContent = 'Observez… (ça commence)';
       const step = api.reducedMotion ? 800 : 620; let t = 500; pads.forEach((p) => p.classList.add('lit')); T(() => pads.forEach((p) => p.classList.remove('lit')), 260);
-      const items = seq.map((v) => ({ v })); if (n === 1) { items.splice(2, 0, { v: api.int(0, 3), d: 1 }); items.splice(5, 0, { v: api.int(0, 3), d: 1 }); }
+      const items = seq.map((v) => ({ v }));
       items.forEach((it) => { T(() => { pads[it.v].classList.toggle('dec', !!it.d); lit(it.v, true); api.sfx(it.d ? 'tick' : 'pop'); }, t); T(() => { lit(it.v, false); pads[it.v].classList.remove('dec'); }, t + step * 0.62); t += step; });
-      T(() => { accept = true; pads.forEach((p) => (p.disabled = false)); state.className = 'bm-state go'; state.textContent = n ? 'À l’envers !' : 'À vous !'; api.timer(n ? 16000 : 13000); api.sfx('whoosh'); if (n) { const o = api.shuffle([0, 1, 2, 3]); pads.forEach((p, i) => (p.style.order = o[i])); api.say('Les pads ont changé de place. Fiez-vous à la couleur, pas à la position.', 'smug'); } }, t + 100);
+      T(() => { accept = true; pads.forEach((p) => (p.disabled = false)); state.className = 'bm-state go'; state.textContent = 'À vous !'; api.timer(24000); api.sfx('whoosh'); }, t + 100);
       api.timer(5000 + (seq.length + 2) * step + 14000);
     }
     function press(i) {
       if (!accept) return; lit(i, true); T(() => lit(i, false), 140);
-      const want = stage ? seq[seq.length - 1 - pos] : seq[pos];
+      const want = seq[pos];
       if (i !== want) {
         accept = false; shake(root); const nth = pos + 1; pads[i].classList.remove('lit');
-        const m = pos === 0 ? `Dès le premier signal : ${PADS[i].n} au lieu de ${PADS[want].n}. Ça commence fort.` : stage ? `Signal n° ${nth} (à l’envers) : vous avez tapé ${PADS[i].n}, il fallait ${PADS[want].n}. L’envers, c’est dur, hein ?` : `Au signal n° ${nth}, c’était ${PADS[want].n}, pas ${PADS[i].n}. Votre mémoire a la durée de vie d’un poisson rouge.`;
+        const m = pos === 0 ? `Dès le premier signal : ${PADS[i].n} au lieu de ${PADS[want].n}. Ça commence fort.` : `Au signal n° ${nth}, c’était ${PADS[want].n}, pas ${PADS[i].n}. Votre mémoire a la durée de vie d’un poisson rouge.`;
         recover(host); api.fail(m + ' (On reprend cette phase.)', { retry: true }); T(() => begin(stage), 1500); return;
       }
       api.sfx('click'); dots.children[pos].classList.add('ok'); pos++;

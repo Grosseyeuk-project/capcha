@@ -18,7 +18,7 @@ const FN = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
 const FU = [[0, 1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [0, 1, 0], [0, 1, 0]];
 const COL = ['#ffd23f', '#9ee7d0', '#ff9a8b', '#a9c8ff', '#e8c2ff', '#ffe0a3'];
 export default {
-  id: 'b_cube', tier: 5, title: 'Dé truqué en 3D', time: 45000,
+  id: 'b_cube', tier: 5, title: 'Dé truqué en 3D', time: 60000,
   mount(host, api) {
     const { h, THREE } = api;
     const letters = api.shuffle(LET).slice(0, 5), target = letters[0];

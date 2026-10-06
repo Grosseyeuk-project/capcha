@@ -38,7 +38,7 @@ export const RULES = [
   { after: 'a_order', k: 'R6', t: '↑ HS, 2 poses', full: 'Le bouton ↑ est en maintenance. Une seule pose étant suspecte, il en faut deux.' }
 ];
 export const lvOf = (id) => Math.max(0, ORDER.indexOf(id));
-export const rulesFor = (id) => RULES.filter((r) => ORDER.indexOf(r.after) < ORDER.indexOf(id));
+export const rulesFor = (id) => []; // POLICY: no cross-card rules, instructions never change mid-game
 export const hasRule = (id, k) => rulesFor(id).some((r) => r.k === k);
 // shared across captchas for the page's lifetime; reset by the first card
 export const S = { entries: [], pen: 0, last: '', lastT: 0, lastId: '', upper: false, straight: false, left: 30000, hit: {} };
@@ -182,7 +182,7 @@ css('dz', `
 `);
 const SUB = ['', 'Dossier n° 4471 · pièce 2', 'Dossier 4471 · pièce 3', 'Pièce 4/8 · patience notée', 'FORMULAIRE 27-B/6 · 2 exemplaires', 'ATTENTION : interface en dégradation', 'Widget non garanti. Ni remboursé.', 'reCAPCHA a démissionné. Remplaçant.'];
 const BRAND2 = ['Confidentialité · Conditions', 'Confidentialité · Conditions', 'Confidentialité · Conditions', 'Vie privée (non) · Conditions', 'Vie privée (non) · Conditions', 'Données revendues', 'Aucune confidentialité', 'Non remboursable'];
-const MOCK = [null, null, null, ['☑', 'rappel pièce 1'], ['☑', 'sous réserve'], ['☑', 'en révision'], ['☐', 'décochée'], ['☐', 'peut-être robot']];
+const MOCK = [];
 const MOCKSAY = ['', '', '', 'Oui, oui, vous avez coché. Je m’en souviens très bien.', 'Cette case a été cochée à la pièce 1. Elle vous observe depuis.', 'Vous n’êtes pas un robot. Pour l’instant. Sur le papier.', 'La direction a décoché votre case. Elle dit que c’était une erreur de saisie.', 'Je ne dis pas que vous êtes un robot. Je dis que la case, elle, ne le dit plus.'];
 const LOGO = `<svg viewBox="0 0 24 24"><path fill="#4285f4" d="M21 12a9 9 0 0 1-2.6 6.4l-2.1-2.1A6 6 0 0 0 18 12z"/><path fill="#1a73e8" d="M12 3a9 9 0 0 1 8.6 6.3l-2.9.9A6 6 0 0 0 12 6z"/><path fill="#9aa0a6" d="M3 12a9 9 0 0 1 9-9v3a6 6 0 0 0-6 6z"/><path fill="#34a853" d="M12 21a9 9 0 0 1-9-9h3a6 6 0 0 0 6 6z"/></svg>`;
 export function brand(h, lv = 0) {
@@ -211,8 +211,7 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
     if (MOCK[lv]) st.append(h('button', { class: 'ak-mock', type: 'button', onclick: () => api && api.say(MOCKSAY[lv], 'smug') }, h('i', {}, MOCK[lv][0]), h('span', {}, MOCK[lv][1])));
   }
   // dossier strip
-  ensureEntries(id);
-  const ents = S.entries.filter((x) => ORDER.indexOf(x.id) < lv);
+  const ents = [];
   const bad2 = () => ents.filter((e) => e.text !== canon(e, rules));
   let dz = null, dd = null; const dcs = [];
   const causeOf = (e) => { const act = [...rules].reverse(); for (const r of act) if (e.text === canon(e, rules.filter((x) => x.k !== r.k))) return r; return null; };
@@ -258,7 +257,7 @@ export function frame(h, { api, id, small, title, note, body, verify = 'Vérifie
   setLock(); refresh();
   { const rs = bad2(); if (rs.length) { setTimeout(() => { if (!el.isConnected) return; openEntry(rs[0]); const r = causeOf(rs[0]); api && api.say(`${r ? r.k : 'Une règle'} : l’entrée ${roman(ents.indexOf(rs[0]) + 1)} du dossier (« ${rs[0].text} ») n’est plus conforme. Corrigez-la avant de continuer. Le dossier est juge, jury et bureaucrate.`, 'smug'); api && api.sfx('bad'); }, 900); } }
   return { el, btn, noteEl, banner, rule: (k, state) => { const c = chips[k]; if (c) { c.className = 'ak-lc ' + state; if (state === 'bad') { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); } } if (state === 'bad' && (k === 'R1' || k === 'R2')) { bad.add(k); drain(); } else bad.delete(k); },
-    addChip: (text, state) => { const c = h('span', { class: 'ak-lc ' + (state || 'bad') }, h('i'), text); (drainEl ? st.insertBefore(c, drainEl) : (st || el).append(c)); return c; }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
+    addChip: (text, state) => { const c = h('span', { class: 'ak-lc ' + (state || 'bad') }, h('i'), text); if (st) (drainEl ? st.insertBefore(c, drainEl) : st.append(c)); return c; }, shake() { el.classList.remove('ak-shake'); void el.offsetWidth; el.classList.add('ak-shake'); } };
 }
 export const numWords = (n) => {
   if (!Number.isFinite(n) || n < 0 || n > 999) return String(n);
