@@ -54,6 +54,7 @@ const WORDS = ['robot', 'canard', 'pingouin', 'cactus', 'vautour', 'chaussons'];
 const CAPL = 'bcdfghkmnprstuvwxz'; // sans e, sans l/i/o ambigus
 const MOONS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
 const MOON_RE = /[\u{1F311}-\u{1F318}]/gu;
+const CAPITALS = ['paris', 'rome', 'madrid', 'berlin', 'londres', 'lisbonne', 'oslo', 'lima', 'tokyo', 'rabat', 'dakar', 'berne', 'vienne', 'athènes', 'athenes', 'bruxelles', 'ottawa', 'brasilia', 'canberra', 'riga', 'kiev', 'moscou', 'pékin', 'pekin', 'séoul', 'seoul', 'delhi', 'alger', 'tunis', 'bamako', 'accra', 'nairobi', 'helsinki', 'stockholm', 'copenhague', 'dublin', 'varsovie', 'prague', 'budapest', 'sofia', 'bucarest', 'ankara', 'bogota', 'caracas', 'quito', 'santiago', 'havane', 'washington', 'mexico', 'le caire'];
 const PRIMES = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]);
 const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 const PANIC = (n) => [`AAAH ! La règle ${n} vient de sauter ! Qui a touché à la règle ${n} ?!`, `Non non non. La règle ${n} était verte il y a une seconde. Je l’aimais bien.`, `Règle ${n} cassée. Ce n’est pas ma faute. C’est un peu la vôtre.`, `Cascade ! La règle ${n} a lâché. Respirez. Réparez.`, `La règle ${n} s’effondre. Je prépare un formulaire de réclamation.`];
@@ -79,7 +80,7 @@ export default {
       { t: ['Une ', h('b', {}, 'majuscule'), '. Pour le respect.'], f: (p) => /[A-ZÀ-ÖØ-Ý]/.test(p) },
       { t: ['Un ', h('b', {}, 'chiffre'), '. Au moins un, hélas.'], f: (p) => /[0-9]/.test(p) },
       { t: ['Un caractère spécial : ', h('b', {}, '! ? # @ *')], f: (p) => /[!?#@*]/.test(p) },
-      { t: ['Deux chiffres consécutifs formant un ', h('b', {}, 'nombre premier'), ' (13, 47, 71…). Les maths, ça sert.'], f: hasPrime, s: 'Un nombre premier. Allez, je suis gentil, il y en a 21.' },
+      { t: ['Doit contenir le nom d’une ', h('b', {}, 'capitale'), ' (en minuscules ou en majuscules, comme vous voulez : Paris, Oslo, Lima, Rabat, Tokyo, Madrid…).'], f: (p) => CAPITALS.some((c) => p.toLowerCase().includes(c)), s: 'Une capitale. N’importe laquelle. Je suis un homme de goût, pas un monstre.' },
       { t: ['Doit contenir un ', h('b', {}, 'mois de l’année'), ' (en lettres, en français : mars, avril, mai, juin, août…).'], f: (p) => MONTHS.some((m) => p.toLowerCase().includes(m)) },
       { t: ['Doit contenir le mot « ', h('b', {}, word), ' ». Ne demandez pas.'], f: (p) => p.toLowerCase().includes(word), s: 'Ce mot a été tiré au sort. Par moi. Avec amour.' },
       { t: ['Doit contenir une ', h('b', {}, 'lune 🌙'), ' (bouton 🌙 : votre clavier n’en a pas, nous le savons).'], f: (p) => p.includes('🌙'), s: 'Je n’ai pas à justifier la lune.' },
@@ -163,7 +164,7 @@ export default {
     let sy = 0;
     if (/cheat=1/.test(location.search)) {
       const build = () => {
-        const mid = 'Gérard' + capWord + word + '!mars🌙12' + '13';
+        const mid = 'Gérard' + capWord + word + '!mars🌙12' + 'paris';
         const make = (d) => { const base = mid + (d === null ? '' : String(d)) + (hatched ? '🌱🐔🌱' : '🥚'); const padN = Math.max(0, L - len(base)); let f = ''; for (let i = 0; i < padN; i++) f += i % 2 ? 'y' : 'x'; return base + f + '!'; };
         const sum = dsum(make(null)); const d = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => (sum + x) % 7 === 0);
         return make(d);

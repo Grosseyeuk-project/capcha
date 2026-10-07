@@ -177,21 +177,21 @@ export default {
       const next = () => { api.sfx('good'); step++; hp([15, 9, 4][step - 1]); if (step >= 3) { win(); return; } T(stepIn, 700); };
       // 1 : arithmétique de robot (trois questions, priorités d'opérations)
       function stepA() {
-        api.timer(60000); lab.textContent = 'Chef d’accusation 1/3 · 60 s'; setRule('Charge n° 1 — Robotisme présumé', 'Un robot calcule vite. Répondez aux ', h('b', {}, '3 questions'), ' (attention aux priorités d’opérations). Une erreur ne coûte rien, sauf du temps.');
-        const a1 = api.int(12, 19), b1 = api.int(3, 9), n2 = api.int(90, 120), p2_ = api.int(3, 9), q2 = api.int(3, 9), x3 = api.int(4, 15), y3 = api.int(4, 15), z3 = api.int(3, 7);
-        const Q = [[`${a1} × ${b1}`, a1 * b1], [`${n2} − ${p2_} × ${q2}`, n2 - p2_ * q2], [`(${x3} + ${y3}) × ${z3}`, (x3 + y3) * z3]]; let qi = 0;
+        api.timer(60000); lab.textContent = 'Chef d’accusation 1/3 · 60 s'; setRule('Charge n° 1 — Robotisme présumé', 'Un robot calcule vite. Répondez aux ', h('b', {}, '3 questions'), '. Des calculs tout simples. Une erreur ne coûte rien, sauf du temps.');
+        const a1 = api.int(3, 9), b1 = api.int(2, 8), n2 = api.int(12, 19), p2_ = api.int(3, 9), x3 = api.int(2, 5), y3 = api.int(2, 5);
+        const Q = [[`${a1} + ${b1}`, a1 + b1], [`${n2} − ${p2_}`, n2 - p2_], [`${x3} × ${y3}`, x3 * y3]]; let qi = 0;
         const qEl = h('div', { class: 'bb-phrase' }), prog = h('div', { class: 'bb-echo' });
         const inp = h('input', { type: 'text', inputmode: 'numeric', pattern: '[0-9-]*', 'aria-label': 'Réponse', placeholder: '= ?', ...nofix, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
         const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
         body.append(qEl, prog, h('div', { class: 'bb-row' }, inp, sub));
         const show = () => { qEl.textContent = Q[qi][0] + ' = ?'; prog.textContent = `Question ${qi + 1}/3`; inp.value = ''; if (/cheat=1/.test(location.search)) host.dataset.answer = String(Q[qi][1]); };
-        function go() { if (busy) return; if (+inp.value.trim() === Q[qi][1] && inp.value.trim() !== '') { api.sfx('pop'); qi++; if (qi >= 3) { busy = true; next(); } else { show(); inp.focus(); } } else { shake(root); api.sfx('bad'); api.say(['Non. Un robot aurait trouvé ça en 0,2 ms.', 'Faux. Les priorités d’opérations, ça vous dit quelque chose ?', 'Raté. Respirez. Recalculez.'][api.int(0, 2)], 'smug'); } }
+        function go() { if (busy) return; if (+inp.value.trim() === Q[qi][1] && inp.value.trim() !== '') { api.sfx('pop'); qi++; if (qi >= 3) { busy = true; next(); } else { show(); inp.focus(); } } else { shake(root); api.sfx('bad'); api.say(['Non. Un robot aurait trouvé ça en 0,2 ms.', 'Faux. C’est une petite opération, prenez votre temps.', 'Raté. Respirez. Recalculez.'][api.int(0, 2)], 'smug'); } }
         show(); setTimeout(() => alive && inp.focus({ preventScroll: true }), 80);
       }
       // 2 : mot de passe à énigmes, grignoté par le boss
       function stepB() {
         api.timer(70000); lab.textContent = 'Chef d’accusation 2/3 · 70 s'; setRule('Charge n° 2 — Mots de passe suspects', 'Composez un mot de passe qui respecte les 5 règles. Réfléchissez : elles se contredisent presque. Rien ne change en cours de route.');
-        const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Contient le résultat de 7 × 8', (p) => p.includes('56')], ['Contient une couleur du drapeau français', (p) => /bleu|blanc|rouge/i.test(p)], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
+        const mk = [['Au moins 10 caractères', (p) => [...p].length >= 10], ['Une majuscule', (p) => /[A-Z]/.test(p)], ['Contient un chiffre', (p) => /[0-9]/.test(p)], ['Contient une couleur du drapeau français', (p) => /bleu|blanc|rouge/i.test(p)], ['Aucun « e » (sans accent)', (p) => !/e/i.test(p)]];
         const ul = h('div', { class: 'bb-rl' }, mk.map(([t]) => h('span', {}, t)));
         const inp = h('input', { type: 'text', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe…', ...nofix, oninput: ck, onkeydown: (e) => { if (e.key === 'Enter') go(); } });
         const sub = h('button', { class: 'bk-btn', type: 'button', onclick: go, style: { minHeight: '38px', padding: '6px 14px' } }, 'Valider');
