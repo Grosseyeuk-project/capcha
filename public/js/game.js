@@ -10,6 +10,8 @@ const TIER_TIME = { 1: 20000, 2: 25000, 3: 30000, 4: 35000, 5: 45000 };
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const pad = (n) => String(n).padStart(2, '0');
 const RM = () => reducedMotion();
+// === OUTIL DE TEST : bouton « Passer l'étape ». À SUPPRIMER AVANT LA MISE EN LIGNE (mettre DEV_SKIP à false, ou retirer ce bloc et .dev-skip du CSS). ===
+const DEV_SKIP = true;
 
 export class Game {
   constructor({ root, seedFor = (l) => l * 7919 + 13, mode = 'solo', onEvent = () => {}, startLevel = 1, onReplay, onMenu }) {
@@ -66,7 +68,7 @@ export class Game {
     this.hud = h('header', { class: 'hud' },
       h('div', { class: 'hud-l' }, h('span', { class: 'brand', 'aria-hidden': 'true' }, 'CAPCHA™'), h('div', { class: 'lvl' }, this.levelLabel)),
       h('div', { class: 'hud-c' }, pips),
-      h('div', { class: 'hud-r' }, this.lbBar = h('button', { class: 'icon-btn ledger-btn', type: 'button', 'aria-expanded': 'false', 'aria-label': 'Registre de conformité', title: 'Registre de conformité', onclick: () => this.toggleLedger() }, h('span', { 'aria-hidden': 'true' }, '§'), this.lbCount = h('i', { class: 'lb-count', 'aria-hidden': 'true' }, '0')), h('div', { class: 'strikes', role: 'img', 'aria-label': 'Vies restantes : 3 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Vies'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
+      h('div', { class: 'hud-r' }, (DEV_SKIP && this.mode === 'solo') ? h('button', { class: 'icon-btn dev-skip', type: 'button', title: 'Passer l’étape (outil de test)', 'aria-label': 'Passer l’étape en cours (outil de test)', onclick: () => { const c = this.cur; if (c && c.api && this.phase === 'play') c.api.solve(); } }, h('span', { 'aria-hidden': 'true' }, '⏭')) : null, this.lbBar = h('button', { class: 'icon-btn ledger-btn', type: 'button', 'aria-expanded': 'false', 'aria-label': 'Registre de conformité', title: 'Registre de conformité', onclick: () => this.toggleLedger() }, h('span', { 'aria-hidden': 'true' }, '§'), this.lbCount = h('i', { class: 'lb-count', 'aria-hidden': 'true' }, '0')), h('div', { class: 'strikes', role: 'img', 'aria-label': 'Vies restantes : 3 sur 3' }, h('span', { class: 'strikes-lbl', 'aria-hidden': 'true' }, 'Vies'), h('span', { class: 'strike-row' }, this.strikeEls)), this.clockBox, soundButton()));
     this.strikesBox = this.hud.querySelector('.strikes');
     this.speaker = new Speaker();
     this.nOk = 0; this.nBad = 0;

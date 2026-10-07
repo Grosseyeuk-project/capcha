@@ -7,7 +7,7 @@ css('wavy', `
 .aw-in::placeholder{font-size:13px;letter-spacing:.02em;font-weight:400;text-transform:none;color:#80868b}
 .aw-rf{width:42px;height:42px;border:1px solid #c9ccd1;border-radius:3px;font-size:18px}
 `);
-const WORDS = ['BAGUETTE', 'FROMAGE', 'PATATE', 'ESCARGOT', 'BRIOCHE', 'COUCOU', 'MOUSTACHE', 'CROISSANT'];
+const WORDS = ['BAGUETTE', 'FROMAGE', 'PATATE', 'ESCARGOT', 'BRIOCHE', 'COUCOU', 'MOUSTACHE', 'CROISSANT', 'CHAUSSON', 'TARTINE', 'SAUCISSON', 'POMPIER', 'PARAPLUIE', 'CITROUILLE', 'GRENOUILLE', 'CHAMPIGNON', 'TROTTINETTE', 'MARMOTTE', 'BERET', 'TIRELIRE', 'CORNICHON', 'ZEBRE', 'KANGOUROU', 'PYJAMA'];
 const FONTS = ['Georgia,serif', 'Impact,Haettenschweiler,sans-serif', '"Courier New",monospace', '"Brush Script MT","Comic Sans MS",cursive', '"Trebuchet MS",sans-serif', 'Palatino,"Times New Roman",serif', 'Verdana,sans-serif'];
 const lev = (a, b) => { const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]); for (let j = 1; j <= b.length; j++) d[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; };
 export default {

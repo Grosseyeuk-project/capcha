@@ -561,3 +561,6 @@ body:has(> .ol-root) #app { visibility: hidden !important; }
 @media (max-width: 640px) { .card-head { display: none; } .game-root .bubble { height: 40px; padding: 4px 8px; } .game-root .bubble-text, .game-root .bubble-text.fit { font-size: .75rem; line-height: 1.12; -webkit-line-clamp: 2; } .game-root .nameplate { display: none; } .pips li { height: 5px; } }
 .game-root.cine .stage, .game-root.cine .ledger { transition: opacity .18s; }
 @media (max-width: 640px) { .cap-host { padding: 4px 6px; } .cap-host .ak-mock { display: none; } .cap-host .ak-w { box-shadow: 0 2px 8px rgba(0,0,0,.2); } }
+
+/* OUTIL DE TEST (à supprimer avant la mise en ligne) */
+.dev-skip { flex: none; font: 800 1.05rem/1 var(--display); background: #ffd23f; color: #10202a; border: 2px dashed #10202a; min-width: 42px; min-height: 42px; }

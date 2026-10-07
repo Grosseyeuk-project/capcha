@@ -25,6 +25,7 @@ export default {
     const pips = h('div', { class: 'bk-pips' }, [0, 1].map(() => h('i', {})));
     const root = h('div', { class: 'bk' }, rule, h('div', { class: 'bm-pads' }, pads), dots, h('div', { class: 'bk-meta' }, state, pips)); host.append(root);
     const T = (fn, ms) => tm.push(setTimeout(() => alive && fn(), ms));
+    const cd = h('div', { class: 'bm-cd', 'aria-hidden': 'true', style: { position: 'absolute', inset: '0', display: 'none', placeItems: 'center', font: '800 clamp(72px,26vw,140px) var(--display)', color: 'var(--ink)', background: 'rgba(255,250,235,.88)', zIndex: '5', pointerEvents: 'none' } }); root.style.position = 'relative'; root.append(cd);
     const lit = (i, on) => pads[i].classList.toggle('lit', on);
     function setRule(small, ...k) { rule.replaceChildren(h('div', {}, h('small', {}, small), ...k)); }
     function begin(n) {
@@ -34,11 +35,12 @@ export default {
       dots.replaceChildren(...seq.map(() => h('i', {})));
       setRule(n === 0 ? 'Consigne (elle ne changera pas)' : 'Séquence 2/2 — même consigne', 'Regardez la séquence, puis ', h('b', {}, 'répétez-la'), ' dans le même ordre (clic, toucher ou touches 1-4). ' + (n ? 'Elle est un peu plus longue.' : 'Quatre signaux.'));
       pads.forEach((p) => { p.disabled = true; p.style.order = ''; }); state.className = 'bm-state'; state.textContent = 'Observez… (ça commence)';
-      const step = api.reducedMotion ? 800 : 620; let t = 500; pads.forEach((p) => p.classList.add('lit')); T(() => pads.forEach((p) => p.classList.remove('lit')), 260);
+      const step = api.reducedMotion ? 800 : 620; const lead = n === 0 ? 3300 : 0; let t = 500 + lead;
+      if (n === 0) { api.timer(30000); state.textContent = 'Préparez-vous…'; [['3', 0], ['2', 1000], ['1', 2000], ['GO !', 3000]].forEach(([txt, at]) => T(() => { cd.style.display = 'grid'; cd.textContent = txt; api.sfx(txt === 'GO !' ? 'whoosh' : 'tick'); }, at)); T(() => { cd.style.display = 'none'; state.textContent = 'Observez… (ça commence)'; }, 3300); } pads.forEach((p) => p.classList.add('lit')); T(() => pads.forEach((p) => p.classList.remove('lit')), 260);
       const items = seq.map((v) => ({ v }));
       items.forEach((it) => { T(() => { pads[it.v].classList.toggle('dec', !!it.d); lit(it.v, true); api.sfx(it.d ? 'tick' : 'pop'); }, t); T(() => { lit(it.v, false); pads[it.v].classList.remove('dec'); }, t + step * 0.62); t += step; });
       T(() => { accept = true; pads.forEach((p) => (p.disabled = false)); state.className = 'bm-state go'; state.textContent = 'À vous !'; api.timer(24000); api.sfx('whoosh'); }, t + 100);
-      api.timer(5000 + (seq.length + 2) * step + 14000);
+      api.timer(5000 + lead + (seq.length + 2) * step + 14000);
     }
     function press(i) {
       if (!accept) return; lit(i, true); T(() => lit(i, false), 140);

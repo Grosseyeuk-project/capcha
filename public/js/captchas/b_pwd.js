@@ -88,10 +88,10 @@ export default {
       { t: ['Doit contenir ', h('b', {}, 'Gérard'), '. Il se sent seul. (Bouton « Gérard » pour les claviers sans é.)'], f: (p) => p.includes('Gérard'), s: 'Gérard est là, il vous regarde.' },
       { t: ['Doit contenir le nombre ', h('b', {}, '12'), ' (c’est le nombre de lettres de « BUREAUCRATIE »). Le mot de passe peut être plus long, bien sûr.'], f: (p) => p.includes('12'), s: 'Douze. B-U-R-E-A-U-C-R-A-T-I-E. Je vous ai fait le calcul, de rien.' },
             { id: 'conf', t: ['Confirmez en le ', h('b', {}, 'retapant'), ' dans la seconde case (ou « copier »). Ensuite, elle se synchronise toute seule. Nous sommes humains.'], f: (p, c) => p.length > 0 && c === p, s: 'Une seconde case. Elle se mettra à jour toute seule, c’est mon cadeau.' },
-            { t: ['Gérard a pondu : le mot de passe doit contenir un ', h('b', {}, 'œuf 🥚'), '. Il éclot tout seul au bout de 20 s passées dedans. Ne le perdez pas.'], f: (p) => p.includes('🥚') || p.includes('🐔'), s: 'Gérard a pondu. Je ne pose pas de questions. Il fait ça quand il stresse.', id: 'egg' },
+            { t: ['Gérard a pondu : le mot de passe doit contenir un ', h('b', {}, 'œuf 🥚'), '. Il éclot tout seul au bout de 5 s passées dedans (un compte à rebours s’affiche). Ne le perdez pas.'], f: (p) => p.includes('🥚') || p.includes('🐔'), s: 'Gérard a pondu. Je ne pose pas de questions. Il fait ça quand il stresse.', id: 'egg' },
       { t: ['L’œuf a éclos : c’est une ', h('b', {}, 'poule 🐔'), '. Elle doit être entourée de graines : ', h('b', {}, '🌱🐔🌱'), ' (boutons 🌱 et 🐔).'], f: (p) => p.includes('🌱🐔🌱'), when: () => hatched, s: 'C’est une poule. Évidemment que c’est une poule. Donnez-lui des graines.' },
       { t: ['🔥 ', h('b', {}, 'INCENDIE'), ' : dans 5 secondes, un feu se déclare dans le mot de passe et brûle un caractère toutes les 2 s. ', h('b', {}, '2 foyers'), ' successifs : éteignez-le chaque fois (bouton 🧯, ou effacez les 🔥). Il repart 6 s après le premier.'], f: (p) => fireDone && !p.includes('🔥'), s: 'Au feu ! Ce n’est pas dans la procédure. Faites quelque chose !', id: 'fire' },
-      { t: ['Dernière règle : la ', h('b', {}, 'somme de tous les chiffres'), ' doit être un ', h('b', {}, 'multiple de 7'), ' (0 compte). Ajoutez ou changez un chiffre.'], f: (p) => dsum(p) % 7 === 0, live: (p) => `Σ chiffres = ${dsum(p)}`, s: 'La dernière. Je vous le jure. Cette fois, c’est la dernière.' },
+      { t: ['Dernière règle : le mot de passe doit ', h('b', {}, 'se terminer par un point d’exclamation « ! »'), '. Mettez-le tout à la fin (bouton « ! » du clavier d’urgence).'], f: (p) => p.endsWith('!'), s: 'La dernière. Je vous le jure. Un point d’exclamation, et on n’en parle plus.' },
     ];
     const IDX = (id) => rules.findIndex((r) => r.id === id);
     const CONF = IDX('conf');
@@ -147,9 +147,9 @@ export default {
     let ext = 0; api.onTick((ms) => { if (ms < 1500 && revealed >= rules.length - 3 && ext < 2 && !solved) { ext++; api.timer(60000); api.say('Prolongation accordée par Gérard. Ne le répétez pas.', 'impressed'); } });
     const iv = setInterval(() => {
       if (!alive || solved) return; let p = input.value;
-      if (p.includes('🥚') && revealed > IDX('egg') && !hatched) { eggT++; if (eggT >= 20) { hatched = true; p = p.replace('🥚', '🐔'); setPw(p); api.sfx('confetti'); api.say('L’œuf éclot ! C’est… une poule. Gérard pleure de joie. Moi aussi, un peu.', 'impressed'); } }
+      if (p.includes('🥚') && revealed > IDX('egg') && !hatched) { eggT++; if (eggT >= 5) { hatched = true; p = p.replace('🥚', '🐔'); setPw(p); api.sfx('confetti'); api.say('L’œuf éclot ! C’est… une poule. Gérard pleure de joie. Moi aussi, un peu.', 'impressed'); } }
       worm.className = 'bp-worm'; worm.textContent = '';
-      if (p.includes('🥚') && !hatched && revealed > IDX('egg')) worm.textContent = `🥚 éclot dans ${Math.max(0, 20 - eggT)} s`;
+      if (p.includes('🥚') && !hatched && revealed > IDX('egg')) worm.textContent = `🥚 éclot dans ${Math.max(0, 5 - eggT)} s`;
       if (fireOn || fireStart) worm.textContent += (worm.textContent ? ' · ' : '') + (fireOn ? `🔥 foyer ${Math.min(2, foyers + 1)}/2` : fireDone ? '' : '🔥 départ de feu imminent');
       update();
     }, 1000);
@@ -164,7 +164,7 @@ export default {
     if (/cheat=1/.test(location.search)) {
       const build = () => {
         const mid = 'Gérard' + capWord + word + '!mars🌙12' + '13';
-        const make = (d) => { const base = mid + (d === null ? '' : String(d)) + (hatched ? '🌱🐔🌱' : '🥚'); const padN = Math.max(0, L - len(base)); let f = ''; for (let i = 0; i < padN; i++) f += i % 2 ? 'y' : 'x'; return base + f; };
+        const make = (d) => { const base = mid + (d === null ? '' : String(d)) + (hatched ? '🌱🐔🌱' : '🥚'); const padN = Math.max(0, L - len(base)); let f = ''; for (let i = 0; i < padN; i++) f += i % 2 ? 'y' : 'x'; return base + f + '!'; };
         const sum = dsum(make(null)); const d = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => (sum + x) % 7 === 0);
         return make(d);
       };
