@@ -192,7 +192,7 @@ export function titleScreen({ best, speaker, onSolo, onOnline, onlineReady }) {
     h('p', { class: 'typo' }, '(Oui, il manque un T. Ne le dites pas à Gérard.)'),
     h('div', { class: 'eye-slot', 'aria-hidden': 'true' }),
     speaker.el,
-    h('div', { class: 'actions' }, start, online),
+    h('div', { class: 'actions' }, start),
     best ? h('p', { class: 'best' }, h('span', {}, 'Dossier précédent'), ` niveau ${best.level}${best.total ? '/' + best.total : ''} · ${best.rank}`) : null,
     h('p', { class: 'fine' }, 'En cliquant, vous acceptez que Gérard vous juge, vous chronomètre et note vos erreurs dans un carnet. Aucun humain n’a été blessé. Plusieurs ont été vexés.')
   );
